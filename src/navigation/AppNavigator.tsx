@@ -89,13 +89,15 @@ function TabIcon({ icon, color }: { icon: string; color: string }) {
   return <AppIcon name={icon} size={24} color={color} />;
 }
 
-function HomeTabScreen() {
+function HomeTabScreen(props: any) {
   const { user } = useAuth();
+  // Forward navigation/route — without this the dashboards get an undefined
+  // `navigation` prop and crash the moment a card's onPress calls .navigate().
   switch (user?.role) {
-    case 'teacher': return <TeacherDashboard />;
-    case 'parent': return <ParentDashboard />;
-    case 'professional': return <ProfessionalDashboard />;
-    default: return <StudentDashboard />;
+    case 'teacher': return <TeacherDashboard {...props} />;
+    case 'parent': return <ParentDashboard {...props} />;
+    case 'professional': return <ProfessionalDashboard {...props} />;
+    default: return <StudentDashboard {...props} />;
   }
 }
 
