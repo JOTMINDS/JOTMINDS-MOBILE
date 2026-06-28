@@ -96,26 +96,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session: s } }) => {
-      setSession(s);
-      if (s?.user) {
-        fetchProfile(s.user).then(setUser).finally(() => setLoading(false));
-      } else {
-        setLoading(false);
-      }
-    });
+    let mounted = true;
+    // Fail-safe: never let the loader/splash hang forever. If getSession or the
+    // network stalls (or a stored token is unusable), fall through to Welcome.
+    const failSafe = setTimeout(() => { if (mounted) setLoading(false); }, 6000);
+    const done = () => { if (mounted) { clearTimeout(failSafe); setLoading(false); } };
+
+    supabase.auth.getSession()
+      .then(({ data: { session: s } }) => {
+        if (!mounted) return;
+        setSession(s);
+        if (s?.user) {
+          fetchProfile(s.user)
+            .then((p) => { if (mounted) setUser(p); })
+            .finally(done);
+        } else {
+          done();
+        }
+      })
+      .catch(done); // getSession rejected — don't strand the user on a blank screen
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, s) => {
+      if (!mounted) return;
       setSession(s);
       if (s?.user) {
-        const profile = await fetchProfile(s.user);
-        setUser(profile);
+        try {
+          const profile = await fetchProfile(s.user);
+          if (mounted) setUser(profile);
+        } catch { /* keep any existing user; profile fetch can retry later */ }
       } else {
         setUser(null);
       }
+      done();
     });
 
-    return () => subscription.unsubscribe();
+    return () => { mounted = false; clearTimeout(failSafe); subscription.unsubscribe(); };
   }, []);
 
   const signIn = async (email: string, password: string) => {

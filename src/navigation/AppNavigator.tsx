@@ -176,7 +176,7 @@ export default function AppNavigator() {
     <NavigationContainer>
       <Stack.Navigator
         screenOptions={{ headerShown: false }}
-        initialRouteName={user && !firstWinDone ? 'FirstWin' : undefined}
+        initialRouteName={user ? (firstWinDone ? 'Main' : 'FirstWin') : 'Welcome'}
       >
         {user ? (
           // ── Authenticated Stack ────────────────────────────────────────────

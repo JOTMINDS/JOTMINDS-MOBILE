@@ -2,7 +2,6 @@ import React, { useEffect } from 'react';
 import { Text, TextInput } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useFonts } from 'expo-font';
-import * as SplashScreen from 'expo-splash-screen';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider } from './src/context/AuthContext';
@@ -10,6 +9,7 @@ import { AccessibilityProvider } from './src/context/AccessibilityContext';
 import { ThemeProvider, useTheme } from './src/context/ThemeContext';
 import { ToastProvider } from './src/context/ToastContext';
 import { initOutboxSync } from './src/utils/outbox';
+import ErrorBoundary from './src/components/ErrorBoundary';
 import AppNavigator from './src/navigation/AppNavigator';
 
 // ── Global text accessibility ────────────────────────────────────────────────
@@ -19,10 +19,6 @@ const TextAny = Text as any;
 const TextInputAny = TextInput as any;
 TextAny.defaultProps = { ...(TextAny.defaultProps || {}), allowFontScaling: true, maxFontSizeMultiplier: 1.8 };
 TextInputAny.defaultProps = { ...(TextInputAny.defaultProps || {}), allowFontScaling: true, maxFontSizeMultiplier: 1.8 };
-
-// Keep the native splash up until we explicitly hide it (see the timer below).
-SplashScreen.preventAutoHideAsync().catch(() => {});
-const EXTRA_SPLASH_MS = 8000; // hold the splash ~8s longer on every launch
 
 // Status bar adapts to the active theme (dark text on light bg, light on dark).
 function ThemedStatusBar() {
@@ -41,27 +37,22 @@ export default function App() {
   // Replay any queued offline writes on launch + whenever connectivity returns.
   useEffect(() => initOutboxSync(), []);
 
-  // Once everything's ready, keep the splash on for an extra few seconds, then hide it.
-  useEffect(() => {
-    if (!fontsLoaded) return;
-    const t = setTimeout(() => { SplashScreen.hideAsync().catch(() => {}); }, EXTRA_SPLASH_MS);
-    return () => clearTimeout(t);
-  }, [fontsLoaded]);
-
-  if (!fontsLoaded) return null; // native splash stays up until fonts are ready
+  if (!fontsLoaded) return null; // native splash shows until fonts are ready, then hides
 
   return (
-    <SafeAreaProvider>
-      <AccessibilityProvider>
-        <ThemeProvider>
-          <ToastProvider>
-            <AuthProvider>
-              <ThemedStatusBar />
-              <AppNavigator />
-            </AuthProvider>
-          </ToastProvider>
-        </ThemeProvider>
-      </AccessibilityProvider>
-    </SafeAreaProvider>
+    <ErrorBoundary>
+      <SafeAreaProvider>
+        <AccessibilityProvider>
+          <ThemeProvider>
+            <ToastProvider>
+              <AuthProvider>
+                <ThemedStatusBar />
+                <AppNavigator />
+              </AuthProvider>
+            </ToastProvider>
+          </ThemeProvider>
+        </AccessibilityProvider>
+      </SafeAreaProvider>
+    </ErrorBoundary>
   );
 }
