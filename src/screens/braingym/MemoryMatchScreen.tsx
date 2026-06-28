@@ -5,7 +5,9 @@ import { saveBrainGymResult } from '../../utils/brainGym';
 import ScreenBackground from '../../components/ScreenBackground';
 import AppIcon from '../../components/AppIcon';
 import GameResult from './GameResult';
-import { colors, radii, spacing } from '../../theme';
+import { select } from '../../utils/haptics';
+import { colors, radii, spacing, Palette } from '../../theme';
+import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 
 const FACES = ['🧠', '💡', '🎯', '🌱', '🔍', '🧩', '⚡', '🚀'];
 
@@ -21,6 +23,8 @@ function buildDeck(): Card[] {
 }
 
 export default function MemoryMatchScreen({ navigation }: any) {
+  const colors = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const [deck, setDeck] = useState<Card[]>(buildDeck);
   const [flipped, setFlipped] = useState<number[]>([]);
   const [moves, setMoves] = useState(0);
@@ -42,6 +46,7 @@ export default function MemoryMatchScreen({ navigation }: any) {
 
   const onFlip = (index: number) => {
     if (lock.current || flipped.includes(index) || deck[index].matched) return;
+    select();
     const next = [...flipped, index];
     setFlipped(next);
     if (next.length === 2) {
@@ -129,8 +134,8 @@ export default function MemoryMatchScreen({ navigation }: any) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, paddingHorizontal: spacing.xl, paddingTop: 60 },
+const makeStyles = (colors: Palette) => StyleSheet.create({
+  container: { flex: 1, paddingHorizontal: spacing.xl, paddingTop: 12 },
   topBar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 },
   movesText: { fontSize: 15, fontWeight: '700', color: colors.textSecondary },
   title: { fontSize: 26, fontWeight: '800', color: colors.textPrimary, letterSpacing: -0.6 },

@@ -4,9 +4,12 @@ import { LinearGradient } from 'expo-linear-gradient';
 import ScreenBackground from '../../components/ScreenBackground';
 import AppIcon from '../../components/AppIcon';
 import GlassCard from '../../components/GlassCard';
-import { colors, radii, shadow, spacing } from '../../theme';
+import { colors, radii, shadow, spacing, Palette } from '../../theme';
+import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 
 export default function AssessmentListScreen({ navigation }: any) {
+  const colors = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const assessments: {
     type: string; title: string; description: string; icon: string;
     gradient: [string, string]; duration: string;
@@ -94,8 +97,8 @@ export default function AssessmentListScreen({ navigation }: any) {
   );
 }
 
-const styles = StyleSheet.create({
-  scroll: { paddingTop: 56, paddingHorizontal: spacing.xl, paddingBottom: 120 },
+const makeStyles = (colors: Palette) => StyleSheet.create({
+  scroll: { paddingTop: 8, paddingHorizontal: spacing.xl, paddingBottom: 120 },
   header: { marginBottom: spacing.xxl },
   eyebrow: { fontSize: 12, color: colors.textSubtle, letterSpacing: 1.4, fontWeight: '700' },
   title: { fontSize: 32, fontWeight: '700', color: colors.textPrimary, marginTop: 4, letterSpacing: -0.6 },

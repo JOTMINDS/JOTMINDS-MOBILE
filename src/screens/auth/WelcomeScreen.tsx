@@ -3,7 +3,8 @@ import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-nati
 import { LinearGradient } from 'expo-linear-gradient';
 import AppIcon from '../../components/AppIcon';
 import Logo from '../../components/Logo';
-import { colors, radii, spacing } from '../../theme';
+import { colors, radii, spacing, Palette } from '../../theme';
+import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 
 const { height } = Dimensions.get('window');
 
@@ -14,6 +15,8 @@ const features = [
 ];
 
 export default function WelcomeScreen({ navigation }: any) {
+  const colors = useTheme();
+  const styles = useThemedStyles(makeStyles);
   return (
     <LinearGradient
       colors={['#020618', '#0F172B', '#020618']}
@@ -76,7 +79,7 @@ export default function WelcomeScreen({ navigation }: any) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Palette) => StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: spacing.xl,

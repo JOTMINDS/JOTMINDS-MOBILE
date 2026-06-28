@@ -10,9 +10,12 @@ import { LinearGradient } from 'expo-linear-gradient';
 import ScreenBackground from '../../components/ScreenBackground';
 import AppIcon from '../../components/AppIcon';
 import GlassCard from '../../components/GlassCard';
-import { colors, radii, shadow, spacing } from '../../theme';
+import { colors, radii, shadow, spacing, Palette } from '../../theme';
+import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 
 export default function PracticeResultsScreen({ route, navigation }: any) {
+  const colors = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const { score, total, moduleId } = route.params;
   const percentage = Math.round((score / total) * 100);
 
@@ -179,9 +182,9 @@ export default function PracticeResultsScreen({ route, navigation }: any) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Palette) => StyleSheet.create({
   scroll: {
-    paddingTop: 56,
+    paddingTop: 8,
     paddingHorizontal: spacing.xl,
     paddingBottom: 120,
   },

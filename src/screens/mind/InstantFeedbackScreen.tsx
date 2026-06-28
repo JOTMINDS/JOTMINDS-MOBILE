@@ -4,7 +4,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import ScreenBackground from '../../components/ScreenBackground';
 import GlassCard from '../../components/GlassCard';
 import AppIcon from '../../components/AppIcon';
-import { colors, radii, spacing } from '../../theme';
+import { colors, radii, spacing, Palette } from '../../theme';
+import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 
 function generateFeedback(checkin: any) {
   const { focus_score, decision_delay, emotional_state } = checkin;
@@ -57,6 +58,8 @@ const FEEDBACK_ITEMS = [
 ];
 
 export default function InstantFeedbackScreen({ route, navigation }: any) {
+  const colors = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const { checkin } = route.params;
   const feedback = route.params.feedback ?? generateFeedback(checkin);
 
@@ -139,8 +142,8 @@ export default function InstantFeedbackScreen({ route, navigation }: any) {
   );
 }
 
-const styles = StyleSheet.create({
-  scroll: { paddingTop: 56, paddingHorizontal: spacing.xl, paddingBottom: 120 },
+const makeStyles = (colors: Palette) => StyleSheet.create({
+  scroll: { paddingTop: 8, paddingHorizontal: spacing.xl, paddingBottom: 120 },
   hero: { borderRadius: radii.xl, padding: 28, alignItems: 'center', marginBottom: 24 },
   checkmark: { fontSize: 48, marginBottom: 12 },
   heroTitle: { fontSize: 24, fontWeight: '800', color: '#FFFFFF', marginBottom: 6 },

@@ -154,7 +154,9 @@ export interface AppIconProps {
 }
 
 export default function AppIcon({ name, size = 22, color = '#FFFFFF', style, accessibilityLabel }: AppIconProps) {
-  const def = MAP[name] ?? SEMANTIC[name] ?? { lib: 'ion' as Lib, name: 'ellipse' };
+  // Mapped emoji → vector icon; otherwise treat `name` as a raw Ionicons name
+  // (e.g. "eye", "arrow-back") so those render instead of a placeholder dot.
+  const def = MAP[name] ?? SEMANTIC[name] ?? { lib: 'ion' as Lib, name };
   const a11y = accessibilityLabel
     ? { accessible: true, accessibilityRole: 'image' as const, accessibilityLabel }
     : { accessibilityElementsHidden: true, importantForAccessibility: 'no-hide-descendants' as const };

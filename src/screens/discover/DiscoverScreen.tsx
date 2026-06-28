@@ -7,7 +7,8 @@ import { useAuth } from '../../context/AuthContext';
 import ScreenBackground from '../../components/ScreenBackground';
 import GlassCard from '../../components/GlassCard';
 import AppIcon from '../../components/AppIcon';
-import { colors, radii, spacing } from '../../theme';
+import { colors, radii, spacing, Palette } from '../../theme';
+import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 
 const INSIGHTS = [
   {
@@ -65,6 +66,8 @@ const INSIGHTS = [
 const CATEGORIES = ['All', 'Pattern', 'Snapshot', 'Coach', 'Strategic'];
 
 export default function DiscoverScreen({ navigation }: any) {
+  const colors = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const { user } = useAuth();
   const [activeCategory, setActiveCategory] = useState('All');
 
@@ -162,9 +165,9 @@ export default function DiscoverScreen({ navigation }: any) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Palette) => StyleSheet.create({
   scroll: {
-    paddingTop: 56,
+    paddingTop: 8,
     paddingHorizontal: spacing.xl,
     paddingBottom: 120,
   },

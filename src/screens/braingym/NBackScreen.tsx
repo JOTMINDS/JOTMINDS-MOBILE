@@ -6,7 +6,9 @@ import ScreenBackground from '../../components/ScreenBackground';
 import GlassCard from '../../components/GlassCard';
 import AppIcon from '../../components/AppIcon';
 import GameResult from './GameResult';
-import { colors, radii, spacing } from '../../theme';
+import { select } from '../../utils/haptics';
+import { colors, radii, spacing, Palette } from '../../theme';
+import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 
 const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'];
 const TRIALS = 15;
@@ -28,6 +30,8 @@ function buildSequence(): string[] {
 }
 
 export default function NBackScreen({ navigation }: any) {
+  const colors = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const [phase, setPhase] = useState<'intro' | 'play' | 'done'>('intro');
   const [seq] = useState<string[]>(buildSequence);
   const [index, setIndex] = useState(0);
@@ -52,6 +56,7 @@ export default function NBackScreen({ navigation }: any) {
 
   const onMatch = () => {
     if (tapped.current) return;
+    select();
     tapped.current = true;
     setFlash(isMatch(index) ? 'hit' : 'miss');
     setTimeout(() => setFlash('none'), 300);
@@ -142,8 +147,8 @@ export default function NBackScreen({ navigation }: any) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, paddingHorizontal: spacing.xl, paddingTop: 60 },
+const makeStyles = (colors: Palette) => StyleSheet.create({
+  container: { flex: 1, paddingHorizontal: spacing.xl, paddingTop: 12 },
   topBar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   progress: { fontSize: 15, fontWeight: '700', color: colors.textSecondary },
   stimWrap: { flex: 1, justifyContent: 'center', alignItems: 'center' },

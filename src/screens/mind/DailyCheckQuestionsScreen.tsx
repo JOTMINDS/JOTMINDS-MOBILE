@@ -9,7 +9,8 @@ import { submitWithOutbox } from '../../utils/outbox';
 import ScreenBackground from '../../components/ScreenBackground';
 import GlassCard from '../../components/GlassCard';
 import AppIcon from '../../components/AppIcon';
-import { colors, radii, spacing } from '../../theme';
+import { colors, radii, spacing, Palette } from '../../theme';
+import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 
 const EMOTIONS = [
   { key: 'calm', emoji: '😌', label: 'Calm', color: colors.success },
@@ -20,6 +21,8 @@ const EMOTIONS = [
 ];
 
 export default function DailyCheckQuestionsScreen({ navigation }: any) {
+  const colors = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const { user } = useAuth();
   const toast = useToast();
   const [step, setStep] = useState(1);
@@ -215,8 +218,8 @@ export default function DailyCheckQuestionsScreen({ navigation }: any) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, paddingHorizontal: spacing.xl, paddingTop: 60, paddingBottom: 40 },
+const makeStyles = (colors: Palette) => StyleSheet.create({
+  container: { flex: 1, paddingHorizontal: spacing.xl, paddingTop: 12, paddingBottom: 40 },
   progressWrap: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 32 },
   progressTrack: { flex: 1, height: 6, backgroundColor: colors.bgTertiary, borderRadius: 3, overflow: 'hidden' },
   progressFill: { height: '100%', borderRadius: 3 },

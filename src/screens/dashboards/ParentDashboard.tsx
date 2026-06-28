@@ -23,9 +23,12 @@ import ScreenBackground from '../../components/ScreenBackground';
 import GlassCard from '../../components/GlassCard';
 import GradientButton from '../../components/GradientButton';
 import AppIcon from '../../components/AppIcon';
-import { colors, radii, shadow, spacing } from '../../theme';
+import { colors, radii, shadow, spacing, Palette } from '../../theme';
+import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 
 export default function ParentDashboard({ navigation }: any) {
+  const colors = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const { user } = useAuth();
   const [children, setChildren] = useState<any[]>([]);
   const [requests, setRequests] = useState<any[]>([]);
@@ -268,8 +271,8 @@ export default function ParentDashboard({ navigation }: any) {
   );
 }
 
-const styles = StyleSheet.create({
-  scroll: { paddingTop: 56, paddingHorizontal: spacing.xl, paddingBottom: 120 },
+const makeStyles = (colors: Palette) => StyleSheet.create({
+  scroll: { paddingTop: 8, paddingHorizontal: spacing.xl, paddingBottom: 120 },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   header: { marginBottom: spacing.xxl },
   greeting: { fontSize: 12, color: colors.textSubtle, letterSpacing: 1.4, fontWeight: '700' },

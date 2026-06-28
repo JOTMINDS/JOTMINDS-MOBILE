@@ -8,7 +8,8 @@ import { callEdgeFn } from '../../utils/supabase';
 import ScreenBackground from '../../components/ScreenBackground';
 import GlassCard from '../../components/GlassCard';
 import AppIcon from '../../components/AppIcon';
-import { colors, radii, spacing } from '../../theme';
+import { colors, radii, spacing, Palette } from '../../theme';
+import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 
 const DIMENSIONS = [
   { key: 'analytical_depth', label: 'Analytical Depth', icon: '🧮', desc: 'How much data analysis the role requires' },
@@ -24,6 +25,8 @@ const DIMENSIONS = [
 ];
 
 export default function RoleDemandBuilderScreen({ navigation }: any) {
+  const colors = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const { user } = useAuth();
   const [roleName, setRoleName] = useState('');
   const [scores, setScores] = useState<Record<string, number>>({});
@@ -147,8 +150,8 @@ export default function RoleDemandBuilderScreen({ navigation }: any) {
   );
 }
 
-const styles = StyleSheet.create({
-  scroll: { paddingTop: 56, paddingHorizontal: spacing.xl, paddingBottom: 120 },
+const makeStyles = (colors: Palette) => StyleSheet.create({
+  scroll: { paddingTop: 8, paddingHorizontal: spacing.xl, paddingBottom: 120 },
   header: { marginBottom: 24 },
   title: { fontSize: 28, fontWeight: '800', color: colors.textPrimary, letterSpacing: -1 },
   subtitle: { fontSize: 14, color: colors.textMuted, marginTop: 4, lineHeight: 20 },

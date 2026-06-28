@@ -9,7 +9,8 @@ import ScreenBackground from '../../components/ScreenBackground';
 import GlassCard from '../../components/GlassCard';
 import AppIcon from '../../components/AppIcon';
 import Logo from '../../components/Logo';
-import { colors, radii, spacing } from '../../theme';
+import { colors, radii, spacing, Palette } from '../../theme';
+import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 
 // A 3-question taster (Curiosity, Logic, Self-Reflection) → instant mini-result.
 const QUESTIONS = [
@@ -34,6 +35,8 @@ const INSIGHT: Record<string, string> = {
 };
 
 export default function FirstWinScreen({ navigation }: any) {
+  const colors = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const { user } = useAuth();
   const [index, setIndex] = useState(0);
   const [scores, setScores] = useState<Record<string, number>>({});
@@ -164,8 +167,8 @@ export default function FirstWinScreen({ navigation }: any) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, paddingHorizontal: spacing.xl, paddingTop: 64, paddingBottom: 32 },
+const makeStyles = (colors: Palette) => StyleSheet.create({
+  container: { flex: 1, paddingHorizontal: spacing.xl, paddingTop: 12, paddingBottom: 32 },
   logoWrap: { alignItems: 'center', marginBottom: 28 },
   progressWrap: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 28 },
   progressTrack: { flex: 1, height: 6, backgroundColor: colors.bgTertiary, borderRadius: 3, overflow: 'hidden' },

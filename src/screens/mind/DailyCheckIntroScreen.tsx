@@ -3,7 +3,8 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import ScreenBackground from '../../components/ScreenBackground';
 import AppIcon from '../../components/AppIcon';
-import { colors, radii, spacing } from '../../theme';
+import { colors, radii, spacing, Palette } from '../../theme';
+import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 
 const STEPS = [
   { icon: '🎯', label: 'Focus Score', sub: 'Rate your focus from 1–5' },
@@ -12,6 +13,8 @@ const STEPS = [
 ];
 
 export default function DailyCheckIntroScreen({ navigation }: any) {
+  const colors = useTheme();
+  const styles = useThemedStyles(makeStyles);
   return (
     <ScreenBackground>
       <View style={styles.container}>
@@ -70,8 +73,8 @@ export default function DailyCheckIntroScreen({ navigation }: any) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, paddingHorizontal: spacing.xl, paddingTop: 60, paddingBottom: 40 },
+const makeStyles = (colors: Palette) => StyleSheet.create({
+  container: { flex: 1, paddingHorizontal: spacing.xl, paddingTop: 12, paddingBottom: 40 },
   hero: {
     borderRadius: radii.xl,
     padding: 28,

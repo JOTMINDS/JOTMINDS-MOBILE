@@ -4,7 +4,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import ScreenBackground from '../../components/ScreenBackground';
 import GlassCard from '../../components/GlassCard';
 import AppIcon from '../../components/AppIcon';
-import { colors, radii, spacing } from '../../theme';
+import { colors, radii, spacing, Palette } from '../../theme';
+import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 
 interface Stat { label: string; value: string }
 
@@ -17,6 +18,8 @@ export default function GameResult({
   onPlayAgain: () => void;
   onDone: () => void;
 }) {
+  const colors = useTheme();
+  const styles = useThemedStyles(makeStyles);
   return (
     <ScreenBackground>
       <View style={styles.container}>
@@ -61,8 +64,8 @@ export default function GameResult({
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, paddingHorizontal: spacing.xl, paddingTop: 80, paddingBottom: 40, justifyContent: 'center' },
+const makeStyles = (colors: Palette) => StyleSheet.create({
+  container: { flex: 1, paddingHorizontal: spacing.xl, paddingTop: 16, paddingBottom: 40, justifyContent: 'center' },
   top: { alignItems: 'center', marginBottom: 28 },
   trophy: { width: 88, height: 88, borderRadius: 28, justifyContent: 'center', alignItems: 'center', marginBottom: 20 },
   done: { fontSize: 28, fontWeight: '800', color: colors.textPrimary, letterSpacing: -0.8 },

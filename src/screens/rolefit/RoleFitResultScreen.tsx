@@ -4,7 +4,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import ScreenBackground from '../../components/ScreenBackground';
 import GlassCard from '../../components/GlassCard';
 import AppIcon from '../../components/AppIcon';
-import { colors, radii, spacing } from '../../theme';
+import { colors, radii, spacing, Palette } from '../../theme';
+import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 
 function fitInfo(score: number) {
   if (score >= 85) return { label: 'Natural Accelerator', color: colors.success, desc: 'Your cognitive profile is a natural match. Expect rapid growth and low friction.' };
@@ -15,6 +16,8 @@ function fitInfo(score: number) {
 }
 
 export default function RoleFitResultScreen({ route, navigation }: any) {
+  const colors = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const { result, roleName, role } = route.params;
   const name = roleName ?? role?.title ?? 'This Role';
   const score = result?.fit_score ?? role?.fit ?? 0;
@@ -135,8 +138,8 @@ export default function RoleFitResultScreen({ route, navigation }: any) {
   );
 }
 
-const styles = StyleSheet.create({
-  scroll: { paddingTop: 56, paddingHorizontal: spacing.xl, paddingBottom: 120 },
+const makeStyles = (colors: Palette) => StyleSheet.create({
+  scroll: { paddingTop: 8, paddingHorizontal: spacing.xl, paddingBottom: 120 },
   backBtn: { marginBottom: 20 },
   backText: { fontSize: 15, color: colors.cyan, fontWeight: '600' },
   scoreCard: { borderRadius: radii.xl, padding: 28, alignItems: 'center', marginBottom: 20 },

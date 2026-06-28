@@ -197,7 +197,7 @@ export default function DarkStudentDashboard({ navigation }: any) {
 
 const styles = StyleSheet.create({
   scroll: {
-    paddingTop: 60,
+    paddingTop: 12,
     paddingHorizontal: 24,
     paddingBottom: 100,
   },

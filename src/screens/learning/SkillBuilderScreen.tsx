@@ -12,7 +12,8 @@ import ScreenBackground from '../../components/ScreenBackground';
 import AppIcon from '../../components/AppIcon';
 import GlassCard from '../../components/GlassCard';
 import { callEdgeFn } from '../../utils/supabase';
-import { colors, radii, shadow, spacing } from '../../theme';
+import { colors, radii, shadow, spacing, Palette } from '../../theme';
+import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 
 interface SkillPlan {
   planId: string;
@@ -35,6 +36,8 @@ interface SkillModule {
 }
 
 export default function SkillBuilderScreen({ navigation }: any) {
+  const colors = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [plans, setPlans] = useState<SkillPlan[]>([]);
 
@@ -342,9 +345,9 @@ export default function SkillBuilderScreen({ navigation }: any) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Palette) => StyleSheet.create({
   scroll: {
-    paddingTop: 56,
+    paddingTop: 8,
     paddingHorizontal: spacing.xl,
     paddingBottom: 120,
   },

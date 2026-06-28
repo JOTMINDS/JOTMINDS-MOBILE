@@ -11,12 +11,15 @@ import ScreenBackground from '../../components/ScreenBackground';
 import GlassCard from '../../components/GlassCard';
 import AppIcon from '../../components/AppIcon';
 import type { ScreenProps } from '../../navigation/types';
-import { colors, radii, spacing } from '../../theme';
+import { colors, radii, spacing, Palette } from '../../theme';
+import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 
 const CODE_LENGTH = 6;
 const RESEND_SECONDS = 30;
 
 export default function OtpVerificationScreen({ route, navigation }: ScreenProps<'OtpVerification'>) {
+  const colors = useTheme();
+  const styles = useThemedStyles(makeStyles);
   // mode: 'signup' (custom Resend OTP) | 'login' (Supabase native OTP)
   const { mode, email, signupData } = route.params;
   const { signIn, signUp, verifyLoginOtp, requestLoginOtp } = useAuth();
@@ -186,8 +189,8 @@ export default function OtpVerificationScreen({ route, navigation }: ScreenProps
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, paddingHorizontal: spacing.xl, paddingTop: 60 },
+const makeStyles = (colors: Palette) => StyleSheet.create({
+  container: { flex: 1, paddingHorizontal: spacing.xl, paddingTop: 12 },
   back: { width: 44, height: 44, justifyContent: 'center' },
   header: { alignItems: 'center', marginTop: 12, marginBottom: 32 },
   iconWrap: {

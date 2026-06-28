@@ -3,9 +3,12 @@ import { View, Text, StyleSheet, Animated } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Logo from '../../components/Logo';
 import { useAccessibility } from '../../context/AccessibilityContext';
-import { colors, shadow } from '../../theme';
+import { colors, shadow, Palette } from '../../theme';
+import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 
 export default function SplashScreen({ navigation }: any) {
+  const colors = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const { reduceMotion } = useAccessibility();
   const logoScale = new Animated.Value(reduceMotion ? 1 : 0.6);
   const logoOpacity = new Animated.Value(reduceMotion ? 1 : 0);
@@ -53,7 +56,7 @@ export default function SplashScreen({ navigation }: any) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Palette) => StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',

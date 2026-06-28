@@ -7,7 +7,8 @@ import { useAuth } from '../../context/AuthContext';
 import { callEdgeFn } from '../../utils/supabase';
 import ScreenBackground from '../../components/ScreenBackground';
 import GlassCard from '../../components/GlassCard';
-import { colors, radii, spacing } from '../../theme';
+import { colors, radii, spacing, Palette } from '../../theme';
+import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const EMOTION_COLORS: Record<string, string> = {
@@ -19,6 +20,8 @@ const EMOTION_COLORS: Record<string, string> = {
 };
 
 export default function BehavioralDashboardScreen({ navigation }: any) {
+  const colors = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const { user } = useAuth();
   const [checkins, setCheckins] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -171,8 +174,8 @@ export default function BehavioralDashboardScreen({ navigation }: any) {
   );
 }
 
-const styles = StyleSheet.create({
-  scroll: { paddingTop: 56, paddingHorizontal: spacing.xl, paddingBottom: 120 },
+const makeStyles = (colors: Palette) => StyleSheet.create({
+  scroll: { paddingTop: 8, paddingHorizontal: spacing.xl, paddingBottom: 120 },
   header: { marginBottom: 24 },
   title: { fontSize: 32, fontWeight: '800', color: colors.textPrimary, letterSpacing: -1 },
   subtitle: { fontSize: 15, color: colors.textMuted, marginTop: 4 },

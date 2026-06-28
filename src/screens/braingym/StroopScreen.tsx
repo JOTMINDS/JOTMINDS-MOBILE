@@ -5,7 +5,9 @@ import { saveBrainGymResult } from '../../utils/brainGym';
 import ScreenBackground from '../../components/ScreenBackground';
 import AppIcon from '../../components/AppIcon';
 import GameResult from './GameResult';
-import { colors, radii, spacing } from '../../theme';
+import { select } from '../../utils/haptics';
+import { colors, radii, spacing, Palette } from '../../theme';
+import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 
 const COLORS = [
   { name: 'RED', value: '#EF4444' },
@@ -26,6 +28,8 @@ function makeTrial() {
 }
 
 export default function StroopScreen({ navigation }: any) {
+  const colors = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const [phase, setPhase] = useState<'intro' | 'play' | 'done'>('intro');
   const [trial, setTrial] = useState(makeTrial);
   const [count, setCount] = useState(0);
@@ -41,6 +45,7 @@ export default function StroopScreen({ navigation }: any) {
   };
 
   const answer = (chosen: { name: string; value: string }) => {
+    select();
     const isCorrect = chosen.name === trial.ink.name;
     if (isCorrect) correct.current += 1;
     rts.current.push(Date.now() - trialStart.current);
@@ -140,8 +145,8 @@ export default function StroopScreen({ navigation }: any) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, paddingHorizontal: spacing.xl, paddingTop: 60 },
+const makeStyles = (colors: Palette) => StyleSheet.create({
+  container: { flex: 1, paddingHorizontal: spacing.xl, paddingTop: 12 },
   topBar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   progress: { fontSize: 15, fontWeight: '700', color: colors.textSecondary },
   stimWrap: { flex: 1, justifyContent: 'center', alignItems: 'center', borderRadius: radii.xl, marginVertical: 20 },

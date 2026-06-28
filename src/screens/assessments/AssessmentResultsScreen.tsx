@@ -12,7 +12,12 @@ import ScreenBackground from '../../components/ScreenBackground';
 import AppIcon from '../../components/AppIcon';
 import GlassCard from '../../components/GlassCard';
 import GradientButton from '../../components/GradientButton';
-import { colors, radii, shadow, spacing } from '../../theme';
+import RadarChart from '../../components/RadarChart';
+import { SkeletonCard, Skeleton } from '../../components/Skeleton';
+import { STYLE_DESCRIPTIONS } from '../../utils/scoring';
+import { rs } from '../../utils/responsive';
+import { colors, radii, shadow, spacing, Palette } from '../../theme';
+import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 
 const typeGradient: Record<string, [string, string, string]> = {
   learning: ['#3D52C9', '#2E3FA8', '#14136E'],
@@ -21,6 +26,8 @@ const typeGradient: Record<string, [string, string, string]> = {
 };
 
 export default function AssessmentResultsScreen({ route, navigation }: any) {
+  const colors = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const { assessmentType } = route.params;
   const [results, setResults] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -29,7 +36,8 @@ export default function AssessmentResultsScreen({ route, navigation }: any) {
     (async () => {
       try {
         const data = await getAssessmentResults(assessmentType);
-        setResults(data.result);
+        // Backend returns the stored result object under `results` (plural).
+        setResults(data.results ?? data.result);
       } catch (e) {
         console.error('[AssessmentResults]', e);
       } finally {
@@ -41,8 +49,12 @@ export default function AssessmentResultsScreen({ route, navigation }: any) {
   if (loading) {
     return (
       <ScreenBackground>
-        <View style={styles.centered}>
-          <ActivityIndicator size="large" color={colors.purple} />
+        <View style={{ paddingTop: 8, paddingHorizontal: spacing.xl }}>
+          <Skeleton width={'40%'} height={14} style={{ marginBottom: 10 }} />
+          <Skeleton width={'60%'} height={28} radius={6} style={{ marginBottom: 24 }} />
+          <Skeleton height={150} radius={20} style={{ marginBottom: 20 }} />
+          <SkeletonCard lines={4} />
+          <SkeletonCard lines={3} />
         </View>
       </ScreenBackground>
     );
@@ -73,7 +85,7 @@ export default function AssessmentResultsScreen({ route, navigation }: any) {
           <Text style={styles.eyebrow}>{assessmentType.toUpperCase()} RESULTS</Text>
           <Text style={styles.title}>Your Profile</Text>
           <Text style={styles.date}>
-            Completed on {new Date(results.createdAt).toLocaleDateString()}
+            Completed on {new Date(results.completedAt ?? results.createdAt ?? Date.now()).toLocaleDateString()}
           </Text>
         </View>
 
@@ -85,6 +97,9 @@ export default function AssessmentResultsScreen({ route, navigation }: any) {
         >
           <Text style={styles.heroLabel}>PRIMARY STYLE</Text>
           <Text style={styles.heroValue}>{results.results?.primaryStyle || 'N/A'}</Text>
+          {STYLE_DESCRIPTIONS[results.results?.primaryStyle] ? (
+            <Text style={styles.heroDesc}>{STYLE_DESCRIPTIONS[results.results.primaryStyle]}</Text>
+          ) : null}
           {results.results?.secondaryStyle ? (
             <View style={styles.heroSecondaryRow}>
               <Text style={styles.heroSecondaryLabel}>Secondary</Text>
@@ -92,6 +107,17 @@ export default function AssessmentResultsScreen({ route, navigation }: any) {
             </View>
           ) : null}
         </LinearGradient>
+
+        {results.results?.scores && Object.keys(results.results.scores).length >= 3 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Cognitive Profile</Text>
+            <GlassCard padding={16}>
+              <RadarChart
+                data={Object.entries(results.results.scores).map(([label, value]: any) => ({ label, value }))}
+              />
+            </GlassCard>
+          </View>
+        )}
 
         {results.results?.scores && (
           <View style={styles.section}>
@@ -103,14 +129,14 @@ export default function AssessmentResultsScreen({ route, navigation }: any) {
                     <Text style={styles.scoreLabel}>
                       {key.charAt(0).toUpperCase() + key.slice(1)}
                     </Text>
-                    <Text style={styles.scoreValue}>{value}/10</Text>
+                    <Text style={styles.scoreValue}>{value}/100</Text>
                   </View>
                   <View style={styles.scoreBar}>
                     <LinearGradient
                       colors={[gradient[0], gradient[1]]}
                       start={{ x: 0, y: 0 }}
                       end={{ x: 1, y: 0 }}
-                      style={[styles.scoreBarFill, { width: `${(value / 10) * 100}%` }]}
+                      style={[styles.scoreBarFill, { width: `${Math.min(100, value)}%` }]}
                     />
                   </View>
                 </View>
@@ -176,16 +202,17 @@ export default function AssessmentResultsScreen({ route, navigation }: any) {
   );
 }
 
-const styles = StyleSheet.create({
-  scroll: { paddingTop: 56, paddingHorizontal: spacing.xl, paddingBottom: 120 },
+const makeStyles = (colors: Palette) => StyleSheet.create({
+  scroll: { paddingTop: 8, paddingHorizontal: spacing.xl, paddingBottom: 120 },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: spacing.xl },
   header: { marginBottom: spacing.lg },
   eyebrow: { fontSize: 12, color: colors.textSubtle, letterSpacing: 1.4, fontWeight: '700' },
-  title: { fontSize: 28, fontWeight: '700', color: colors.textPrimary, marginTop: 4, letterSpacing: -0.6 },
+  title: { fontSize: rs(28), fontWeight: '700', color: colors.textPrimary, marginTop: 4, letterSpacing: -0.6 },
   date: { fontSize: 14, color: colors.textMuted, marginTop: 4 },
   heroCard: { borderRadius: radii.xl, padding: spacing.xxl, marginBottom: spacing.xxl, ...shadow.glow },
   heroLabel: { color: 'rgba(255,255,255,0.75)', fontSize: 11, letterSpacing: 1.6, fontWeight: '700' },
-  heroValue: { color: '#FFF', fontSize: 32, fontWeight: '800', marginTop: 8, letterSpacing: -0.5 },
+  heroValue: { color: '#FFF', fontSize: rs(32), fontWeight: '800', marginTop: 8, letterSpacing: -0.5 },
+  heroDesc: { color: 'rgba(255,255,255,0.85)', fontSize: 14, lineHeight: 21, marginTop: 10 },
   heroSecondaryRow: {
     marginTop: spacing.lg, paddingTop: spacing.md,
     borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.2)',

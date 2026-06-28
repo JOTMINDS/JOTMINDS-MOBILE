@@ -8,7 +8,8 @@ import { callEdgeFn } from '../../utils/supabase';
 import ScreenBackground from '../../components/ScreenBackground';
 import GlassCard from '../../components/GlassCard';
 import AppIcon from '../../components/AppIcon';
-import { colors, radii, spacing } from '../../theme';
+import { colors, radii, spacing, Palette } from '../../theme';
+import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 
 interface WeeklyData {
   avg_focus: number;
@@ -23,6 +24,8 @@ const trendIcon = { improving: '📈', stable: '➡️', declining: '📉' };
 const trendColor = { improving: colors.success, stable: colors.cyan, declining: colors.error };
 
 export default function WeeklySnapshotScreen({ navigation }: any) {
+  const colors = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const { user } = useAuth();
   const [data, setData] = useState<WeeklyData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -142,8 +145,8 @@ export default function WeeklySnapshotScreen({ navigation }: any) {
   );
 }
 
-const styles = StyleSheet.create({
-  scroll: { paddingTop: 56, paddingHorizontal: spacing.xl, paddingBottom: 120 },
+const makeStyles = (colors: Palette) => StyleSheet.create({
+  scroll: { paddingTop: 8, paddingHorizontal: spacing.xl, paddingBottom: 120 },
   header: { marginBottom: 24 },
   title: { fontSize: 32, fontWeight: '800', color: colors.textPrimary, letterSpacing: -1 },
   subtitle: { fontSize: 15, color: colors.textMuted, marginTop: 4 },

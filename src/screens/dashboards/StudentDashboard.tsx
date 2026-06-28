@@ -14,9 +14,13 @@ import { getAllAssessmentResults } from '../../utils/api';
 import ScreenBackground from '../../components/ScreenBackground';
 import GlassCard from '../../components/GlassCard';
 import AppIcon from '../../components/AppIcon';
-import { colors, radii, shadow, spacing } from '../../theme';
+import { Skeleton, SkeletonCard } from '../../components/Skeleton';
+import { colors, radii, shadow, spacing, Palette } from '../../theme';
+import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 
 export default function StudentDashboard({ navigation }: any) {
+  const colors = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const { user } = useAuth();
   const [assessments, setAssessments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -79,8 +83,12 @@ export default function StudentDashboard({ navigation }: any) {
   if (loading) {
     return (
       <ScreenBackground>
-        <View style={styles.centered}>
-          <ActivityIndicator size="large" color={colors.purple} />
+        <View style={{ paddingTop: 8, paddingHorizontal: spacing.xl }}>
+          <Skeleton width={'45%'} height={14} style={{ marginBottom: 8 }} />
+          <Skeleton width={'65%'} height={28} radius={6} style={{ marginBottom: 24 }} />
+          <Skeleton height={160} radius={24} style={{ marginBottom: 24 }} />
+          <SkeletonCard lines={2} />
+          <SkeletonCard lines={2} />
         </View>
       </ScreenBackground>
     );
@@ -144,10 +152,7 @@ export default function StudentDashboard({ navigation }: any) {
                 onPress={() =>
                   isKidsMode
                     ? navigation.navigate('KidsAssessment')
-                    : navigation.navigate('Assessments', {
-                        screen: 'AssessmentTaking',
-                        params: { assessmentType: card.type },
-                      })
+                    : navigation.navigate('AssessmentTaking', { assessmentType: card.type })
                 }
                 style={styles.assessmentCard}
               >
@@ -186,10 +191,7 @@ export default function StudentDashboard({ navigation }: any) {
                 padding={16}
                 style={styles.resultCard}
                 onPress={() =>
-                  navigation.navigate('Assessments', {
-                    screen: 'AssessmentResults',
-                    params: { assessmentType: result.assessmentType },
-                  })
+                  navigation.navigate('AssessmentResults', { assessmentType: result.assessmentType })
                 }
               >
                 <View style={styles.resultRow}>
@@ -201,7 +203,7 @@ export default function StudentDashboard({ navigation }: any) {
                       Assessment
                     </Text>
                     <Text style={styles.resultDate}>
-                      {new Date(result.createdAt).toLocaleDateString()}
+                      {new Date(result.completedAt ?? result.createdAt ?? Date.now()).toLocaleDateString()}
                     </Text>
                   </View>
                   <Text style={styles.viewResults}>View →</Text>
@@ -243,9 +245,9 @@ export default function StudentDashboard({ navigation }: any) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Palette) => StyleSheet.create({
   scroll: {
-    paddingTop: 56,
+    paddingTop: 8,
     paddingHorizontal: spacing.xl,
     paddingBottom: 120,
   },

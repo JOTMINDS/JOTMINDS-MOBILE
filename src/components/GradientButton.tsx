@@ -1,6 +1,7 @@
 import React from 'react';
 import { Text, StyleSheet, TouchableOpacity, ViewStyle, ActivityIndicator } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { tapLight } from '../utils/haptics';
 import { colors, radii, shadow } from '../theme';
 
 interface Props {
@@ -27,13 +28,14 @@ export default function GradientButton({
   size = 'large',
 }: Props) {
   const buttonHeight = size === 'small' ? 40 : size === 'medium' ? 48 : 56;
+  const handlePress = () => { tapLight(); onPress(); };
 
   if (variant === 'outline') {
     return (
       <TouchableOpacity
         activeOpacity={0.7}
         disabled={disabled || loading}
-        onPress={onPress}
+        onPress={handlePress}
         style={[styles.outline, { height: buttonHeight }, disabled && styles.disabled, style]}
       >
         <Text style={styles.outlineText}>{label} {icon}</Text>
@@ -55,7 +57,7 @@ export default function GradientButton({
     <TouchableOpacity
       activeOpacity={0.85}
       disabled={disabled || loading}
-      onPress={onPress}
+      onPress={handlePress}
       style={[styles.wrapper, { height: buttonHeight }, disabled && styles.disabled, style]}
     >
       <LinearGradient

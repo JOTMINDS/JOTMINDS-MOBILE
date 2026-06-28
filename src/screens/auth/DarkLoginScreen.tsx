@@ -168,7 +168,7 @@ const styles = StyleSheet.create({
   scroll: {
     flexGrow: 1,
     justifyContent: 'flex-end',
-    paddingTop: 80,
+    paddingTop: 16,
     paddingBottom: 32,
     paddingHorizontal: 24,
   },

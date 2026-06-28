@@ -47,6 +47,44 @@ export function fitCategory(score: number): FitCategory {
   return 'Misalignment Risk';
 }
 
+// ── Style determination (mirrors the webapp's src/app/utils/scoring.ts) ──────
+// Sternberg: highest trait wins. Dual-Process: "Balanced" when the two poles are
+// close, else the higher. Kolb: highest quadrant (our bank tags items by quadrant).
+const BALANCED_THRESHOLD = 10; // on the 0-100 scale
+
+export interface StyleOutcome { primaryStyle: string; secondaryStyle?: string }
+
+export function determineStyle(
+  assessmentType: 'learning' | 'thinking' | 'decision',
+  scores: Record<string, number>,
+): StyleOutcome {
+  const ranked = Object.entries(scores).sort((a, b) => b[1] - a[1]);
+  if (ranked.length === 0) return { primaryStyle: '' };
+
+  if (assessmentType === 'decision') {
+    const intuitive = scores['Intuitive'] ?? 0;
+    const reflective = scores['Reflective'] ?? 0;
+    if (Math.abs(intuitive - reflective) < BALANCED_THRESHOLD) {
+      return { primaryStyle: 'Balanced', secondaryStyle: ranked[0][0] };
+    }
+  }
+  return { primaryStyle: ranked[0][0], secondaryStyle: ranked[1]?.[0] };
+}
+
+// Official style descriptions copied verbatim from the webapp.
+export const STYLE_DESCRIPTIONS: Record<string, string> = {
+  Diverging: 'You prefer to watch, feel, and think. You excel at seeing things from multiple perspectives and working in groups.',
+  Assimilating: 'You prefer logical, organized thinking. You excel at understanding theories and creating systematic plans.',
+  Converging: 'You prefer to think and do. You excel at solving problems and applying ideas to practical situations.',
+  Accommodating: 'You prefer to feel and do. You excel at hands-on experiences and adapting to new situations.',
+  Analytical: 'You excel at analyzing, comparing, and evaluating. You enjoy breaking down problems and thinking critically.',
+  Creative: 'You excel at creating, imagining, and designing. You enjoy thinking of new possibilities and original solutions.',
+  Practical: 'You excel at applying knowledge to real-world situations. You focus on what works in everyday life.',
+  Intuitive: 'You tend to make quick decisions based on gut feelings and pattern recognition.',
+  Reflective: 'You tend to think carefully and deliberately, analyzing options before deciding.',
+  Balanced: 'You effectively use both intuitive and reflective thinking, depending on the situation.',
+};
+
 /** Weekly focus trend from a chronological list of 1-5 focus scores. */
 export function focusTrend(scores: number[]): 'improving' | 'stable' | 'declining' {
   if (scores.length < 2) return 'stable';

@@ -10,7 +10,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import ScreenBackground from '../../components/ScreenBackground';
 import AppIcon from '../../components/AppIcon';
 import GlassCard from '../../components/GlassCard';
-import { colors, radii, shadow, spacing } from '../../theme';
+import { colors, radii, shadow, spacing, Palette } from '../../theme';
+import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 
 interface PracticeQuestion {
   id: string;
@@ -22,6 +23,8 @@ interface PracticeQuestion {
 }
 
 export default function PracticeModuleScreen({ route, navigation }: any) {
+  const colors = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const { moduleId } = route.params;
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
@@ -227,7 +230,7 @@ export default function PracticeModuleScreen({ route, navigation }: any) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Palette) => StyleSheet.create({
   scroll: {
     paddingTop: 20,
     paddingHorizontal: spacing.xl,

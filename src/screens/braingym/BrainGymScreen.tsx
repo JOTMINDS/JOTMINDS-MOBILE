@@ -5,7 +5,8 @@ import { getBrainGymStats } from '../../utils/brainGym';
 import ScreenBackground from '../../components/ScreenBackground';
 import GlassCard from '../../components/GlassCard';
 import AppIcon from '../../components/AppIcon';
-import { colors, radii, spacing } from '../../theme';
+import { colors, radii, spacing, Palette } from '../../theme';
+import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 
 const GAMES = [
   {
@@ -26,6 +27,8 @@ const GAMES = [
 ];
 
 export default function BrainGymScreen({ navigation }: any) {
+  const colors = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const [bests, setBests] = useState<Record<string, number>>({});
   const [plays, setPlays] = useState(0);
 
@@ -92,8 +95,8 @@ export default function BrainGymScreen({ navigation }: any) {
   );
 }
 
-const styles = StyleSheet.create({
-  scroll: { paddingTop: 56, paddingHorizontal: spacing.xl, paddingBottom: 120 },
+const makeStyles = (colors: Palette) => StyleSheet.create({
+  scroll: { paddingTop: 8, paddingHorizontal: spacing.xl, paddingBottom: 120 },
   back: { width: 44, height: 44, justifyContent: 'center', marginBottom: 4 },
   header: { marginBottom: 20 },
   title: { fontSize: 30, fontWeight: '800', color: colors.textPrimary, letterSpacing: -1 },

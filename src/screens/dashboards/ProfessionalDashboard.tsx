@@ -13,9 +13,12 @@ import { getOrganizationMembers, getAllAssessmentResults } from '../../utils/api
 import ScreenBackground from '../../components/ScreenBackground';
 import GlassCard from '../../components/GlassCard';
 import AppIcon from '../../components/AppIcon';
-import { colors, radii, shadow, spacing } from '../../theme';
+import { colors, radii, shadow, spacing, Palette } from '../../theme';
+import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 
 export default function ProfessionalDashboard({ navigation }: any) {
+  const colors = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const { user } = useAuth();
   const [members, setMembers] = useState<any[]>([]);
   const [assessments, setAssessments] = useState<any[]>([]);
@@ -50,7 +53,7 @@ export default function ProfessionalDashboard({ navigation }: any) {
   }
 
   const actions: { icon: string; title: string; desc: string; g: [string, string]; onPress?: () => void }[] = [
-    { icon: '🎯', title: 'Take Assessment', desc: 'Discover your cognitive profile', g: ['#F59E0B', '#D97706'], onPress: () => navigation.navigate('Assessments') },
+    { icon: '🎯', title: 'Take Assessment', desc: 'Discover your cognitive profile', g: ['#F59E0B', '#D97706'], onPress: () => navigation.navigate('AssessmentList') },
     { icon: '👥', title: 'View Team', desc: 'See organization members', g: ['#3B82F6', '#2563EB'] },
     { icon: '📊', title: 'Team Analytics', desc: 'View team performance insights', g: ['#6E4D9C', '#5A3E82'] },
   ];
@@ -123,10 +126,7 @@ export default function ProfessionalDashboard({ navigation }: any) {
                 padding={16}
                 style={styles.spacedCard}
                 onPress={() =>
-                  navigation.navigate('Assessments', {
-                    screen: 'AssessmentResults',
-                    params: { assessmentType: result.assessmentType },
-                  })
+                  navigation.navigate('AssessmentResults', { assessmentType: result.assessmentType })
                 }
               >
                 <View style={styles.row}>
@@ -135,7 +135,7 @@ export default function ProfessionalDashboard({ navigation }: any) {
                     <Text style={styles.cardTitle}>
                       {result.assessmentType.charAt(0).toUpperCase() + result.assessmentType.slice(1)} Assessment
                     </Text>
-                    <Text style={styles.cardSubtle}>{new Date(result.createdAt).toLocaleDateString()}</Text>
+                    <Text style={styles.cardSubtle}>{new Date(result.completedAt ?? result.createdAt ?? Date.now()).toLocaleDateString()}</Text>
                   </View>
                   <Text style={styles.viewResults}>View →</Text>
                 </View>
@@ -148,8 +148,8 @@ export default function ProfessionalDashboard({ navigation }: any) {
   );
 }
 
-const styles = StyleSheet.create({
-  scroll: { paddingTop: 56, paddingHorizontal: spacing.xl, paddingBottom: 120 },
+const makeStyles = (colors: Palette) => StyleSheet.create({
+  scroll: { paddingTop: 8, paddingHorizontal: spacing.xl, paddingBottom: 120 },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   header: { marginBottom: spacing.xxl },
   greeting: { fontSize: 12, color: colors.textSubtle, letterSpacing: 1.4, fontWeight: '700' },

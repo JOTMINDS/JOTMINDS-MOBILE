@@ -129,7 +129,7 @@ export default function ProfileScreen({ navigation }: any) {
 }
 
 const makeStyles = (c: Palette) => StyleSheet.create({
-  scroll: { paddingTop: 56, paddingHorizontal: spacing.xl, paddingBottom: 120 },
+  scroll: { paddingTop: 8, paddingHorizontal: spacing.xl, paddingBottom: 120 },
   header: { alignItems: 'center', marginBottom: spacing.xxl },
   avatar: {
     width: 88, height: 88, borderRadius: 28, alignItems: 'center', justifyContent: 'center',

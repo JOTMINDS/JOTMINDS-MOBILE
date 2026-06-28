@@ -152,8 +152,36 @@ const highContrastOverrides = {
   borderSoft: 'rgba(255,255,255,0.5)',
 };
 
-export type Palette = typeof colors;
+// Light palette — brand hues preserved; surfaces/text inverted for daylight use.
+const lightOverrides = {
+  bgPrimary: '#F4F6FB',
+  bgSecondary: '#FFFFFF',
+  bgTertiary: '#E7EAF3',
+  bg: '#F4F6FB',
+  bgGradient: ['rgba(244,246,251,0)', 'rgba(244,246,251,0.8)', '#F4F6FB'] as [string, string, string],
+  glassDark: '#FFFFFF',
+  glassMedium: '#FFFFFF',
+  glassLight: '#F0F2F8',
+  surface: '#FFFFFF',
+  surfaceMuted: '#EEF1F7',
+  text: '#1A2233',
+  textPrimary: '#111827',
+  textSecondary: '#374151',
+  textMuted: '#5B6678',
+  textSubtle: '#8A93A6',
+  border: '#E2E6EE',
+  borderSoft: 'rgba(17,24,39,0.08)',
+  borderLight: '#D9DEE9',
+  borderGlow: 'rgba(110,77,156,0.18)',
+  overlay: 'rgba(17,24,39,0.4)',
+  cyanSoft: 'rgba(61,82,201,0.12)',
+  successSoft: 'rgba(16,185,129,0.14)',
+};
 
-export function getPalette(highContrast: boolean): Palette {
-  return highContrast ? { ...colors, ...highContrastOverrides } : colors;
+export type Palette = typeof colors;
+export type ThemeMode = 'light' | 'dark';
+
+export function getPalette(mode: ThemeMode, highContrast: boolean): Palette {
+  if (highContrast) return { ...colors, ...highContrastOverrides };
+  return mode === 'light' ? { ...colors, ...lightOverrides } : colors;
 }

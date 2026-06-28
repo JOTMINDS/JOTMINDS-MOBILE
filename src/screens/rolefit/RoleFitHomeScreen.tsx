@@ -5,7 +5,8 @@ import { useAuth } from '../../context/AuthContext';
 import ScreenBackground from '../../components/ScreenBackground';
 import GlassCard from '../../components/GlassCard';
 import AppIcon from '../../components/AppIcon';
-import { colors, radii, spacing } from '../../theme';
+import { colors, radii, spacing, Palette } from '../../theme';
+import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 
 const SAMPLE_ROLES = [
   { id: '1', title: 'Data Scientist', category: 'Technology', icon: '📊', fit: 82 },
@@ -23,6 +24,8 @@ function fitCategory(score: number) {
 }
 
 export default function RoleFitHomeScreen({ navigation }: any) {
+  const colors = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const { user } = useAuth();
   const hasProfile = (user?.assessmentsCompleted?.length ?? 0) > 0;
 
@@ -151,8 +154,8 @@ export default function RoleFitHomeScreen({ navigation }: any) {
   );
 }
 
-const styles = StyleSheet.create({
-  scroll: { paddingTop: 56, paddingHorizontal: spacing.xl, paddingBottom: 120 },
+const makeStyles = (colors: Palette) => StyleSheet.create({
+  scroll: { paddingTop: 8, paddingHorizontal: spacing.xl, paddingBottom: 120 },
   header: { marginBottom: 24 },
   title: { fontSize: 32, fontWeight: '800', color: colors.textPrimary, letterSpacing: -1 },
   subtitle: { fontSize: 15, color: colors.textMuted, marginTop: 4 },

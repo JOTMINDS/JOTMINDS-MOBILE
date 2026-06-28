@@ -5,6 +5,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { ActivityIndicator, View, StyleSheet } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import AppIcon from '../components/AppIcon';
 import { colors } from '../theme';
 
@@ -99,13 +100,14 @@ function HomeTabScreen() {
 }
 
 function MainTabs() {
+  const t = useTheme();
   return (
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
-        tabBarStyle: styles.tabBar,
-        tabBarActiveTintColor: colors.purple,
-        tabBarInactiveTintColor: colors.textSubtle,
+        tabBarStyle: [styles.tabBar, { backgroundColor: t.bgSecondary, borderTopColor: t.borderLight }],
+        tabBarActiveTintColor: t.purple,
+        tabBarInactiveTintColor: t.textSubtle,
         tabBarLabelStyle: styles.tabLabel,
       }}
     >

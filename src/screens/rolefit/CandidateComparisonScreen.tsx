@@ -5,7 +5,8 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import ScreenBackground from '../../components/ScreenBackground';
 import GlassCard from '../../components/GlassCard';
-import { colors, radii, spacing } from '../../theme';
+import { colors, radii, spacing, Palette } from '../../theme';
+import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 
 const MOCK_CANDIDATES = [
   { id: '1', name: 'Kwame A.', fit: 91, emotion: 'confident', focus: 4.8 },
@@ -21,6 +22,8 @@ function fitColor(score: number) {
 }
 
 export default function CandidateComparisonScreen({ navigation }: any) {
+  const colors = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const [roleName, setRoleName] = useState('');
   const candidates = MOCK_CANDIDATES;
 
@@ -105,8 +108,8 @@ export default function CandidateComparisonScreen({ navigation }: any) {
   );
 }
 
-const styles = StyleSheet.create({
-  scroll: { paddingTop: 56, paddingHorizontal: spacing.xl, paddingBottom: 120 },
+const makeStyles = (colors: Palette) => StyleSheet.create({
+  scroll: { paddingTop: 8, paddingHorizontal: spacing.xl, paddingBottom: 120 },
   backBtn: { marginBottom: 20 },
   backText: { fontSize: 15, color: colors.cyan, fontWeight: '600' },
   header: { marginBottom: 24 },

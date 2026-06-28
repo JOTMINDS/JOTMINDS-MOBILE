@@ -6,7 +6,8 @@ import { useAccessibility } from '../../context/AccessibilityContext';
 import ScreenBackground from '../../components/ScreenBackground';
 import GlassCard from '../../components/GlassCard';
 import AppIcon from '../../components/AppIcon';
-import { colors, radii, spacing } from '../../theme';
+import { colors, radii, spacing, Palette } from '../../theme';
+import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 
 interface ToggleRowProps {
   icon: string;
@@ -41,7 +42,14 @@ function ToggleRow({ icon, iconColor, title, description, value, onValueChange }
 }
 
 export default function AccessibilityScreen({ navigation }: any) {
-  const { highContrast, reduceMotion, setHighContrast, setReduceMotion } = useAccessibility();
+  const colors = useTheme();
+  const styles = useThemedStyles(makeStyles);
+  const { highContrast, reduceMotion, appearance, setHighContrast, setReduceMotion, setAppearance } = useAccessibility();
+  const APPEARANCES: { key: 'system' | 'light' | 'dark'; label: string; icon: string }[] = [
+    { key: 'system', label: 'System', icon: '📱' },
+    { key: 'light', label: 'Light', icon: '☀️' },
+    { key: 'dark', label: 'Dark', icon: '🌙' },
+  ];
 
   return (
     <ScreenBackground>
@@ -58,6 +66,26 @@ export default function AccessibilityScreen({ navigation }: any) {
         <View style={styles.header}>
           <Text style={styles.title}>Accessibility</Text>
           <Text style={styles.subtitle}>Make JotMinds easier to see and use</Text>
+        </View>
+
+        <Text style={styles.sectionLabel}>APPEARANCE</Text>
+        <View style={styles.segment}>
+          {APPEARANCES.map((a) => {
+            const active = appearance === a.key;
+            return (
+              <TouchableOpacity
+                key={a.key}
+                style={[styles.segmentBtn, active && styles.segmentBtnActive]}
+                onPress={() => setAppearance(a.key)}
+                accessibilityRole="button"
+                accessibilityState={{ selected: active }}
+                accessibilityLabel={`${a.label} appearance`}
+              >
+                <AppIcon name={a.icon} size={20} color={active ? '#FFFFFF' : colors.textMuted} />
+                <Text style={[styles.segmentText, active && styles.segmentTextActive]}>{a.label}</Text>
+              </TouchableOpacity>
+            );
+          })}
         </View>
 
         <Text style={styles.sectionLabel}>DISPLAY</Text>
@@ -109,8 +137,8 @@ export default function AccessibilityScreen({ navigation }: any) {
   );
 }
 
-const styles = StyleSheet.create({
-  scroll: { paddingTop: 56, paddingHorizontal: spacing.xl, paddingBottom: 120 },
+const makeStyles = (colors: Palette) => StyleSheet.create({
+  scroll: { paddingTop: 8, paddingHorizontal: spacing.xl, paddingBottom: 120 },
   back: { width: 44, height: 44, justifyContent: 'center', marginBottom: 4 },
   header: { marginBottom: 24 },
   title: { fontSize: 30, fontWeight: '800', color: colors.textPrimary, letterSpacing: -1 },
@@ -119,6 +147,18 @@ const styles = StyleSheet.create({
     fontSize: 12, fontWeight: '700', color: colors.textSubtle,
     letterSpacing: 1.4, marginBottom: 12, marginTop: 8,
   },
+  segment: {
+    flexDirection: 'row', gap: 8, marginBottom: 24,
+    backgroundColor: colors.glassMedium, borderRadius: radii.md, padding: 6,
+    borderWidth: 1, borderColor: colors.borderLight,
+  },
+  segmentBtn: {
+    flex: 1, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8,
+    paddingVertical: 12, borderRadius: radii.sm,
+  },
+  segmentBtnActive: { backgroundColor: colors.purple },
+  segmentText: { fontSize: 14, fontWeight: '600', color: colors.textMuted },
+  segmentTextActive: { color: '#FFFFFF' },
   row: { marginBottom: 12 },
   rowInner: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   iconWrap: { width: 44, height: 44, borderRadius: 13, justifyContent: 'center', alignItems: 'center' },

@@ -13,7 +13,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import ScreenBackground from '../../components/ScreenBackground';
 import AppIcon from '../../components/AppIcon';
 import GlassCard from '../../components/GlassCard';
-import { colors, radii, shadow, spacing } from '../../theme';
+import { colors, radii, shadow, spacing, Palette } from '../../theme';
+import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 
 interface Message {
   id: string;
@@ -23,6 +24,8 @@ interface Message {
 }
 
 export default function ExpertChatScreen({ route }: any) {
+  const colors = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const { expertName, expertRole } = route.params || {
     expertName: 'Dr. Sarah Mitchell',
     expertRole: 'Child Cognitive Development Specialist',
@@ -164,7 +167,7 @@ export default function ExpertChatScreen({ route }: any) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Palette) => StyleSheet.create({
   container: {
     flex: 1,
   },
@@ -172,7 +175,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: spacing.xl,
-    paddingTop: 56,
+    paddingTop: 8,
     paddingBottom: spacing.lg,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(124, 58, 237, 0.1)',

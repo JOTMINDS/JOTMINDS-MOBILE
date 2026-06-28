@@ -18,9 +18,12 @@ import GlassCard from '../../components/GlassCard';
 import GradientButton from '../../components/GradientButton';
 import AppIcon from '../../components/AppIcon';
 import Logo from '../../components/Logo';
-import { colors, radii, shadow, spacing } from '../../theme';
+import { colors, radii, shadow, spacing, Palette } from '../../theme';
+import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 
 export default function LoginScreen({ navigation }: any) {
+  const colors = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const { signIn, requestLoginOtp } = useAuth();
   const toast = useToast();
   const [email, setEmail] = useState('');
@@ -181,7 +184,7 @@ export default function LoginScreen({ navigation }: any) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Palette) => StyleSheet.create({
   container: {
     flex: 1,
   },
@@ -189,7 +192,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingHorizontal: spacing.xl,
     paddingVertical: 50,
-    paddingTop: 80,
+    paddingTop: 16,
   },
   header: {
     alignItems: 'center',

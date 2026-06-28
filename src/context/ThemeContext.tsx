@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useMemo } from 'react';
+import React, { createContext, useContext, useMemo, useState, useEffect } from 'react';
+import { Appearance as RNAppearance } from 'react-native';
 import { getPalette, Palette, colors as defaultColors } from '../theme';
 import { useAccessibility } from './AccessibilityContext';
 
@@ -15,8 +16,20 @@ import { useAccessibility } from './AccessibilityContext';
 const ThemeContext = createContext<Palette>(defaultColors);
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { highContrast } = useAccessibility();
-  const palette = useMemo(() => getPalette(highContrast), [highContrast]);
+  const { highContrast, appearance } = useAccessibility();
+  const [systemScheme, setSystemScheme] = useState(RNAppearance.getColorScheme());
+
+  // Track the OS light/dark setting for "System" mode.
+  useEffect(() => {
+    const sub = RNAppearance.addChangeListener(({ colorScheme }) => setSystemScheme(colorScheme));
+    return () => sub.remove();
+  }, []);
+
+  const mode = appearance === 'system'
+    ? (systemScheme === 'light' ? 'light' : 'dark')
+    : appearance;
+
+  const palette = useMemo(() => getPalette(mode, highContrast), [mode, highContrast]);
   return <ThemeContext.Provider value={palette}>{children}</ThemeContext.Provider>;
 };
 
