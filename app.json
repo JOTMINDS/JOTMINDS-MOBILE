@@ -1,0 +1,39 @@
+{
+  "expo": {
+    "name": "JotMinds",
+    "slug": "jotminds-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "scheme": "jotminds",
+    "icon": "./assets/icon.png",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.jotminds.mobile"
+    },
+    "android": {
+      "package": "com.jotminds.mobile",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#FFFFFF"
+      }
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-font",
+      "expo-asset",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/logo.png",
+          "imageWidth": 240,
+          "resizeMode": "contain",
+          "backgroundColor": "#0F172B"
+        }
+      ],
+      "@react-native-community/datetimepicker"
+    ]
+  }
+}

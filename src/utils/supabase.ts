@@ -1,0 +1,58 @@
+import 'react-native-url-polyfill/auto';
+import { createClient } from '@supabase/supabase-js';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const SUPABASE_URL = 'https://femvnconxoefpctiptkj.supabase.co';
+const SUPABASE_ANON_KEY =
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZlbXZuY29ueG9lZnBjdGlwdGtqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI0NTY1ODMsImV4cCI6MjA3ODAzMjU4M30.kmYrjWIfgzXZuLda3D8LjqL6V20DBgo8fkHsnIdQLGA';
+
+export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  auth: {
+    storage: AsyncStorage,
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: false,
+  },
+});
+
+// Edge Function base URL (same as webapp backend — verified live via deployed functions list)
+export const EDGE_FN_URL = `${SUPABASE_URL}/functions/v1/make-server-fc8eb847`;
+
+export async function callEdgeFn(
+  endpoint: string,
+  options: RequestInit = {},
+): Promise<any> {
+  const { data: { session } } = await supabase.auth.getSession();
+  const token = session?.access_token ?? SUPABASE_ANON_KEY;
+
+  const res = await fetch(`${EDGE_FN_URL}${endpoint}`, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+      ...(options.headers ?? {}),
+    },
+  });
+
+  const json = await res.json();
+  if (!res.ok) throw new Error(json.error ?? 'Request failed');
+  return json;
+}
+
+// ── OTP (email verification during signup) ──────────────────────────────────
+// The Edge Function generates the 6-digit code server-side, stores it (10-min
+// expiry), emails it via Resend, and verifies it. The client never sees/sets it.
+export async function sendSignupOtp(email: string): Promise<void> {
+  await callEdgeFn('/send-otp', {
+    method: 'POST',
+    body: JSON.stringify({ email: email.trim().toLowerCase() }),
+  });
+}
+
+export async function verifySignupOtp(email: string, otp: string): Promise<boolean> {
+  const res = await callEdgeFn('/verify-otp', {
+    method: 'POST',
+    body: JSON.stringify({ email: email.trim().toLowerCase(), otp: otp.trim() }),
+  });
+  return res.verified === true;
+}
