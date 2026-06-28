@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { Text, TextInput } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { Text, TextInput, View, ActivityIndicator } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useFonts } from 'expo-font';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
@@ -29,15 +29,31 @@ function ThemedStatusBar() {
 
 export default function App() {
   // Preload the vector-icon fonts so every <AppIcon> renders (avoids blank/▢ icons).
-  const [fontsLoaded] = useFonts({
+  const [fontsLoaded, fontError] = useFonts({
     ...Ionicons.font,
     ...MaterialCommunityIcons.font,
   });
+  // Fail-safe: never block the whole app on font loading. In release builds the
+  // font load can stall or error — if so we proceed anyway (icons fall back to
+  // their raw glyphs) so the app can never get stuck on a blank screen.
+  const [fontTimeout, setFontTimeout] = useState(false);
 
   // Replay any queued offline writes on launch + whenever connectivity returns.
   useEffect(() => initOutboxSync(), []);
+  useEffect(() => {
+    const t = setTimeout(() => setFontTimeout(true), 2500);
+    return () => clearTimeout(t);
+  }, []);
 
-  if (!fontsLoaded) return null; // native splash shows until fonts are ready, then hides
+  const ready = fontsLoaded || !!fontError || fontTimeout;
+  if (!ready) {
+    // Brief, visible loading state (not a blank screen) while fonts load.
+    return (
+      <View style={{ flex: 1, backgroundColor: '#0F172B', justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color="#7C5CFF" />
+      </View>
+    );
+  }
 
   return (
     <ErrorBoundary>
