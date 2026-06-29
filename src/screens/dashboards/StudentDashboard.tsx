@@ -40,7 +40,11 @@ export default function StudentDashboard({ navigation }: any) {
 
   useEffect(() => {
     fetchAssessments();
-  }, []);
+    // Re-fetch whenever the dashboard regains focus (e.g. after finishing an
+    // assessment) so the completed state and results routing stay current.
+    const unsub = navigation?.addListener?.('focus', fetchAssessments);
+    return unsub;
+  }, [navigation]);
 
   const handleRefresh = () => {
     setRefreshing(true);
@@ -149,11 +153,15 @@ export default function StudentDashboard({ navigation }: any) {
             return (
               <GlassCard
                 key={card.type}
-                onPress={() =>
-                  isKidsMode
-                    ? navigation.navigate('KidsAssessment')
-                    : navigation.navigate('AssessmentTaking', { assessmentType: card.type })
-                }
+                onPress={() => {
+                  if (isKidsMode) { navigation.navigate('KidsAssessment'); return; }
+                  // A completed assessment opens its saved results instead of
+                  // restarting — results persist on the backend per user+type.
+                  navigation.navigate(
+                    isCompleted ? 'AssessmentResults' : 'AssessmentTaking',
+                    { assessmentType: card.type },
+                  );
+                }}
                 style={styles.assessmentCard}
               >
                 <View style={styles.cardRow}>
