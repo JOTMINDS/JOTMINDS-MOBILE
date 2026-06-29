@@ -5,6 +5,8 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { callEdgeFn } from '../../utils/supabase';
 import { useToast } from '../../context/ToastContext';
+import { useAuth } from '../../context/AuthContext';
+import { missingCognitiveDomains, domainLabel } from '../../utils/profileCompleteness';
 import ScreenBackground from '../../components/ScreenBackground';
 import GlassCard from '../../components/GlassCard';
 import AppIcon from '../../components/AppIcon';
@@ -29,12 +31,19 @@ export default function CareerMatchesScreen({ navigation }: any) {
   const colors = useTheme();
   const styles = useThemedStyles(makeStyles);
   const toast = useToast();
+  const { user } = useAuth();
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
   const [needsProfile, setNeedsProfile] = useState(false);
   const [generating, setGenerating] = useState(false);
 
+  // Career matching requires the full cognitive profile (all three core
+  // assessments) — not a single quick test or the 60-second First Win.
+  const missing = missingCognitiveDomains(user?.assessmentsCompleted);
+  const profileComplete = missing.length === 0;
+
   const load = async () => {
+    if (!profileComplete) { setNeedsProfile(true); setLoading(false); return; }
     try {
       const data = await callEdgeFn('/career/matches');
       setMatches(data.matches ?? []);
@@ -47,6 +56,7 @@ export default function CareerMatchesScreen({ navigation }: any) {
   };
 
   const generate = async (silent = false) => {
+    if (!profileComplete) { setNeedsProfile(true); return; }
     if (!silent) setGenerating(true);
     try {
       const data = await callEdgeFn('/career/match', { method: 'POST', body: '{}' });
@@ -86,10 +96,19 @@ export default function CareerMatchesScreen({ navigation }: any) {
         ) : needsProfile ? (
           <GlassCard style={styles.empty}>
             <AppIcon name="🎯" size={40} color={colors.textSubtle} />
-            <Text style={styles.emptyTitle}>Complete an assessment first</Text>
+            <Text style={styles.emptyTitle}>Complete your full profile first</Text>
             <Text style={styles.emptyText}>
-              Career matching uses your cognitive profile. Take an assessment, then come back to see your top 10 career fits.
+              Career matching is based on your complete cognitive profile — all three
+              core assessments — not a quick test. Finish these to unlock accurate matches:
             </Text>
+            <View style={styles.missingList}>
+              {missing.map((d) => (
+                <View key={d} style={styles.missingItem}>
+                  <AppIcon name="✕" size={14} color={colors.warning} />
+                  <Text style={styles.missingText}>{domainLabel(d)}</Text>
+                </View>
+              ))}
+            </View>
             <TouchableOpacity style={styles.emptyBtn} onPress={() => navigation.navigate('Main')}>
               <Text style={styles.emptyBtnText}>Go to Assessments →</Text>
             </TouchableOpacity>
@@ -148,6 +167,9 @@ const makeStyles = (colors: Palette) => StyleSheet.create({
   empty: { alignItems: 'center', paddingVertical: 32, gap: 8 },
   emptyTitle: { fontSize: 17, fontWeight: '700', color: colors.text, marginTop: 8 },
   emptyText: { fontSize: 14, color: colors.textMuted, textAlign: 'center', lineHeight: 21, marginBottom: 8 },
+  missingList: { gap: 8, marginBottom: 16, alignSelf: 'stretch', paddingHorizontal: 24 },
+  missingItem: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  missingText: { fontSize: 14, color: colors.text, fontWeight: '600' },
   emptyBtn: { backgroundColor: colors.purple, paddingHorizontal: 20, paddingVertical: 12, borderRadius: radii.pill },
   emptyBtnText: { color: '#FFFFFF', fontWeight: '700', fontSize: 14 },
   card: { marginBottom: 12 },

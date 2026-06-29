@@ -7,6 +7,7 @@ import GlassCard from '../../components/GlassCard';
 import AppIcon from '../../components/AppIcon';
 import { colors, radii, spacing, Palette } from '../../theme';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
+import { missingCognitiveDomains, domainLabel } from '../../utils/profileCompleteness';
 
 const SAMPLE_ROLES = [
   { id: '1', title: 'Data Scientist', category: 'Technology', icon: '📊', fit: 82 },
@@ -27,7 +28,8 @@ export default function RoleFitHomeScreen({ navigation }: any) {
   const colors = useTheme();
   const styles = useThemedStyles(makeStyles);
   const { user } = useAuth();
-  const hasProfile = (user?.assessmentsCompleted?.length ?? 0) > 0;
+  const missing = missingCognitiveDomains(user?.assessmentsCompleted);
+  const hasProfile = missing.length === 0;
 
   return (
     <ScreenBackground>
@@ -42,9 +44,10 @@ export default function RoleFitHomeScreen({ navigation }: any) {
           <GlassCard style={styles.alertCard}>
             <AppIcon name="⚠️" size={24} color={colors.warning} style={styles.alertIcon} />
             <View style={styles.alertText}>
-              <Text style={styles.alertTitle}>Complete Your Assessment First</Text>
+              <Text style={styles.alertTitle}>Complete Your Full Profile First</Text>
               <Text style={styles.alertSub}>
-                Role Fit uses your cognitive profile. Take the assessments to unlock accurate matching.
+                Role Fit uses your complete cognitive profile — not a quick test. Finish{' '}
+                {missing.map((d) => domainLabel(d)).join(', ')} to unlock accurate matching.
               </Text>
             </View>
           </GlassCard>
