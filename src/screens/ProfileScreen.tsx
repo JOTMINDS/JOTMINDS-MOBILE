@@ -96,7 +96,7 @@ export default function ProfileScreen({ navigation }: any) {
           {[
             { label: 'Notifications', icon: '🔥', screen: 'Notifications' },
             { label: 'Accessibility', icon: '👁️', screen: 'Accessibility' },
-            { label: 'Edit Profile', icon: '✏️', screen: null },
+            { label: 'Edit Profile', icon: '✏️', screen: 'EditProfile' },
             { label: 'Privacy Settings', icon: '🔒', screen: null },
             { label: 'Help & Support', icon: '💬', screen: null },
           ].map((a) => (

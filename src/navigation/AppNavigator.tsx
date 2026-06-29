@@ -53,6 +53,7 @@ import CareerMatchesScreen from '../screens/rolefit/CareerMatchesScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import AccessibilityScreen from '../screens/profile/AccessibilityScreen';
 import NotificationsScreen from '../screens/profile/NotificationsScreen';
+import EditProfileScreen from '../screens/profile/EditProfileScreen';
 // import SubscriptionScreen from '../screens/profile/SubscriptionScreen'; // disabled
 
 // ── Assessments ───────────────────────────────────────────────────────────────
@@ -161,10 +162,17 @@ export default function AppNavigator() {
 
   useEffect(() => {
     if (!user) { setFirstWinDone(null); return; }
+    // Backend flag is the source of truth (survives reinstall / new device);
+    // fall back to the local cache when it isn't set on the profile yet.
+    if (user.firstWinCompleted) {
+      setFirstWinDone(true);
+      AsyncStorage.setItem(`jotminds.firstwin.${user.id}`, 'done').catch(() => {});
+      return;
+    }
     AsyncStorage.getItem(`jotminds.firstwin.${user.id}`)
       .then((v) => setFirstWinDone(!!v))
       .catch(() => setFirstWinDone(true));
-  }, [user?.id]);
+  }, [user?.id, user?.firstWinCompleted]);
 
   if (loading || (user && firstWinDone === null)) {
     return (
@@ -212,6 +220,7 @@ export default function AppNavigator() {
             {/* Profile */}
             <Stack.Screen name="Accessibility" component={AccessibilityScreen} />
             <Stack.Screen name="Notifications" component={NotificationsScreen} />
+            <Stack.Screen name="EditProfile" component={EditProfileScreen} />
             {/* Subscription disabled */}
 
             {/* Assessments */}

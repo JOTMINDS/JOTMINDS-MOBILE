@@ -3,6 +3,9 @@ import { callEdgeFn } from './supabase';
 
 export { callEdgeFn };
 
+export const updateUserProfile = (updates: Record<string, any>) =>
+  callEdgeFn('/user/profile', { method: 'PATCH', body: JSON.stringify(updates) });
+
 export const getAllAssessmentResults = () =>
   callEdgeFn('/assessment/results');
 

@@ -5,6 +5,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../../context/AuthContext';
+import { updateUserProfile } from '../../utils/api';
 import ScreenBackground from '../../components/ScreenBackground';
 import GlassCard from '../../components/GlassCard';
 import AppIcon from '../../components/AppIcon';
@@ -59,7 +60,12 @@ export default function FirstWinScreen({ navigation }: any) {
   const dominantQ = QUESTIONS.find((q) => q.key === dominant)!;
 
   const finish = async () => {
+    // Local cache for instant skip on next launch.
     if (user?.id) await AsyncStorage.setItem(`jotminds.firstwin.${user.id}`, 'done').catch(() => {});
+    // Persist to the backend so completion survives reinstall / new device.
+    try {
+      await updateUserProfile({ firstWinCompleted: true, cognitiveProfile: scores });
+    } catch { /* offline: local flag still skips it next launch */ }
     navigation.replace('Main');
   };
 

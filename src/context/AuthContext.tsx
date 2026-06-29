@@ -15,6 +15,7 @@ export interface AppUser {
   age?: number;
   assessmentsCompleted?: string[];
   subscriptionStatus?: 'free' | 'premium' | 'organization';
+  firstWinCompleted?: boolean;
 }
 
 interface AuthContextType {
@@ -75,6 +76,8 @@ async function fetchProfile(supabaseUser: SupabaseUser): Promise<AppUser> {
       age: profile.dateOfBirth ? calculateAge(profile.dateOfBirth) : profile.age,
       assessmentsCompleted: profile.assessmentsCompleted ?? [],
       subscriptionStatus: profile.subscriptionStatus ?? profile.subscription_status ?? 'free',
+      // Backend-persisted onboarding flag (survives reinstall / new device).
+      firstWinCompleted: profile.firstWinCompleted ?? !!profile.cognitiveProfile,
     };
   } catch {
     // Fallback: build minimal profile from Supabase user metadata
