@@ -11,10 +11,19 @@ import AppIcon from '../../components/AppIcon';
 import { radii, spacing, Palette } from '../../theme';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 
+// Mirrors the jotminds.com web signup (students only).
+const EDUCATION_LEVELS = [
+  { value: 'Elementary', label: 'Primary' },
+  { value: 'JHS', label: 'JHS' },
+  { value: 'SHS', label: 'SHS' },
+  { value: 'Tertiary', label: 'Tertiary' },
+];
+
 interface Field {
   key: string;
   label: string;
   placeholder: string;
+  type?: 'text' | 'level';
   keyboardType?: 'default' | 'phone-pad';
   autoCapitalize?: 'none' | 'words' | 'sentences';
 }
@@ -32,6 +41,9 @@ export default function EditProfileScreen({ navigation }: any) {
   ];
   if (user?.role === 'student' || user?.role === 'teacher') {
     fields.push({ key: 'school', label: 'School', placeholder: 'Your school', autoCapitalize: 'words' });
+  }
+  if (user?.role === 'student') {
+    fields.push({ key: 'educationLevel', label: 'Education Level', placeholder: '', type: 'level' });
   }
   if (user?.role === 'professional') {
     fields.push({ key: 'organizationName', label: 'Organization', placeholder: 'Your organization', autoCapitalize: 'words' });
@@ -96,16 +108,38 @@ export default function EditProfileScreen({ navigation }: any) {
           {fields.map((f) => (
             <View key={f.key}>
               <Text style={styles.fieldLabel}>{f.label.toUpperCase()}</Text>
-              <TextInput
-                style={styles.input}
-                value={values[f.key]}
-                onChangeText={(t) => setValues((p) => ({ ...p, [f.key]: t }))}
-                placeholder={f.placeholder}
-                placeholderTextColor={colors.textSubtle}
-                keyboardType={f.keyboardType ?? 'default'}
-                autoCapitalize={f.autoCapitalize ?? 'sentences'}
-                returnKeyType="done"
-              />
+              {f.type === 'level' ? (
+                <View style={styles.levelRow}>
+                  {EDUCATION_LEVELS.map((lvl) => {
+                    const active = values[f.key] === lvl.value;
+                    return (
+                      <TouchableOpacity
+                        key={lvl.value}
+                        style={[styles.levelPill, active && styles.levelPillActive]}
+                        onPress={() => setValues((p) => ({ ...p, [f.key]: lvl.value }))}
+                        accessibilityRole="button"
+                        accessibilityState={{ selected: active }}
+                        accessibilityLabel={lvl.label}
+                      >
+                        <Text style={[styles.levelPillText, active && styles.levelPillTextActive]}>
+                          {lvl.label}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              ) : (
+                <TextInput
+                  style={styles.input}
+                  value={values[f.key]}
+                  onChangeText={(t) => setValues((p) => ({ ...p, [f.key]: t }))}
+                  placeholder={f.placeholder}
+                  placeholderTextColor={colors.textSubtle}
+                  keyboardType={f.keyboardType ?? 'default'}
+                  autoCapitalize={f.autoCapitalize ?? 'sentences'}
+                  returnKeyType="done"
+                />
+              )}
             </View>
           ))}
 
@@ -146,6 +180,14 @@ const makeStyles = (colors: Palette) => StyleSheet.create({
   },
   inputDisabled: { opacity: 0.6 },
   inputDisabledText: { fontSize: 16, color: colors.textMuted },
+  levelRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  levelPill: {
+    paddingHorizontal: 16, paddingVertical: 12, borderRadius: radii.md,
+    backgroundColor: colors.glassMedium, borderWidth: 1.5, borderColor: colors.borderLight,
+  },
+  levelPillActive: { backgroundColor: colors.purple, borderColor: colors.purple },
+  levelPillText: { fontSize: 14, fontWeight: '600', color: colors.textMuted },
+  levelPillTextActive: { color: '#FFFFFF' },
   saveBtn: {
     backgroundColor: colors.purple, borderRadius: radii.md,
     paddingVertical: 16, alignItems: 'center', marginTop: 32,

@@ -24,6 +24,14 @@ import Logo from '../../components/Logo';
 import { colors, radii, shadow, spacing, Palette } from '../../theme';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 
+// Education levels — mirrors the jotminds.com web signup (students only).
+const EDUCATION_LEVELS = [
+  { value: 'Elementary', label: 'Primary' },
+  { value: 'JHS', label: 'JHS' },
+  { value: 'SHS', label: 'SHS' },
+  { value: 'Tertiary', label: 'Tertiary' },
+];
+
 export default function SignupScreen({ navigation }: any) {
   const colors = useTheme();
   const styles = useThemedStyles(makeStyles);
@@ -479,6 +487,31 @@ export default function SignupScreen({ navigation }: any) {
                   </View>
                 )}
 
+                {role === 'student' && (
+                  <View style={styles.inputContainer}>
+                    <Text style={styles.label}>EDUCATION LEVEL</Text>
+                    <View style={styles.levelRow}>
+                      {EDUCATION_LEVELS.map((lvl) => {
+                        const active = educationLevel === lvl.value;
+                        return (
+                          <TouchableOpacity
+                            key={lvl.value}
+                            style={[styles.levelPill, active && styles.levelPillActive]}
+                            onPress={() => setEducationLevel(lvl.value)}
+                            accessibilityRole="button"
+                            accessibilityState={{ selected: active }}
+                            accessibilityLabel={lvl.label}
+                          >
+                            <Text style={[styles.levelPillText, active && styles.levelPillTextActive]}>
+                              {lvl.label}
+                            </Text>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
+                  </View>
+                )}
+
                 {role === 'professional' && (
                   <>
                     <View style={styles.inputContainer}>
@@ -681,6 +714,31 @@ const makeStyles = (colors: Palette) => StyleSheet.create({
     color: colors.textSubtle,
     marginBottom: 8,
     letterSpacing: 1.2,
+  },
+  levelRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  levelPill: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: radii.md,
+    backgroundColor: colors.glassMedium,
+    borderWidth: 1.5,
+    borderColor: colors.borderLight,
+  },
+  levelPillActive: {
+    backgroundColor: colors.purple,
+    borderColor: colors.purple,
+  },
+  levelPillText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.textMuted,
+  },
+  levelPillTextActive: {
+    color: '#FFFFFF',
   },
   inputWrapper: {
     backgroundColor: colors.glassMedium,

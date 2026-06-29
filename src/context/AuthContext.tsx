@@ -9,6 +9,7 @@ export interface AppUser {
   role: string;
   phone?: string;
   school?: string;
+  educationLevel?: string;
   position?: string;
   organizationName?: string;
   dateOfBirth?: string;
@@ -70,6 +71,7 @@ async function fetchProfile(supabaseUser: SupabaseUser): Promise<AppUser> {
       role: profile.user_role ?? profile.role ?? 'student',
       phone: profile.phone,
       school: profile.school,
+      educationLevel: profile.educationLevel,
       position: profile.position,
       organizationName: profile.organizationName ?? profile.organization,
       dateOfBirth: profile.dateOfBirth ?? profile.date_of_birth,
