@@ -97,8 +97,8 @@ export default function ProfileScreen({ navigation }: any) {
             { label: 'Notifications', icon: '🔥', screen: 'Notifications' },
             { label: 'Accessibility', icon: '👁️', screen: 'Accessibility' },
             { label: 'Edit Profile', icon: '✏️', screen: 'EditProfile' },
-            { label: 'Privacy Settings', icon: '🔒', screen: null },
-            { label: 'Help & Support', icon: '💬', screen: null },
+            { label: 'Privacy Settings', icon: '🔒', screen: 'PrivacySettings' },
+            { label: 'Help & Support', icon: '💬', screen: 'HelpSupport' },
           ].map((a) => (
             <GlassCard
               key={a.label}

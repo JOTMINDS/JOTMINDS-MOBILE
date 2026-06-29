@@ -53,6 +53,8 @@ import CareerMatchesScreen from '../screens/rolefit/CareerMatchesScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import AccessibilityScreen from '../screens/profile/AccessibilityScreen';
 import NotificationsScreen from '../screens/profile/NotificationsScreen';
+import PrivacySettingsScreen from '../screens/profile/PrivacySettingsScreen';
+import HelpSupportScreen from '../screens/profile/HelpSupportScreen';
 import EditProfileScreen from '../screens/profile/EditProfileScreen';
 // import SubscriptionScreen from '../screens/profile/SubscriptionScreen'; // disabled
 
@@ -157,6 +159,7 @@ function MainTabs() {
 
 export default function AppNavigator() {
   const { user, loading } = useAuth();
+  const t = useTheme();
   // First-Win onboarding gate: shown once per user before the main app.
   const [firstWinDone, setFirstWinDone] = useState<boolean | null>(null);
 
@@ -185,7 +188,16 @@ export default function AppNavigator() {
   return (
     <NavigationContainer>
       <Stack.Navigator
-        screenOptions={{ headerShown: false }}
+        screenOptions={{
+          headerShown: false,
+          // When a screen does show the native header, theme it dark instead of
+          // the default white-with-black-text bar.
+          headerStyle: { backgroundColor: t.bgSecondary },
+          headerTintColor: t.textPrimary,
+          headerTitleStyle: { color: t.textPrimary, fontWeight: '700' },
+          headerShadowVisible: false,
+          contentStyle: { backgroundColor: t.bgPrimary },
+        }}
         initialRouteName={user ? (firstWinDone ? 'Main' : 'FirstWin') : 'Welcome'}
       >
         {user ? (
@@ -221,6 +233,8 @@ export default function AppNavigator() {
             <Stack.Screen name="Accessibility" component={AccessibilityScreen} />
             <Stack.Screen name="Notifications" component={NotificationsScreen} />
             <Stack.Screen name="EditProfile" component={EditProfileScreen} />
+            <Stack.Screen name="PrivacySettings" component={PrivacySettingsScreen} />
+            <Stack.Screen name="HelpSupport" component={HelpSupportScreen} />
             {/* Subscription disabled */}
 
             {/* Assessments */}
@@ -232,7 +246,7 @@ export default function AppNavigator() {
             <Stack.Screen
               name="AssessmentTaking"
               component={AssessmentTakingScreen}
-              options={{ headerShown: true, title: 'Assessment' }}
+              options={{ headerShown: false }}
             />
             <Stack.Screen
               name="AssessmentResults"

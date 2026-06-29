@@ -69,7 +69,7 @@ export default function InsightDetailScreen({ route, navigation }: any) {
           </Text>
           <TouchableOpacity
             style={styles.ctaBtn}
-            onPress={() => navigation.navigate('Home')}
+            onPress={() => navigation.navigate('Main', { screen: 'Home' })}
           >
             <LinearGradient
               colors={['#6E4D9C', '#3D52C9']}

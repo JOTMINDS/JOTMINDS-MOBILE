@@ -74,8 +74,8 @@ export default function EditProfileScreen({ navigation }: any) {
       await refreshUser();
       toast.success('Profile updated.');
       navigation.goBack();
-    } catch {
-      toast.error('Could not save changes. Please try again.');
+    } catch (e: any) {
+      toast.error(e?.message ? `Couldn't save: ${e.message}` : 'Could not save changes. Please try again.');
       setSaving(false);
     }
   };

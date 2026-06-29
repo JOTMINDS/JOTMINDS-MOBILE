@@ -113,7 +113,7 @@ export default function AdaptationScreen({ route, navigation }: any) {
 
         <TouchableOpacity
           style={styles.checkInBtn}
-          onPress={() => navigation.navigate('MindHome')}
+          onPress={() => navigation.navigate('Main', { screen: 'MindHome' })}
         >
           <LinearGradient
             colors={['#6E4D9C', '#3D52C9']}

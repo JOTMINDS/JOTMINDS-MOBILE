@@ -16,9 +16,11 @@ interface ToggleRowProps {
   description: string;
   value: boolean;
   onValueChange: (v: boolean) => void;
+  styles: any;
+  colors: Palette;
 }
 
-function ToggleRow({ icon, iconColor, title, description, value, onValueChange }: ToggleRowProps) {
+function ToggleRow({ icon, iconColor, title, description, value, onValueChange, styles, colors }: ToggleRowProps) {
   return (
     <GlassCard style={styles.row}>
       <View style={styles.rowInner}>
@@ -96,6 +98,8 @@ export default function AccessibilityScreen({ navigation }: any) {
           description="Pure-black background with solid cards and brighter borders for stronger contrast."
           value={highContrast}
           onValueChange={setHighContrast}
+          styles={styles}
+          colors={colors}
         />
         <ToggleRow
           icon="⚡"
@@ -104,6 +108,8 @@ export default function AccessibilityScreen({ navigation }: any) {
           description="Turn off animations and transitions that can cause discomfort."
           value={reduceMotion}
           onValueChange={setReduceMotion}
+          styles={styles}
+          colors={colors}
         />
 
         <Text style={styles.sectionLabel}>TEXT SIZE</Text>

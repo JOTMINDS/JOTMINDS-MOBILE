@@ -24,7 +24,7 @@ export default function RadarChart({ data, size = 260, fill = 'rgba(61,82,201,0.
 
   const cx = size / 2;
   const cy = size / 2;
-  const R = size / 2 - 38; // leave room for labels
+  const R = size / 2 - 52; // leave room for labels + their value underneath
   const rings = [0.25, 0.5, 0.75, 1];
 
   // angle for axis i (start at top, clockwise)
@@ -66,17 +66,21 @@ export default function RadarChart({ data, size = 260, fill = 'rgba(61,82,201,0.
           const p = point(i, R * (Math.max(0, Math.min(100, d.value)) / 100));
           return <Circle key={i} cx={p.x} cy={p.y} r={3.5} fill={strokeColor} />;
         })}
-        {/* axis labels */}
+        {/* axis labels — always center-anchored so they extend symmetrically
+            and stay within the SVG bounds (outward anchoring clipped long names) */}
         {data.map((d, i) => {
-          const p = point(i, R + 18);
           const a = angle(i);
-          const anchor = Math.abs(Math.cos(a)) < 0.3 ? 'middle' : Math.cos(a) > 0 ? 'start' : 'end';
+          const lx = cx + Math.cos(a) * (R + 16);
+          const ly = cy + Math.sin(a) * (R + 16);
+          const sin = Math.sin(a);
+          const vy = sin > 0.3 ? 10 : sin < -0.3 ? -3 : 4; // nudge above/below the vertex
+          const label = d.label.length > 12 ? `${d.label.slice(0, 11)}…` : d.label;
           return (
             <G key={`l${i}`}>
-              <SvgText x={p.x} y={p.y} fill={colors.textSecondary} fontSize={11} fontWeight="600" textAnchor={anchor as any}>
-                {d.label}
+              <SvgText x={lx} y={ly + vy} fill={colors.textSecondary} fontSize={10} fontWeight="600" textAnchor="middle">
+                {label}
               </SvgText>
-              <SvgText x={p.x} y={p.y + 13} fill={colors.textSubtle} fontSize={10} textAnchor={anchor as any}>
+              <SvgText x={lx} y={ly + vy + 12} fill={colors.textSubtle} fontSize={9} textAnchor="middle">
                 {Math.round(d.value)}
               </SvgText>
             </G>

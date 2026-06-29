@@ -126,7 +126,7 @@ export default function InstantFeedbackScreen({ route, navigation }: any) {
 
         <TouchableOpacity
           style={styles.doneBtn}
-          onPress={() => navigation.navigate('MindHome')}
+          onPress={() => navigation.navigate('Main', { screen: 'MindHome' })}
         >
           <LinearGradient
             colors={['#6E4D9C', '#3D52C9']}

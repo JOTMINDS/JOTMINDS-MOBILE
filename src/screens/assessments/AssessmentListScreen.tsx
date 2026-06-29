@@ -1,15 +1,29 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import ScreenBackground from '../../components/ScreenBackground';
 import AppIcon from '../../components/AppIcon';
 import GlassCard from '../../components/GlassCard';
+import { getAllAssessmentResults } from '../../utils/api';
 import { colors, radii, shadow, spacing, Palette } from '../../theme';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 
 export default function AssessmentListScreen({ navigation }: any) {
   const colors = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const [completedTypes, setCompletedTypes] = useState<string[]>([]);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const data = await getAllAssessmentResults();
+        setCompletedTypes((data.results || []).map((r: any) => r.assessmentType));
+      } catch { /* leave empty on failure */ }
+    };
+    load();
+    const unsub = navigation?.addListener?.('focus', load);
+    return unsub;
+  }, [navigation]);
   const assessments: {
     type: string; title: string; description: string; icon: string;
     gradient: [string, string]; duration: string;
@@ -58,29 +72,32 @@ export default function AssessmentListScreen({ navigation }: any) {
         </View>
 
         <View style={styles.list}>
-          {assessments.map((a) => (
-            <GlassCard
-              key={a.type}
-              padding={20}
-              style={styles.card}
-              onPress={() => navigation.navigate('AssessmentTaking', { assessmentType: a.type })}
-            >
-              <View style={styles.cardHeader}>
-                <LinearGradient colors={a.gradient} style={styles.iconWrap} start={{x:0,y:0}} end={{x:1,y:1}}>
-                  <AppIcon name={a.icon} size={22} style={styles.icon} />
-                </LinearGradient>
-                <View style={styles.durationPill}>
-                  <Text style={styles.durationText}>{a.duration}</Text>
+          {assessments.map((a) => {
+            const done = completedTypes.includes(a.type);
+            return (
+              <GlassCard
+                key={a.type}
+                padding={20}
+                style={styles.card}
+                onPress={() => navigation.navigate(done ? 'AssessmentResults' : 'AssessmentTaking', { assessmentType: a.type })}
+              >
+                <View style={styles.cardHeader}>
+                  <LinearGradient colors={a.gradient} style={styles.iconWrap} start={{x:0,y:0}} end={{x:1,y:1}}>
+                    <AppIcon name={a.icon} size={22} style={styles.icon} />
+                  </LinearGradient>
+                  <View style={[styles.durationPill, done && styles.donePill]}>
+                    <Text style={[styles.durationText, done && styles.donePillText]}>{done ? '✓ Completed' : a.duration}</Text>
+                  </View>
                 </View>
-              </View>
-              <Text style={styles.cardTitle}>{a.title}</Text>
-              <Text style={styles.cardDesc}>{a.description}</Text>
-              <View style={styles.startRow}>
-                <Text style={styles.startText}>Start Assessment</Text>
-                <AppIcon name="→" size={18} style={styles.startArrow} />
-              </View>
-            </GlassCard>
-          ))}
+                <Text style={styles.cardTitle}>{a.title}</Text>
+                <Text style={styles.cardDesc}>{a.description}</Text>
+                <View style={styles.startRow}>
+                  <Text style={styles.startText}>{done ? 'View Results' : 'Start Assessment'}</Text>
+                  <AppIcon name="→" size={18} style={styles.startArrow} />
+                </View>
+              </GlassCard>
+            );
+          })}
         </View>
 
         <Text style={styles.sectionTitle}>Why Take These?</Text>
@@ -110,6 +127,8 @@ const makeStyles = (colors: Palette) => StyleSheet.create({
   icon: { fontSize: 26 },
   durationPill: { backgroundColor: colors.surfaceMuted, paddingHorizontal: 12, paddingVertical: 6, borderRadius: radii.pill },
   durationText: { fontSize: 12, color: colors.textPrimary, fontWeight: '700' },
+  donePill: { backgroundColor: colors.successSoft },
+  donePillText: { color: colors.success },
   cardTitle: { fontSize: 20, fontWeight: '700', color: colors.textPrimary, marginBottom: 6, letterSpacing: -0.3 },
   cardDesc: { fontSize: 14, color: colors.textMuted, lineHeight: 20, marginBottom: spacing.lg },
   startRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 6 },
