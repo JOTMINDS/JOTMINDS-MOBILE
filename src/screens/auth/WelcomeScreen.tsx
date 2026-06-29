@@ -1,12 +1,11 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AppIcon from '../../components/AppIcon';
 import Logo from '../../components/Logo';
 import { colors, radii, spacing, Palette } from '../../theme';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
-
-const { height } = Dimensions.get('window');
 
 const features = [
   { icon: '🧠', label: 'Cognitive Assessments', sub: 'Thinking, learning & decision styles' },
@@ -17,64 +16,74 @@ const features = [
 export default function WelcomeScreen({ navigation }: any) {
   const colors = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const insets = useSafeAreaInsets();
   return (
     <LinearGradient
       colors={['#020618', '#0F172B', '#020618']}
       style={styles.container}
     >
-      <View style={styles.heroSection}>
-        <View style={styles.logoWrap}>
-          <Logo size="md" />
-        </View>
-        <Text style={styles.title}>Understand{'\n'}How You Think</Text>
-        <Text style={styles.subtitle}>
-          A cognitive intelligence platform built for students, professionals, and teams.
-        </Text>
-      </View>
-
-      <View style={styles.featuresSection}>
-        {features.map((f) => (
-          <View key={f.label} style={styles.featureRow}>
-            <View style={styles.featureIconWrap}>
-              <AppIcon name={f.icon} size={24} color={colors.purpleSoft} />
-            </View>
-            <View style={styles.featureText}>
-              <Text style={styles.featureLabel}>{f.label}</Text>
-              <Text style={styles.featureSub}>{f.sub}</Text>
-            </View>
+      <ScrollView
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingTop: insets.top + 24, paddingBottom: insets.bottom + 24 },
+        ]}
+        showsVerticalScrollIndicator={false}
+        bounces={false}
+      >
+        <View style={styles.heroSection}>
+          <View style={styles.logoWrap}>
+            <Logo size="md" />
           </View>
-        ))}
-      </View>
+          <Text style={styles.title}>Understand{'\n'}How You Think</Text>
+          <Text style={styles.subtitle}>
+            A cognitive intelligence platform built for students, professionals, and teams.
+          </Text>
+        </View>
 
-      <View style={styles.actions}>
-        <TouchableOpacity
-          style={styles.primaryBtn}
-          onPress={() => navigation.navigate('Signup')}
-          activeOpacity={0.85}
-        >
-          <LinearGradient
-            colors={['#6E4D9C', '#3D52C9']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={styles.primaryBtnGradient}
+        <View style={styles.featuresSection}>
+          {features.map((f) => (
+            <View key={f.label} style={styles.featureRow}>
+              <View style={styles.featureIconWrap}>
+                <AppIcon name={f.icon} size={24} color={colors.purpleSoft} />
+              </View>
+              <View style={styles.featureText}>
+                <Text style={styles.featureLabel}>{f.label}</Text>
+                <Text style={styles.featureSub}>{f.sub}</Text>
+              </View>
+            </View>
+          ))}
+        </View>
+
+        <View style={styles.actions}>
+          <TouchableOpacity
+            style={styles.primaryBtn}
+            onPress={() => navigation.navigate('Signup')}
+            activeOpacity={0.85}
           >
-            <Text style={styles.primaryBtnText}>Get Started</Text>
-            <Text style={styles.primaryBtnArrow}>→</Text>
-          </LinearGradient>
-        </TouchableOpacity>
+            <LinearGradient
+              colors={['#6E4D9C', '#3D52C9']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.primaryBtnGradient}
+            >
+              <Text style={styles.primaryBtnText}>Get Started</Text>
+              <Text style={styles.primaryBtnArrow}>→</Text>
+            </LinearGradient>
+          </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.secondaryBtn}
-          onPress={() => navigation.navigate('Login')}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.secondaryBtnText}>I already have an account</Text>
-        </TouchableOpacity>
-      </View>
+          <TouchableOpacity
+            style={styles.secondaryBtn}
+            onPress={() => navigation.navigate('Login')}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.secondaryBtnText}>I already have an account</Text>
+          </TouchableOpacity>
 
-      <Text style={styles.disclaimer}>
-        By continuing, you agree to our Privacy Policy & Terms of Service
-      </Text>
+          <Text style={styles.disclaimer}>
+            By continuing, you agree to our Privacy Policy & Terms of Service
+          </Text>
+        </View>
+      </ScrollView>
     </LinearGradient>
   );
 }
@@ -82,13 +91,15 @@ export default function WelcomeScreen({ navigation }: any) {
 const makeStyles = (colors: Palette) => StyleSheet.create({
   container: {
     flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
     paddingHorizontal: spacing.xl,
-    paddingTop: height * 0.1,
-    paddingBottom: 40,
   },
   heroSection: {
     alignItems: 'center',
-    marginBottom: 40,
+    marginBottom: 36,
   },
   logoWrap: {
     marginBottom: 24,
@@ -110,10 +121,8 @@ const makeStyles = (colors: Palette) => StyleSheet.create({
     paddingHorizontal: 16,
   },
   featuresSection: {
-    flex: 1,
-    justifyContent: 'center',
-    gap: 20,
-    marginBottom: 32,
+    gap: 16,
+    marginBottom: 36,
   },
   featureRow: {
     flexDirection: 'row',
@@ -147,7 +156,6 @@ const makeStyles = (colors: Palette) => StyleSheet.create({
   },
   actions: {
     gap: 12,
-    marginBottom: 16,
   },
   primaryBtn: {
     borderRadius: radii.md,
@@ -188,5 +196,6 @@ const makeStyles = (colors: Palette) => StyleSheet.create({
     color: 'rgba(255,255,255,0.3)',
     textAlign: 'center',
     lineHeight: 16,
+    marginTop: 8,
   },
 });
