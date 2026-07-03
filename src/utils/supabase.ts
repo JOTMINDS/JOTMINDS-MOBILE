@@ -21,22 +21,45 @@ export const EDGE_FN_URL = `${SUPABASE_URL}/functions/v1/make-server-fc8eb847`;
 export async function callEdgeFn(
   endpoint: string,
   options: RequestInit = {},
+  timeoutMs = 20000,
 ): Promise<any> {
-  const { data: { session } } = await supabase.auth.getSession();
-  const token = session?.access_token ?? SUPABASE_ANON_KEY;
+  // Getting the session shouldn't hang, but guard it so a stalled auth read
+  // can't freeze the whole request forever.
+  let token = SUPABASE_ANON_KEY;
+  try {
+    const { data: { session } } = await Promise.race([
+      supabase.auth.getSession(),
+      new Promise<never>((_, rej) => setTimeout(() => rej(new Error('timeout')), 5000)),
+    ]) as any;
+    token = session?.access_token ?? SUPABASE_ANON_KEY;
+  } catch {
+    // fall back to anon key — the request itself will 401 if auth was required
+  }
 
-  const res = await fetch(`${EDGE_FN_URL}${endpoint}`, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-      ...(options.headers ?? {}),
-    },
-  });
-
-  const json = await res.json();
-  if (!res.ok) throw new Error(json.error ?? 'Request failed');
-  return json;
+  // Hard timeout so a stalled network never leaves the UI spinning forever.
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(`${EDGE_FN_URL}${endpoint}`, {
+      ...options,
+      signal: controller.signal,
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+        ...(options.headers ?? {}),
+      },
+    });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error ?? 'Request failed');
+    return json;
+  } catch (e: any) {
+    if (e?.name === 'AbortError') {
+      throw new Error('Request timed out. Check your connection and try again.');
+    }
+    throw e;
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 // ── OTP (email verification during signup) ──────────────────────────────────
