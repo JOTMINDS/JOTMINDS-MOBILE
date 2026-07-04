@@ -123,24 +123,27 @@ export default function AssessmentResultsScreen({ route, navigation }: any) {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Detailed Scores</Text>
             <GlassCard padding={20}>
-              {Object.entries(results.results.scores).map(([key, value]: any, i, arr) => (
+              {Object.entries(results.results.scores).map(([key, value]: any, i, arr) => {
+                const n = Math.max(0, Math.min(100, Math.round(Number(value) || 0)));
+                return (
                 <View key={key} style={[styles.scoreRow, i === arr.length - 1 && { marginBottom: 0 }]}>
                   <View style={styles.scoreHeader}>
                     <Text style={styles.scoreLabel}>
-                      {key.charAt(0).toUpperCase() + key.slice(1)}
+                      {String(key).charAt(0).toUpperCase() + String(key).slice(1)}
                     </Text>
-                    <Text style={styles.scoreValue}>{value}/100</Text>
+                    <Text style={styles.scoreValue}>{n}/100</Text>
                   </View>
                   <View style={styles.scoreBar}>
                     <LinearGradient
                       colors={[gradient[0], gradient[1]]}
                       start={{ x: 0, y: 0 }}
                       end={{ x: 1, y: 0 }}
-                      style={[styles.scoreBarFill, { width: `${Math.min(100, value)}%` }]}
+                      style={[styles.scoreBarFill, { width: `${n}%` }]}
                     />
                   </View>
                 </View>
-              ))}
+                );
+              })}
             </GlassCard>
           </View>
         )}

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useCallback, useRef, useState } from 'react';
+import React, { createContext, useContext, useCallback, useEffect, useRef, useState } from 'react';
 import { Animated, StyleSheet, Text, View, AccessibilityInfo } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AppIcon from '../components/AppIcon';
@@ -53,6 +53,9 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
     hideTimer.current = setTimeout(hide, 3200);
   }, [opacity, translateY, reduceMotion, hide]);
+
+  // Clear any pending hide timer on unmount so it can't setState after unmount.
+  useEffect(() => () => { if (hideTimer.current) clearTimeout(hideTimer.current); }, []);
 
   const api: ToastContextType = {
     show,

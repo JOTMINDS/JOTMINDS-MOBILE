@@ -15,6 +15,7 @@ export interface OutboxItem {
   body: any;
   type: string; // e.g. 'checkin' — for UI grouping
   queuedAt: number;
+  idempotencyKey?: string; // dedupe key so a retry can't double-write server-side
 }
 
 type Listener = (count: number) => void;
@@ -61,7 +62,11 @@ export async function flushOutbox(): Promise<void> {
     while (items.length > 0) {
       const item = items[0];
       try {
-        await callEdgeFn(item.endpoint, { method: item.method, body: JSON.stringify(item.body) });
+        await callEdgeFn(item.endpoint, {
+          method: item.method,
+          body: JSON.stringify(item.body),
+          headers: item.idempotencyKey ? { 'Idempotency-Key': item.idempotencyKey } : undefined,
+        });
         items = items.slice(1);
         await write(items);
       } catch {
@@ -75,7 +80,14 @@ export async function flushOutbox(): Promise<void> {
 
 function isNetworkError(err: any): boolean {
   const m = String(err?.message ?? err);
-  return m.includes('Network request failed') || m.includes('Failed to fetch') || m.includes('timeout');
+  return (
+    err?.name === 'AbortError' ||
+    m.includes('Network request failed') ||
+    m.includes('Failed to fetch') ||
+    m.includes('timeout') ||
+    m.includes('timed out') ||
+    m.includes('Network')
+  );
 }
 
 /**
@@ -87,12 +99,19 @@ export async function submitWithOutbox(
   body: any,
   type: string,
 ): Promise<{ queued: boolean; data?: any }> {
+  // One key for this logical write, reused if the online attempt fails and it
+  // gets queued — so a retry that reaches an already-succeeded server is a no-op.
+  const idempotencyKey = `${Date.now()}_${Math.random().toString(36).slice(2)}`;
   try {
-    const data = await callEdgeFn(endpoint, { method: 'POST', body: JSON.stringify(body) });
+    const data = await callEdgeFn(endpoint, {
+      method: 'POST',
+      body: JSON.stringify(body),
+      headers: { 'Idempotency-Key': idempotencyKey },
+    });
     return { queued: false, data };
   } catch (err) {
     if (isNetworkError(err)) {
-      await enqueue({ endpoint, method: 'POST', body, type });
+      await enqueue({ endpoint, method: 'POST', body, type, idempotencyKey });
       return { queued: true };
     }
     throw err; // real server error — surface it

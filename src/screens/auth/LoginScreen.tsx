@@ -21,12 +21,12 @@ import Logo from '../../components/Logo';
 import { colors, radii, shadow, spacing, Palette } from '../../theme';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 
-export default function LoginScreen({ navigation }: any) {
+export default function LoginScreen({ navigation, route }: any) {
   const colors = useTheme();
   const styles = useThemedStyles(makeStyles);
   const { signIn, requestLoginOtp } = useAuth();
   const toast = useToast();
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(route?.params?.email ?? '');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);

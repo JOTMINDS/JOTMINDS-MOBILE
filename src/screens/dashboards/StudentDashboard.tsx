@@ -193,7 +193,10 @@ export default function StudentDashboard({ navigation }: any) {
         {assessments.length > 0 && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Recent Results</Text>
-            {assessments.slice(0, 3).map((result, index) => (
+            {assessments
+              .filter((result) => typeof result?.assessmentType === 'string' && result.assessmentType)
+              .slice(0, 3)
+              .map((result, index) => (
               <GlassCard
                 key={index}
                 padding={16}

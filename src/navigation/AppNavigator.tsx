@@ -71,6 +71,7 @@ import GrowthTrackerScreen from '../screens/teacher/GrowthTrackerScreen';
 
 // ── Parent ────────────────────────────────────────────────────────────────────
 import CoachingPathwaysScreen from '../screens/parent/CoachingPathwaysScreen';
+import PathwayDetailScreen from '../screens/parent/PathwayDetailScreen';
 import ExpertConsultationScreen from '../screens/parent/ExpertConsultationScreen';
 
 // ── Learning ──────────────────────────────────────────────────────────────────
@@ -262,6 +263,7 @@ export default function AppNavigator() {
 
             {/* Parent */}
             <Stack.Screen name="CoachingPathways" component={CoachingPathwaysScreen} options={{ headerShown: true, title: 'Coaching Pathways' }} />
+            <Stack.Screen name="PathwayDetail" component={PathwayDetailScreen} options={{ headerShown: true, title: 'Pathway' }} />
             <Stack.Screen name="ExpertConsultation" component={ExpertConsultationScreen} options={{ headerShown: true, title: 'Expert Consultation' }} />
 
             {/* Learning */}

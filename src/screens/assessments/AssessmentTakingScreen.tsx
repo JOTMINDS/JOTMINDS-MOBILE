@@ -44,7 +44,7 @@ export default function AssessmentTakingScreen({ navigation, route }: any) {
 
   const question = bank.questions[index];
   const total = bank.questions.length;
-  const progress = (index / total) * 100;
+  const progress = ((index + 1) / total) * 100;
 
   const transitionTo = (next: () => void) => {
     if (reduceMotion) { next(); anim.setValue(1); return; }
@@ -57,11 +57,11 @@ export default function AssessmentTakingScreen({ navigation, route }: any) {
     });
   };
 
-  const computeResults = () => {
+  const computeResults = (source: Record<number, number> = answers) => {
     const byStyle: Record<string, { normalized: number; weight: number }[]> = {};
     bank.styles.forEach((s) => (byStyle[s] = []));
     bank.questions.forEach((q) => {
-      const v = answers[q.id];
+      const v = source[q.id];
       if (v) byStyle[q.style].push({ normalized: normalizeLikert(v), weight: 1 });
     });
     const scores: Record<string, number> = {};
@@ -74,7 +74,7 @@ export default function AssessmentTakingScreen({ navigation, route }: any) {
 
   const handleSubmit = async (finalAnswers: Record<number, number>) => {
     setSubmitting(true);
-    const r = computeResults();
+    const r = computeResults(finalAnswers);
     const top = r.ranked[0][0];
     const low = r.ranked[r.ranked.length - 1][0];
     const answerList = Object.entries(finalAnswers).map(([qid, value]) => ({ questionId: Number(qid), value }));

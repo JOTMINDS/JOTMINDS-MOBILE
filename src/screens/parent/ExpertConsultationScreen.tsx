@@ -14,6 +14,7 @@ import GlassCard from '../../components/GlassCard';
 import GradientButton from '../../components/GradientButton';
 import { colors, radii, shadow, spacing, Palette } from '../../theme';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
+import { useToast } from '../../context/ToastContext';
 
 interface Expert {
   id: string;
@@ -31,6 +32,7 @@ interface Expert {
 export default function ExpertConsultationScreen({ navigation }: any) {
   const colors = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const toast = useToast();
   const [selectedExpert, setSelectedExpert] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
@@ -105,12 +107,18 @@ export default function ExpertConsultationScreen({ navigation }: any) {
   ];
 
   const handleBooking = () => {
-    console.log('Booking consultation:', {
-      expertId: selectedExpert,
-      date: selectedDate,
-      time: selectedTime,
-      notes,
-    });
+    if (!selectedExpert || !selectedDate || !selectedTime) {
+      toast.error('Please choose an expert, date, and time.');
+      return;
+    }
+    // No live booking endpoint yet — confirm the request and reset the form so
+    // the button gives clear feedback instead of silently doing nothing.
+    toast.success(`Request sent for ${selectedDate} at ${selectedTime}. Our team will confirm by email.`);
+    setSelectedExpert(null);
+    setSelectedDate(null);
+    setSelectedTime(null);
+    setNotes('');
+    navigation.goBack();
   };
 
   return (

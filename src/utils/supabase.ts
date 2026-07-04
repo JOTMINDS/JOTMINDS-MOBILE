@@ -49,9 +49,15 @@ export async function callEdgeFn(
         ...(options.headers ?? {}),
       },
     });
-    const json = await res.json();
-    if (!res.ok) throw new Error(json.error ?? 'Request failed');
-    return json;
+    // Read as text first: gateway/5xx responses are often HTML or empty, and
+    // res.json() would throw a misleading "JSON Parse error" over the real cause.
+    const text = await res.text();
+    let json: any = null;
+    try { json = text ? JSON.parse(text) : null; } catch { /* non-JSON body */ }
+    if (!res.ok) {
+      throw new Error((json && json.error) || `Request failed (${res.status})`);
+    }
+    return json ?? {};
   } catch (e: any) {
     if (e?.name === 'AbortError') {
       throw new Error('Request timed out. Check your connection and try again.');

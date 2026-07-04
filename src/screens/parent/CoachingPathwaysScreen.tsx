@@ -207,7 +207,7 @@ export default function CoachingPathwaysScreen({ navigation }: any) {
             <GlassCard
               key={pathway.id}
               onPress={() =>
-                navigation.navigate('PathwayDetail', { pathwayId: pathway.id })
+                navigation.navigate('PathwayDetail', { pathway })
               }
               style={styles.pathwayCard}
             >

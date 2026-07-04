@@ -25,9 +25,12 @@ interface DevelopmentModule {
   difficulty: 'beginner' | 'intermediate' | 'advanced';
 }
 
+import { useToast } from '../../context/ToastContext';
+
 export default function TeacherDevelopmentScreen({ navigation }: any) {
   const colors = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const toast = useToast();
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
   const modules: DevelopmentModule[] = [
@@ -200,9 +203,12 @@ export default function TeacherDevelopmentScreen({ navigation }: any) {
             <GlassCard
               key={module.id}
               onPress={() =>
-                navigation.navigate('TeachingStyleAssessment', {
-                  moduleId: module.id,
-                })
+                // The Teaching-Style module maps to the real assessment; other
+                // modules' content isn't built yet, so give honest feedback
+                // instead of silently opening the same quiz for every card.
+                module.id === 'teaching-style'
+                  ? navigation.navigate('TeachingStyleAssessment', { moduleId: module.id })
+                  : toast.info(`"${module.title}" content is coming soon.`)
               }
               style={styles.moduleCard}
             >

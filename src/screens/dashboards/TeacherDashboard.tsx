@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
 import { getStudentsForTeacher } from '../../utils/api';
 import ScreenBackground from '../../components/ScreenBackground';
 import GlassCard from '../../components/GlassCard';
@@ -20,6 +21,7 @@ export default function TeacherDashboard({ navigation }: any) {
   const colors = useTheme();
   const styles = useThemedStyles(makeStyles);
   const { user } = useAuth();
+  const toast = useToast();
   const [students, setStudents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -139,10 +141,15 @@ export default function TeacherDashboard({ navigation }: any) {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Quick Actions</Text>
           {[
-            { icon: '📊', title: 'View Class Analytics', desc: 'See overall class performance', g: ['#3B82F6', '#2563EB'] as [string, string], nav: null },
+            { icon: '📊', title: 'View Class Analytics', desc: 'See overall class performance', g: ['#3B82F6', '#2563EB'] as [string, string], nav: 'GrowthTracker' as const },
             { icon: '📝', title: 'Create Assignment', desc: 'Assign assessments to students', g: ['#6E4D9C', '#5A3E82'] as [string, string], nav: null },
           ].map((a) => (
-            <GlassCard key={a.title} padding={16} style={styles.spacedCard}>
+            <GlassCard
+              key={a.title}
+              padding={16}
+              style={styles.spacedCard}
+              onPress={() => (a.nav ? navigation.navigate(a.nav) : toast.info('This feature is coming soon.'))}
+            >
               <View style={styles.row}>
                 <LinearGradient colors={a.g} style={styles.iconWrap} start={{x:0,y:0}} end={{x:1,y:1}}>
                   <AppIcon name={a.icon} size={22} color="#FFFFFF" />

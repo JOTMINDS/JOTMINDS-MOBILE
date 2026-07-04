@@ -62,11 +62,15 @@ export default function OtpVerificationScreen({ route, navigation }: ScreenProps
     }
   };
 
+  const submitting = useRef(false);
+
   const handleVerify = async () => {
+    if (submitting.current) return; // guard against double-tap before disable renders
     if (code.length !== CODE_LENGTH) {
       setError('Enter the 6-digit code');
       return;
     }
+    submitting.current = true;
     setLoading(true);
     setError('');
     try {
@@ -75,12 +79,33 @@ export default function OtpVerificationScreen({ route, navigation }: ScreenProps
         if (!ok) {
           setError('Incorrect or expired code');
           setLoading(false);
+          submitting.current = false;
           return;
         }
-        // Verified → now create the account, then sign in.
-        await signUp(signupData);
-        await signIn(signupData.email, signupData.password);
-        // AuthProvider's listener swaps the navigator to the main app.
+        // The code is single-use (consumed on the server here), so from this
+        // point never send the user back to re-enter it. Create the account,
+        // then sign in; if either half fails, fall back to Login (the account
+        // may already exist) rather than stranding them on a dead code.
+        try {
+          await signUp(signupData);
+        } catch (e: any) {
+          const msg = String(e?.message || '');
+          if (!/already|registered|exists/i.test(msg)) {
+            // Genuine signup failure (not "already exists") — surface + let them go to Login.
+            toast.error(msg || 'Could not create your account. Please sign in or try again.');
+            navigation.replace('Login', { email: signupData.email });
+            return;
+          }
+          // else: account already exists → proceed to sign in below
+        }
+        try {
+          await signIn(signupData.email, signupData.password);
+          // success → AuthProvider's listener swaps the navigator to the main app.
+        } catch {
+          toast.success('Account created. Please sign in to continue.');
+          navigation.replace('Login', { email: signupData.email });
+          return;
+        }
       } else {
         // Supabase native OTP → establishes a session on success.
         await verifyLoginOtp(email, code);
@@ -88,6 +113,7 @@ export default function OtpVerificationScreen({ route, navigation }: ScreenProps
     } catch (err: any) {
       setError(err.message || 'Verification failed');
       setLoading(false);
+      submitting.current = false;
     }
   };
 
@@ -135,6 +161,11 @@ export default function OtpVerificationScreen({ route, navigation }: ScreenProps
             We sent a 6-digit code to{'\n'}
             <Text style={styles.email}>{email}</Text>
           </Text>
+          {mode === 'login' && (
+            <Text style={styles.hint}>
+              No code arriving? You may not have an account with this email yet — try signing up instead.
+            </Text>
+          )}
         </View>
 
         <GlassCard variant="dark" padding={24} glowColor="purple" style={styles.card}>
@@ -199,6 +230,7 @@ const makeStyles = (colors: Palette) => StyleSheet.create({
   },
   title: { fontSize: 26, fontWeight: '800', color: colors.textPrimary, letterSpacing: -0.8, marginBottom: 10 },
   subtitle: { fontSize: 14, color: colors.textMuted, textAlign: 'center', lineHeight: 21 },
+  hint: { fontSize: 12, color: colors.textSubtle, textAlign: 'center', lineHeight: 18, marginTop: 10, paddingHorizontal: 8 },
   email: { color: colors.cyan, fontWeight: '700' },
   card: {},
   codeRow: { flexDirection: 'row', justifyContent: 'space-between', gap: 8, marginBottom: 8 },
