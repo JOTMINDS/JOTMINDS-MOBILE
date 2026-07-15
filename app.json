@@ -9,7 +9,10 @@
     "icon": "./assets/icon.png",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.jotminds.mobile"
+      "bundleIdentifier": "com.jotminds.mobile",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "package": "com.jotminds.mobile",

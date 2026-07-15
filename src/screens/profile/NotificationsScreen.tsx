@@ -57,7 +57,7 @@ export default function NotificationsScreen({ navigation }: any) {
 
         <View style={styles.header}>
           <Text style={styles.title}>Notifications</Text>
-          <Text style={styles.subtitle}>Gentle nudges to keep your streak going</Text>
+          <Text style={styles.subtitle}>Gentle nudges to keep you growing</Text>
         </View>
 
         <GlassCard style={styles.row}>
@@ -112,7 +112,9 @@ export default function NotificationsScreen({ navigation }: any) {
         <View style={styles.note}>
           <AppIcon name="💡" size={16} color={colors.textSubtle} />
           <Text style={styles.noteText}>
-            Reminders are scheduled on this device. You can fine-tune permissions anytime in your device settings.
+            This also controls streak reminders, profile-completion nudges, and level-up
+            & badge alerts — all scheduled on this device. Turn it off to silence every
+            nudge, or fine-tune permissions anytime in your device settings.
           </Text>
         </View>
       </ScrollView>

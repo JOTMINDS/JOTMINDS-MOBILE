@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { saveBrainGymResult } from '../../utils/brainGym';
+import { MEMORY_MATCH_PARAMS, Difficulty, saveDifficultyBest } from '../../utils/brainGymDifficulty';
 import ScreenBackground from '../../components/ScreenBackground';
 import AppIcon from '../../components/AppIcon';
 import GameResult from './GameResult';
@@ -9,12 +10,13 @@ import { select } from '../../utils/haptics';
 import { colors, radii, spacing, Palette } from '../../theme';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 
-const FACES = ['🧠', '💡', '🎯', '🌱', '🔍', '🧩', '⚡', '🚀'];
+const FACES = ['🧠', '💡', '🎯', '🌱', '🔍', '🧩', '⚡', '🚀', '🎨', '🔥'];
 
 interface Card { id: number; face: string; matched: boolean }
 
-function buildDeck(): Card[] {
-  const deck = [...FACES, ...FACES].map((face, i) => ({ id: i, face, matched: false }));
+function buildDeck(pairs: number): Card[] {
+  const faces = FACES.slice(0, pairs);
+  const deck = [...faces, ...faces].map((face, i) => ({ id: i, face, matched: false }));
   for (let i = deck.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [deck[i], deck[j]] = [deck[j], deck[i]];
@@ -22,10 +24,12 @@ function buildDeck(): Card[] {
   return deck;
 }
 
-export default function MemoryMatchScreen({ navigation }: any) {
+export default function MemoryMatchScreen({ navigation, route }: any) {
   const colors = useTheme();
   const styles = useThemedStyles(makeStyles);
-  const [deck, setDeck] = useState<Card[]>(buildDeck);
+  const difficulty: Difficulty = route.params?.difficulty ?? 'easy';
+  const { pairs } = MEMORY_MATCH_PARAMS[difficulty];
+  const [deck, setDeck] = useState<Card[]>(() => buildDeck(pairs));
   const [flipped, setFlipped] = useState<number[]>([]);
   const [moves, setMoves] = useState(0);
   const [done, setDone] = useState(false);
@@ -37,10 +41,11 @@ export default function MemoryMatchScreen({ navigation }: any) {
   useEffect(() => {
     if (matchedCount === deck.length && !done) {
       const durationMs = Date.now() - startTime.current;
-      // Fewer moves & faster = higher score. Perfect = 16 moves (8 pairs).
+      // Fewer moves & faster = higher score. Perfect = pairs*2 moves.
       const score = Math.max(50, Math.round(1000 - moves * 20 - durationMs / 200));
       setDone(true);
       saveBrainGymResult({ game: 'memory-match', score, durationMs });
+      saveDifficultyBest('memory-match', difficulty, score);
     }
   }, [matchedCount]);
 
@@ -66,7 +71,7 @@ export default function MemoryMatchScreen({ navigation }: any) {
   };
 
   const restart = () => {
-    setDeck(buildDeck()); setFlipped([]); setMoves(0); setDone(false);
+    setDeck(buildDeck(pairs)); setFlipped([]); setMoves(0); setDone(false);
     startTime.current = Date.now();
   };
 
@@ -78,7 +83,7 @@ export default function MemoryMatchScreen({ navigation }: any) {
         stats={[
           { label: 'Moves', value: String(moves) },
           { label: 'Time', value: `${Math.round(durationMs / 1000)}s` },
-          { label: 'Pairs', value: '8/8' },
+          { label: 'Pairs', value: `${pairs}/${pairs}` },
         ]}
         onPlayAgain={restart}
         onDone={() => navigation.goBack()}

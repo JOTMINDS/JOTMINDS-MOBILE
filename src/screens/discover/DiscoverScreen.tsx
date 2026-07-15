@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../../context/AuthContext';
+import { getAllAssessmentResults } from '../../utils/api';
+import { completedDomains, CognitiveDomain } from '../../utils/profileCompleteness';
 import ScreenBackground from '../../components/ScreenBackground';
 import GlassCard from '../../components/GlassCard';
 import AppIcon from '../../components/AppIcon';
@@ -20,26 +22,29 @@ const INSIGHTS = [
     gradient: ['#6E4D9C', '#4F46E5'] as [string, string],
     readTime: '3 min',
     category: 'pattern',
+    domain: 'decision' as CognitiveDomain,
   },
   {
     id: '2',
     tag: 'LEARNING SCIENCE',
     title: 'The Spacing Effect: Why Cramming Fails',
-    preview: 'Distributed practice outperforms massed practice by 200%. Your brain consolidates memory during rest, not during study.',
+    preview: 'Distributed practice consistently outperforms massed practice ("cramming") for long-term retention. Your brain consolidates memory during rest, not during study.',
     icon: '📚',
     gradient: ['#3D52C9', '#2E3FA8'] as [string, string],
     readTime: '4 min',
     category: 'snapshot',
+    domain: 'learning' as CognitiveDomain,
   },
   {
     id: '3',
     tag: 'DECISION MAKING',
     title: 'The Paradox of Choice in Career Decisions',
-    preview: 'More options don\'t lead to better decisions. Research shows 5–7 options is optimal for complex life choices.',
+    preview: 'More options don\'t lead to better decisions. Too many choices can make complex life decisions harder, not easier.',
     icon: '🎯',
     gradient: ['#EC4899', '#DB2777'] as [string, string],
     readTime: '5 min',
     category: 'strategic',
+    domain: 'decision' as CognitiveDomain,
   },
   {
     id: '4',
@@ -50,16 +55,18 @@ const INSIGHTS = [
     gradient: ['#F59E0B', '#D97706'] as [string, string],
     readTime: '4 min',
     category: 'coach',
+    domain: 'thinking' as CognitiveDomain,
   },
   {
     id: '5',
     tag: 'PERFORMANCE',
     title: 'The Ultradian Rhythm: Your Brain\'s 90-Minute Cycle',
-    preview: 'Your brain naturally cycles between high and low focus every 90 minutes. Working with this rhythm can boost output by 40%.',
+    preview: 'Your brain naturally cycles between high and low focus every 90 minutes. Working with this rhythm can meaningfully boost your output and focus.',
     icon: '⏱️',
     gradient: ['#10B981', '#059669'] as [string, string],
     readTime: '3 min',
     category: 'snapshot',
+    domain: 'learning' as CognitiveDomain,
   },
 ];
 
@@ -70,12 +77,27 @@ export default function DiscoverScreen({ navigation }: any) {
   const styles = useThemedStyles(makeStyles);
   const { user } = useAuth();
   const [activeCategory, setActiveCategory] = useState('All');
+  const [myDomains, setMyDomains] = useState<Set<CognitiveDomain>>(new Set());
 
-  const filtered = INSIGHTS.filter(
+  useEffect(() => {
+    getAllAssessmentResults()
+      .then((res) => setMyDomains(completedDomains((res?.results ?? []).map((r: any) => r.assessmentType))))
+      .catch(() => {});
+  }, []);
+
+  // Real personalization: insights matching a domain the user has actually
+  // completed surface first, rather than a fixed order for every user.
+  const sorted = [...INSIGHTS].sort((a, b) => {
+    const aMatch = myDomains.has(a.domain) ? 0 : 1;
+    const bMatch = myDomains.has(b.domain) ? 0 : 1;
+    return aMatch - bMatch;
+  });
+
+  const filtered = sorted.filter(
     (i) => activeCategory === 'All' || i.category === activeCategory.toLowerCase(),
   );
 
-  const featured = INSIGHTS[0];
+  const featured = sorted[0];
 
   return (
     <ScreenBackground>

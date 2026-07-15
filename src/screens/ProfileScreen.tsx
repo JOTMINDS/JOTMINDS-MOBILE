@@ -94,6 +94,8 @@ export default function ProfileScreen({ navigation }: any) {
 
         <View style={styles.actionsBlock}>
           {[
+            { label: 'Cognitive Growth', icon: '🌱', screen: 'Badges' },
+            ...(user?.role === 'student' ? [{ label: 'Family Sharing', icon: '🔗', screen: 'FamilySharing' }] : []),
             { label: 'Notifications', icon: '🔥', screen: 'Notifications' },
             { label: 'Accessibility', icon: '👁️', screen: 'Accessibility' },
             { label: 'Edit Profile', icon: '✏️', screen: 'EditProfile' },

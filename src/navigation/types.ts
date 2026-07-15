@@ -57,8 +57,9 @@ export type RootStackParamList = {
   TeachingStyleAssessment: undefined;
   TeachingStyleResults: undefined;
   GrowthTracker: undefined;
-  CoachingPathways: undefined;
-  ExpertConsultation: undefined;
+  CoachingPathways: { childId: string; childName: string };
+  PathwayDetail: { childId: string; childName: string; pathway: any };
+  SupportRequest: undefined;
   SkillBuilder: undefined;
   PracticeModule: { moduleId: string };
   PracticeResults: { score: number; total: number; moduleId: string };

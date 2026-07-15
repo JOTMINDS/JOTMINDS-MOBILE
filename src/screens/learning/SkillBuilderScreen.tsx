@@ -52,6 +52,14 @@ export default function SkillBuilderScreen({ navigation }: any) {
   const dimLabel = (id: string) =>
     id.replace(/[_-]/g, ' ').replace(/\b\w/g, (m) => m.toUpperCase());
 
+  const isPlanComplete = (plan: SkillPlan) => {
+    const total = plan.activities?.length ?? plan.lengthDays;
+    const done = plan.activities?.filter((a) => a.completed).length ?? 0;
+    return total > 0 && done >= total;
+  };
+  const completedPlanCount = plans.filter(isPlanComplete).length;
+  const activePlanCount = plans.length - completedPlanCount;
+
   const skillModules: SkillModule[] = [
     {
       id: 'critical-thinking-1',
@@ -168,23 +176,28 @@ export default function SkillBuilderScreen({ navigation }: any) {
           end={{ x: 1, y: 1 }}
           style={styles.progressCard}
         >
-          <Text style={styles.progressLabel}>YOUR PROGRESS</Text>
+          <Text style={styles.progressLabel}>YOUR SKILL PLANS</Text>
           <View style={styles.progressStatsRow}>
             <View style={styles.progressStat}>
-              <Text style={styles.progressStatValue}>5</Text>
+              <Text style={styles.progressStatValue}>{activePlanCount}</Text>
               <Text style={styles.progressStatLabel}>Active</Text>
             </View>
             <View style={styles.progressDivider} />
             <View style={styles.progressStat}>
-              <Text style={styles.progressStatValue}>2</Text>
+              <Text style={styles.progressStatValue}>{completedPlanCount}</Text>
               <Text style={styles.progressStatLabel}>Completed</Text>
             </View>
             <View style={styles.progressDivider} />
             <View style={styles.progressStat}>
-              <Text style={styles.progressStatValue}>120</Text>
-              <Text style={styles.progressStatLabel}>Points</Text>
+              <Text style={styles.progressStatValue}>{plans.length}</Text>
+              <Text style={styles.progressStatLabel}>Total Plans</Text>
             </View>
           </View>
+          {plans.length === 0 && (
+            <Text style={styles.progressHint}>
+              Plans are auto-built when you score below 50 on a cognitive dimension.
+            </Text>
+          )}
         </LinearGradient>
 
         {plans.length > 0 && (
@@ -316,30 +329,6 @@ export default function SkillBuilderScreen({ navigation }: any) {
           ))}
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Daily Challenge</Text>
-          <GlassCard padding={20}>
-            <View style={styles.challengeRow}>
-              <LinearGradient
-                colors={['#F59E0B', '#D97706']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.challengeIconWrap}
-              >
-                <AppIcon name="🎯" size={22} style={styles.challengeIcon} />
-              </LinearGradient>
-              <View style={styles.challengeContent}>
-                <Text style={styles.challengeTitle}>Quick Logic Puzzle</Text>
-                <Text style={styles.challengeDescription}>
-                  Complete today's challenge and earn bonus points
-                </Text>
-              </View>
-              <View style={styles.pointsBadge}>
- <Text style={styles.pointsText}>+25</Text>
-              </View>
-            </View>
-          </GlassCard>
-        </View>
       </ScrollView>
     </ScreenBackground>
   );
@@ -421,6 +410,7 @@ const makeStyles = (colors: Palette) => StyleSheet.create({
     letterSpacing: -0.4,
   },
   planHint: { fontSize: 13, color: colors.textMuted, marginTop: -8, marginBottom: spacing.md },
+  progressHint: { color: 'rgba(255,255,255,0.7)', fontSize: 12, marginTop: spacing.md, textAlign: 'center' },
   planCard: { marginBottom: spacing.md },
   planTop: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 14 },
   planIconWrap: {
@@ -549,45 +539,5 @@ const makeStyles = (colors: Palette) => StyleSheet.create({
     color: colors.purple,
     minWidth: 35,
     textAlign: 'right',
-  },
-  challengeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  challengeIconWrap: {
-    width: 48,
-    height: 48,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: spacing.lg,
-  },
-  challengeIcon: {
-    fontSize: 24,
-  },
-  challengeContent: {
-    flex: 1,
-  },
-  challengeTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.text,
-    marginBottom: 2,
-  },
-  challengeDescription: {
-    fontSize: 13,
-    color: colors.textMuted,
-    lineHeight: 18,
-  },
-  pointsBadge: {
-    backgroundColor: '#FEF3C7',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 12,
-  },
-  pointsText: {
-    color: '#B45309',
-    fontWeight: '700',
-    fontSize: 13,
   },
 });

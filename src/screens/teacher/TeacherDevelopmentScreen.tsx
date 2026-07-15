@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,9 @@ import { LinearGradient } from 'expo-linear-gradient';
 import ScreenBackground from '../../components/ScreenBackground';
 import AppIcon from '../../components/AppIcon';
 import GlassCard from '../../components/GlassCard';
+import { getGamificationProfile } from '../../utils/gamificationApi';
+import { isTeachingStyleDone } from '../../utils/teachingStyleStatus';
+import { useAuth } from '../../context/AuthContext';
 import { colors, radii, shadow, spacing, Palette } from '../../theme';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 
@@ -22,18 +25,56 @@ interface DevelopmentModule {
   icon: string;
   gradient: [string, string];
   progress: number;
+  inDevelopment: boolean;
   difficulty: 'beginner' | 'intermediate' | 'advanced';
 }
 
 import { useToast } from '../../context/ToastContext';
 
+const WEEKLY_TIPS = [
+  'Try the "2-minute feedback" strategy: give students immediate, specific feedback during independent work to boost engagement.',
+  'Cold-calling (randomly, not punitively) keeps more students mentally engaged than only calling on raised hands.',
+  'A 5-second pause after asking a question lets more students formulate a real answer instead of the fastest hand winning.',
+  'Naming the skill you\'re teaching ("we\'re practicing summarizing") helps students transfer it to other subjects.',
+  'Ending class with a 1-sentence student self-assessment ("what\'s one thing you understood well today?") surfaces gaps early.',
+];
+
+function tipOfTheWeek() {
+  const dayOfYear = Math.floor(
+    (Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000,
+  );
+  return WEEKLY_TIPS[dayOfYear % WEEKLY_TIPS.length];
+}
+
 export default function TeacherDevelopmentScreen({ navigation }: any) {
   const colors = useTheme();
   const styles = useThemedStyles(makeStyles);
   const toast = useToast();
+  const { user } = useAuth();
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [teachingStyleDone, setTeachingStyleDone] = useState(false);
+  const [streak, setStreak] = useState(0);
+
+  useEffect(() => {
+    isTeachingStyleDone().then(setTeachingStyleDone);
+    if (user?.id) {
+      getGamificationProfile(user.id).then((p) => setStreak(p.currentStreak)).catch(() => {});
+    }
+  }, [user?.id]);
 
   const modules: DevelopmentModule[] = [
+    {
+      id: 'teaching-style',
+      title: 'Teaching Style Assessment',
+      description: 'Discover your unique teaching strengths and blind spots',
+      category: 'assessment',
+      duration: '10 min',
+      icon: '🎓',
+      gradient: ['#F59E0B', '#D97706'],
+      progress: teachingStyleDone ? 100 : 0,
+      inDevelopment: false,
+      difficulty: 'beginner',
+    },
     {
       id: 'differentiated-instruction',
       title: 'Differentiated Instruction',
@@ -42,7 +83,8 @@ export default function TeacherDevelopmentScreen({ navigation }: any) {
       duration: '6 weeks',
       icon: '🎯',
       gradient: ['#10B981', '#059669'],
-      progress: 45,
+      progress: 0,
+      inDevelopment: true,
       difficulty: 'intermediate',
     },
     {
@@ -54,6 +96,7 @@ export default function TeacherDevelopmentScreen({ navigation }: any) {
       icon: '🏫',
       gradient: ['#6E4D9C', '#5A3E82'],
       progress: 0,
+      inDevelopment: true,
       difficulty: 'beginner',
     },
     {
@@ -64,7 +107,8 @@ export default function TeacherDevelopmentScreen({ navigation }: any) {
       duration: '5 weeks',
       icon: '📊',
       gradient: ['#3D52C9', '#2E3FA8'],
-      progress: 80,
+      progress: 0,
+      inDevelopment: true,
       difficulty: 'intermediate',
     },
     {
@@ -75,7 +119,8 @@ export default function TeacherDevelopmentScreen({ navigation }: any) {
       duration: '4 weeks',
       icon: '❤️',
       gradient: ['#EC4899', '#DB2777'],
-      progress: 20,
+      progress: 0,
+      inDevelopment: true,
       difficulty: 'beginner',
     },
     {
@@ -87,6 +132,7 @@ export default function TeacherDevelopmentScreen({ navigation }: any) {
       icon: '💻',
       gradient: ['#6366F1', '#4F46E5'],
       progress: 0,
+      inDevelopment: true,
       difficulty: 'intermediate',
     },
     {
@@ -98,15 +144,16 @@ export default function TeacherDevelopmentScreen({ navigation }: any) {
       icon: '🌍',
       gradient: ['#F59E0B', '#D97706'],
       progress: 0,
+      inDevelopment: true,
       difficulty: 'advanced',
     },
   ];
 
   const categories = [
     { id: 'all', label: 'All Modules', icon: '📚' },
+    { id: 'assessment', label: 'Assessment', icon: '📊' },
     { id: 'pedagogy', label: 'Pedagogy', icon: '🎯' },
     { id: 'management', label: 'Management', icon: '🏫' },
-    { id: 'assessment', label: 'Assessment', icon: '📊' },
     { id: 'technology', label: 'Technology', icon: '💻' },
   ];
 
@@ -136,7 +183,7 @@ export default function TeacherDevelopmentScreen({ navigation }: any) {
       >
         <View style={styles.header}>
           <Text style={styles.greeting}>Professional Development</Text>
- <Text style={styles.name}>Grow Your Teaching Practice</Text>
+          <Text style={styles.name}>Grow Your Teaching Practice</Text>
           <Text style={styles.tagline}>
             Evidence-based modules to enhance your effectiveness
           </Text>
@@ -151,18 +198,18 @@ export default function TeacherDevelopmentScreen({ navigation }: any) {
           <Text style={styles.progressLabel}>YOUR GROWTH JOURNEY</Text>
           <View style={styles.progressStatsRow}>
             <View style={styles.progressStat}>
-              <Text style={styles.progressStatValue}>4</Text>
-              <Text style={styles.progressStatLabel}>Active</Text>
-            </View>
-            <View style={styles.progressDivider} />
-            <View style={styles.progressStat}>
-              <Text style={styles.progressStatValue}>2</Text>
+              <Text style={styles.progressStatValue}>{teachingStyleDone ? 1 : 0}</Text>
               <Text style={styles.progressStatLabel}>Completed</Text>
             </View>
             <View style={styles.progressDivider} />
             <View style={styles.progressStat}>
-              <Text style={styles.progressStatValue}>12</Text>
-              <Text style={styles.progressStatLabel}>Hours</Text>
+              <Text style={styles.progressStatValue}>1</Text>
+              <Text style={styles.progressStatLabel}>Available</Text>
+            </View>
+            <View style={styles.progressDivider} />
+            <View style={styles.progressStat}>
+              <Text style={styles.progressStatValue}>{streak}</Text>
+              <Text style={styles.progressStatLabel}>Day Streak</Text>
             </View>
           </View>
         </LinearGradient>
@@ -203,11 +250,8 @@ export default function TeacherDevelopmentScreen({ navigation }: any) {
             <GlassCard
               key={module.id}
               onPress={() =>
-                // The Teaching-Style module maps to the real assessment; other
-                // modules' content isn't built yet, so give honest feedback
-                // instead of silently opening the same quiz for every card.
                 module.id === 'teaching-style'
-                  ? navigation.navigate('TeachingStyleAssessment', { moduleId: module.id })
+                  ? navigation.navigate('TeachingStyleAssessment')
                   : toast.info(`"${module.title}" content is coming soon.`)
               }
               style={styles.moduleCard}
@@ -246,7 +290,11 @@ export default function TeacherDevelopmentScreen({ navigation }: any) {
                     </View>
                     <Text style={styles.metaText}>⏱ {module.duration}</Text>
                   </View>
-                  {module.progress > 0 && (
+                  {module.inDevelopment ? (
+                    <View style={styles.devBadge}>
+                      <Text style={styles.devBadgeText}>IN DEVELOPMENT</Text>
+                    </View>
+                  ) : module.progress > 0 ? (
                     <View style={styles.progressBarWrap}>
                       <View style={styles.progressBarTrack}>
                         <View
@@ -260,7 +308,7 @@ export default function TeacherDevelopmentScreen({ navigation }: any) {
                         {module.progress}%
                       </Text>
                     </View>
-                  )}
+                  ) : null}
                 </View>
               </View>
             </GlassCard>
@@ -334,10 +382,7 @@ export default function TeacherDevelopmentScreen({ navigation }: any) {
               </LinearGradient>
               <View style={styles.insightContent}>
                 <Text style={styles.insightTitle}>This Week's Tip</Text>
-                <Text style={styles.insightText}>
-                  Try the "2-minute feedback" strategy: Give students immediate,
-                  specific feedback during independent work to boost engagement.
-                </Text>
+                <Text style={styles.insightText}>{tipOfTheWeek()}</Text>
               </View>
             </View>
           </GlassCard>
@@ -505,6 +550,20 @@ const makeStyles = (colors: Palette) => StyleSheet.create({
     fontSize: 12,
     color: colors.textMuted,
     fontWeight: '600',
+  },
+  devBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: colors.bgTertiary,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+    marginTop: spacing.sm,
+  },
+  devBadgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: colors.textSubtle,
+    letterSpacing: 0.5,
   },
   progressBarWrap: {
     flexDirection: 'row',

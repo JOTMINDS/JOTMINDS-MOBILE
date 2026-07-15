@@ -1,29 +1,52 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import ScreenBackground from '../../components/ScreenBackground';
 import AppIcon from '../../components/AppIcon';
 import GlassCard from '../../components/GlassCard';
 import { getAllAssessmentResults } from '../../utils/api';
+import { completedDomains, missingCognitiveDomains } from '../../utils/profileCompleteness';
+import { getThinkingStylesTrack, isThinkingStylesUnlocked } from '../../utils/thinkingStylesTrack';
+import { getGamificationProfile } from '../../utils/gamificationApi';
+import { getXPProgress, GamificationProfile } from '../../utils/gamification';
+import { scheduleStreakReminder, scheduleProfileCompletionReminder } from '../../utils/notifications';
+import CertificateModal from '../../components/CertificateModal';
+import { useAuth } from '../../context/AuthContext';
 import { colors, radii, shadow, spacing, Palette } from '../../theme';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
+
+const THINKING_STYLES_WIRE_TYPE: Record<string, string> = {
+  jhs: 'jhs-thinking', shs: 'shs-thinking', adult: 'adult-thinking',
+};
 
 export default function AssessmentListScreen({ navigation }: any) {
   const colors = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const { user } = useAuth();
   const [completedTypes, setCompletedTypes] = useState<string[]>([]);
+  const [growth, setGrowth] = useState<GamificationProfile | null>(null);
+  const [showCertificate, setShowCertificate] = useState(false);
 
   useEffect(() => {
     const load = async () => {
+      let types: string[] = [];
       try {
         const data = await getAllAssessmentResults();
-        setCompletedTypes((data.results || []).map((r: any) => r.assessmentType));
+        types = (data.results || []).map((r: any) => r.assessmentType);
+        setCompletedTypes(types);
       } catch { /* leave empty on failure */ }
+      scheduleProfileCompletionReminder(missingCognitiveDomains(types).length).catch(() => {});
+      if (user?.id) {
+        getGamificationProfile(user.id).then((profile) => {
+          setGrowth(profile);
+          scheduleStreakReminder(profile.currentStreak).catch(() => {});
+        }).catch(() => {});
+      }
     };
     load();
     const unsub = navigation?.addListener?.('focus', load);
     return unsub;
-  }, [navigation]);
+  }, [navigation, user?.id]);
   const assessments: {
     type: string; title: string; description: string; icon: string;
     gradient: [string, string]; duration: string;
@@ -60,6 +83,20 @@ export default function AssessmentListScreen({ navigation }: any) {
     { icon: '📊', text: 'Track your cognitive profile and growth over time' },
   ];
 
+  // completedTypes may contain either mobile's own names (learning/thinking/
+  // decision) or the webapp's (kolb/sternberg/dual-process) — a domain
+  // counts as done regardless of which client completed it.
+  const doneDomains = completedDomains(completedTypes);
+
+  // Bonus "Thinking Styles" assessment (JHS/SHS/Adult) — mirrors the
+  // webapp's unlock-only-after-the-core-3 behavior. Not shown at all while
+  // locked (matches the webapp — no teaser).
+  const thinkingStylesTrack = getThinkingStylesTrack(user);
+  const thinkingStylesUnlocked = thinkingStylesTrack !== null && isThinkingStylesUnlocked(completedTypes);
+  const thinkingStylesDone = thinkingStylesTrack
+    ? completedTypes.includes(THINKING_STYLES_WIRE_TYPE[thinkingStylesTrack])
+    : false;
+
   return (
     <ScreenBackground>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
@@ -71,9 +108,71 @@ export default function AssessmentListScreen({ navigation }: any) {
           </Text>
         </View>
 
+        {growth && (() => {
+          const { level, percentage, xpToNext } = getXPProgress(growth.xp);
+          return (
+            <GlassCard
+              padding={20}
+              style={styles.growthCard}
+              onPress={() => navigation.navigate('Badges')}
+            >
+              <View style={styles.growthHeader}>
+                <View style={[styles.growthIconWrap, { backgroundColor: `${level.color}22` }]}>
+                  <AppIcon name={level.icon} size={26} color={level.color} />
+                </View>
+                <View style={styles.growthInfo}>
+                  <Text style={styles.growthLevel}>{level.title}</Text>
+                  <Text style={styles.growthSubtitle}>{level.subtitle}</Text>
+                </View>
+                <View style={styles.growthXPCol}>
+                  <Text style={styles.growthXPValue}>{growth.xp}</Text>
+                  <Text style={styles.growthXPLabel}>XP</Text>
+                </View>
+              </View>
+              <View style={styles.growthBarTrack}>
+                <View style={[styles.growthBarFill, { width: `${percentage}%`, backgroundColor: level.color }]} />
+              </View>
+              <View style={styles.growthFooter}>
+                <Text style={styles.growthFooterText}>
+                  {level.level < 10 ? `${xpToNext} XP to next level` : 'Max level reached'}
+                </Text>
+                <View style={styles.growthBadgesRow}>
+                  {growth.currentStreak > 0 && (
+                    <Text style={styles.growthFooterText}>🔥 {growth.currentStreak}d</Text>
+                  )}
+                  <Text style={styles.growthFooterText}>🎖️ {growth.badges.length}</Text>
+                  {growth.streakInsurance.available > 0 && (
+                    <Text style={styles.growthFooterText}>🛡️ {growth.streakInsurance.available}</Text>
+                  )}
+                  <TouchableOpacity
+                    onPress={(e) => { e.stopPropagation?.(); setShowCertificate(true); }}
+                    hitSlop={8}
+                    accessibilityRole="button"
+                    accessibilityLabel="Share your growth certificate"
+                  >
+                    <Text style={[styles.growthFooterText, { color: colors.purple }]}>📤 Share</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </GlassCard>
+          );
+        })()}
+
+        {growth && (
+          <CertificateModal
+            visible={showCertificate}
+            onClose={() => setShowCertificate(false)}
+            icon={getXPProgress(growth.xp).level.icon}
+            headline={getXPProgress(growth.xp).level.title}
+            subtitle={`Level ${growth.level} · ${growth.xp} XP · ${growth.badges.length} badges earned`}
+            name={user?.name ?? 'JotMinds User'}
+            date={new Date().toLocaleDateString()}
+          />
+        )}
+
         <View style={styles.list}>
           {assessments.map((a) => {
-            const done = completedTypes.includes(a.type);
+            const done = doneDomains.has(a.type as any);
             return (
               <GlassCard
                 key={a.type}
@@ -100,6 +199,39 @@ export default function AssessmentListScreen({ navigation }: any) {
           })}
         </View>
 
+        {thinkingStylesUnlocked && (
+          <View style={styles.list}>
+            <Text style={styles.sectionTitle}>Bonus Unlocked 🎉</Text>
+            <GlassCard
+              padding={20}
+              style={styles.card}
+              onPress={() => navigation.navigate(
+                thinkingStylesDone ? 'ThinkingStylesResults' : 'ThinkingStylesAssessment',
+                { track: thinkingStylesTrack },
+              )}
+            >
+              <View style={styles.cardHeader}>
+                <LinearGradient colors={['#F59E0B', '#D97706']} style={styles.iconWrap} start={{x:0,y:0}} end={{x:1,y:1}}>
+                  <AppIcon name="🎨" size={22} style={styles.icon} />
+                </LinearGradient>
+                <View style={[styles.durationPill, thinkingStylesDone && styles.donePill]}>
+                  <Text style={[styles.durationText, thinkingStylesDone && styles.donePillText]}>
+                    {thinkingStylesDone ? '✓ Completed' : '10-15 min'}
+                  </Text>
+                </View>
+              </View>
+              <Text style={styles.cardTitle}>Thinking Styles Adventure</Text>
+              <Text style={styles.cardDesc}>
+                You've completed your Core Profile! Unlock a deeper look at your creative, analytical, practical, and reflective thinking — with program and career suggestions.
+              </Text>
+              <View style={styles.startRow}>
+                <Text style={styles.startText}>{thinkingStylesDone ? 'View Results' : 'Start Assessment'}</Text>
+                <AppIcon name="→" size={18} style={styles.startArrow} />
+              </View>
+            </GlassCard>
+          </View>
+        )}
+
         <Text style={styles.sectionTitle}>Why Take These?</Text>
         {info.map((i) => (
           <GlassCard key={i.text} padding={16} style={styles.infoCard}>
@@ -120,6 +252,20 @@ const makeStyles = (colors: Palette) => StyleSheet.create({
   eyebrow: { fontSize: 12, color: colors.textSubtle, letterSpacing: 1.4, fontWeight: '700' },
   title: { fontSize: 32, fontWeight: '700', color: colors.textPrimary, marginTop: 4, letterSpacing: -0.6 },
   subtitle: { fontSize: 15, color: colors.textMuted, marginTop: spacing.sm, lineHeight: 22 },
+  growthCard: { marginBottom: spacing.xl },
+  growthHeader: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 14 },
+  growthIconWrap: { width: 48, height: 48, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
+  growthInfo: { flex: 1 },
+  growthLevel: { fontSize: 16, fontWeight: '700', color: colors.text },
+  growthSubtitle: { fontSize: 12, color: colors.textMuted, marginTop: 2 },
+  growthXPCol: { alignItems: 'flex-end' },
+  growthXPValue: { fontSize: 20, fontWeight: '800', color: colors.text },
+  growthXPLabel: { fontSize: 10, color: colors.textSubtle, fontWeight: '700', letterSpacing: 0.5 },
+  growthBarTrack: { height: 6, backgroundColor: colors.bgTertiary, borderRadius: 3, overflow: 'hidden', marginBottom: 10 },
+  growthBarFill: { height: '100%', borderRadius: 3 },
+  growthFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  growthFooterText: { fontSize: 12, color: colors.textMuted, fontWeight: '600' },
+  growthBadgesRow: { flexDirection: 'row', gap: 12 },
   list: { marginBottom: spacing.lg },
   card: { marginBottom: spacing.lg },
   cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.md },

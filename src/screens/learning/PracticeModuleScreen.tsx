@@ -10,17 +10,9 @@ import { LinearGradient } from 'expo-linear-gradient';
 import ScreenBackground from '../../components/ScreenBackground';
 import AppIcon from '../../components/AppIcon';
 import GlassCard from '../../components/GlassCard';
+import { PRACTICE_MODULES } from '../../data/practiceQuestions';
 import { colors, radii, shadow, spacing, Palette } from '../../theme';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
-
-interface PracticeQuestion {
-  id: string;
-  type: 'multiple-choice' | 'scenario' | 'reflection';
-  question: string;
-  options?: string[];
-  correctAnswer?: number;
-  explanation?: string;
-}
 
 export default function PracticeModuleScreen({ route, navigation }: any) {
   const colors = useTheme();
@@ -31,52 +23,7 @@ export default function PracticeModuleScreen({ route, navigation }: any) {
   const [showExplanation, setShowExplanation] = useState(false);
   const [score, setScore] = useState(0);
 
-  const practiceQuestions: PracticeQuestion[] = [
-    {
-      id: 'q1',
-      type: 'multiple-choice',
-      question:
-        'When analyzing an argument, what is the first step you should take?',
-      options: [
-        'Identify the conclusion',
-        'Look for emotional language',
-        "Check the author's credentials",
-        'Count the number of premises',
-      ],
-      correctAnswer: 0,
-      explanation:
-        'Identifying the conclusion helps you understand what the argument is trying to prove, which is essential before evaluating the supporting evidence.',
-    },
-    {
-      id: 'q2',
-      type: 'scenario',
-      question:
-        'A friend claims: "This diet works because I lost 5 pounds in a week!" What critical thinking skill should you apply?',
-      options: [
-        'Accept their personal experience as evidence',
-        'Question whether correlation implies causation',
-        'Immediately try the diet yourself',
-        'Ignore their claim entirely',
-      ],
-      correctAnswer: 1,
-      explanation:
-        'Personal anecdotes are not reliable evidence. Weight loss could be due to many factors, not just the diet. Critical thinkers question whether two related events are causally connected.',
-    },
-    {
-      id: 'q3',
-      type: 'multiple-choice',
-      question: 'Which of these is an example of confirmation bias?',
-      options: [
-        'Reading multiple perspectives on a topic',
-        'Only seeking information that supports your existing beliefs',
-        'Changing your mind based on new evidence',
-        'Asking questions to clarify understanding',
-      ],
-      correctAnswer: 1,
-      explanation:
-        'Confirmation bias occurs when we selectively seek or interpret information that confirms our pre-existing beliefs while ignoring contradictory evidence.',
-    },
-  ];
+  const practiceQuestions = (PRACTICE_MODULES[moduleId] ?? PRACTICE_MODULES['critical-thinking-1']).questions;
 
   const currentQuestion = practiceQuestions[currentQuestionIndex];
   const isLastQuestion = currentQuestionIndex === practiceQuestions.length - 1;

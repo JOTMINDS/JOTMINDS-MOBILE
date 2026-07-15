@@ -51,10 +51,12 @@ export default function StudentDashboard({ navigation }: any) {
     fetchAssessments();
   };
 
-  const completedTypes = assessments.map((a) => a.assessmentType);
+  const completedTypes = [...new Set(assessments.map((a) => a.assessmentType))];
 
-  // Determine if user is in kids age group (7-12)
-  const isKidsMode = user?.ageGroup === '7-12';
+  // Determine if user is in kids age group (7-12). AppUser has no
+  // `ageGroup` field (only `age`), so this previously always evaluated to
+  // false and silently never routed anyone to Kids mode.
+  const isKidsMode = typeof user?.age === 'number' && user.age >= 7 && user.age <= 12;
 
   const assessmentCards = [
     {
@@ -80,9 +82,9 @@ export default function StudentDashboard({ navigation }: any) {
     },
   ];
 
-  const progressPct = Math.round(
+  const progressPct = Math.min(100, Math.round(
     (completedTypes.length / assessmentCards.length) * 100,
-  );
+  ));
 
   if (loading) {
     return (
@@ -224,33 +226,6 @@ export default function StudentDashboard({ navigation }: any) {
           </View>
         )}
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Daily Challenge</Text>
-          <GlassCard padding={20}>
-            <View style={styles.challengeRow}>
-              <LinearGradient
-                colors={['#F59E0B', '#D97706']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.cardIconWrap}
-              >
-                <AppIcon name="🎯" size={22} color="#FFFFFF" />
-              </LinearGradient>
-              <View style={styles.cardText}>
-                <Text style={styles.cardTitle}>Complete a Reflection</Text>
-                <Text style={styles.cardDescription}>
-                  Reflect on your recent assessment results
-                </Text>
-              </View>
-              <View style={styles.pointsBadge}>
-                <View style={styles.pointsRow}>
-                  <Text style={styles.pointsText}>+10</Text>
-                  <AppIcon name="⭐" size={13} color="#B45309" />
-                </View>
-              </View>
-            </View>
-          </GlassCard>
-        </View>
       </ScrollView>
     </ScreenBackground>
   );
@@ -440,25 +415,5 @@ const makeStyles = (colors: Palette) => StyleSheet.create({
     color: colors.purple,
     fontSize: 14,
     fontWeight: '600',
-  },
-  challengeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  pointsBadge: {
-    backgroundColor: '#FEF3C7',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 12,
-  },
-  pointsText: {
-    color: '#B45309',
-    fontWeight: '700',
-    fontSize: 13,
-  },
-  pointsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
   },
 });

@@ -3,22 +3,12 @@ import {
   View, Text, ScrollView, StyleSheet, ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useAuth } from '../../context/AuthContext';
-import { callEdgeFn } from '../../utils/supabase';
+import { getWeeklyReport, getLast7Days, WeeklyReport, DayEntry } from '../../utils/mindCheckins';
 import ScreenBackground from '../../components/ScreenBackground';
 import GlassCard from '../../components/GlassCard';
 import AppIcon from '../../components/AppIcon';
 import { colors, radii, spacing, Palette } from '../../theme';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
-
-interface WeeklyData {
-  avg_focus: number;
-  delay_count: number;
-  dominant_emotion: string;
-  trend_direction: 'improving' | 'stable' | 'declining';
-  total_checkins: number;
-  recommendation_text: string;
-}
 
 const trendIcon = { improving: '📈', stable: '➡️', declining: '📉' };
 const trendColor = { improving: colors.success, stable: colors.cyan, declining: colors.error };
@@ -26,8 +16,8 @@ const trendColor = { improving: colors.success, stable: colors.cyan, declining: 
 export default function WeeklySnapshotScreen({ navigation }: any) {
   const colors = useTheme();
   const styles = useThemedStyles(makeStyles);
-  const { user } = useAuth();
-  const [data, setData] = useState<WeeklyData | null>(null);
+  const [data, setData] = useState<WeeklyReport | null>(null);
+  const [days, setDays] = useState<DayEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -35,23 +25,10 @@ export default function WeeklySnapshotScreen({ navigation }: any) {
   }, []);
 
   const loadSnapshot = async () => {
-    try {
-      const res = await callEdgeFn(`/checkin/weekly/${user?.id}`);
-      setData(res?.report ?? res);
-    } catch {
-      // fallback to placeholder
-      setData({
-        avg_focus: 3.4,
-        delay_count: 2,
-        dominant_emotion: 'calm',
-        trend_direction: 'improving',
-        total_checkins: 5,
-        recommendation_text:
-          'Your focus trend is improving this week. Consider protecting your peak-focus hours (typically 9–11am) for deep work. Your calm emotional baseline is a strong foundation.',
-      });
-    } finally {
-      setLoading(false);
-    }
+    const [report, last7] = await Promise.all([getWeeklyReport(), getLast7Days()]);
+    setData(report);
+    setDays(last7);
+    setLoading(false);
   };
 
   if (loading) {
@@ -111,21 +88,22 @@ export default function WeeklySnapshotScreen({ navigation }: any) {
           ))}
         </View>
 
-        {/* Focus bar chart (simplified) */}
+        {/* Focus bar chart — real per-day scores from local check-in history */}
         <GlassCard style={styles.chartCard}>
           <Text style={styles.chartTitle}>Focus Score This Week</Text>
           <View style={styles.barChart}>
-            {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, i) => {
-              const height = Math.floor(Math.random() * 60) + 20;
+            {days.map((d, i) => {
+              const score = d.checkin?.focus_score ?? 0;
+              const height = Math.max((score / 5) * 80, 8);
               return (
-                <View key={day} style={styles.barCol}>
+                <View key={i} style={styles.barCol}>
                   <LinearGradient
                     colors={['#6E4D9C', '#3D52C9']}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 0, y: 1 }}
                     style={[styles.bar, { height }]}
                   />
-                  <Text style={styles.barLabel}>{day}</Text>
+                  <Text style={styles.barLabel}>{d.label}</Text>
                 </View>
               );
             })}

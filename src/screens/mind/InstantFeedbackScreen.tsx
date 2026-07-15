@@ -19,7 +19,7 @@ function generateFeedback(checkin: any) {
   };
 
   const patterns: Record<string, string> = {
-    calm: 'Calm states correlate with 23% higher accuracy in decision-making.',
+    calm: 'Calm states tend to support clearer, more accurate decision-making.',
     confident: 'Confident states often precede peak performance windows.',
     anxious: 'Anxiety narrows attentional focus — useful for detail work, limiting for creative tasks.',
     overwhelmed: 'Overwhelm signals your cognitive load is at its limit. Prioritisation is critical now.',

@@ -2,299 +2,143 @@ import React, { useState } from 'react';
 import {
   View,
   Text,
-  ScrollView,
   StyleSheet,
   TouchableOpacity,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import ScreenBackground from '../../components/ScreenBackground';
 import AppIcon from '../../components/AppIcon';
-import GlassCard from '../../components/GlassCard';
-import { colors, radii, shadow, spacing, Palette } from '../../theme';
+import { teachingStyleQuestions } from '../../data/teachingStyleQuestions';
+import { calculateTeachingStyleScore } from '../../utils/teachingStyleScoring';
+import { recordAssessmentCompletion } from '../../utils/gamificationApi';
+import { markTeachingStyleDone } from '../../utils/teachingStyleStatus';
+import { useAuth } from '../../context/AuthContext';
+import { rs } from '../../utils/responsive';
+import { colors, radii, spacing, Palette } from '../../theme';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 
-interface AssessmentQuestion {
-  id: string;
-  question: string;
-  options: string[];
-}
+// Same conversational Likert scale as AssessmentTakingScreen.
+const LIKERT = [
+  { value: 5, label: 'Strongly agree', tint: '#10B981' },
+  { value: 4, label: 'Agree', tint: '#3D52C9' },
+  { value: 3, label: 'Neutral', tint: '#8A97B2' },
+  { value: 2, label: 'Disagree', tint: '#6E4D9C' },
+  { value: 1, label: 'Strongly disagree', tint: '#EC4899' },
+];
 
 export default function TeachingStyleAssessmentScreen({ navigation }: any) {
   const colors = useTheme();
   const styles = useThemedStyles(makeStyles);
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
-  const [answers, setAnswers] = useState<number[]>([]);
+  const { user } = useAuth();
+  const [index, setIndex] = useState(0);
+  // Keyed by question id (not array index — ids are non-contiguous).
+  const [answers, setAnswers] = useState<Record<number, number>>({});
 
-  const questions: AssessmentQuestion[] = [
-    {
-      id: 'q1',
-      question:
-        'When planning a lesson, what do you prioritize most?',
-      options: [
-        'Clear structure and step-by-step progression',
-        'Opportunities for student exploration and discovery',
-        'Collaborative activities and group work',
-        'Individual student needs and differentiation',
-      ],
-    },
-    {
-      id: 'q2',
-      question:
-        'How do you typically respond when a student struggles with a concept?',
-      options: [
-        'Re-teach using a different method or example',
-        'Guide them with questions to discover the answer themselves',
-        'Pair them with a peer for collaborative problem-solving',
-        'Provide personalized support based on their learning style',
-      ],
-    },
-    {
-      id: 'q3',
-      question: 'Which classroom environment do you prefer?',
-      options: [
-        'Organized with clear routines and procedures',
-        'Flexible with space for exploration and hands-on learning',
-        'Interactive with frequent group discussions',
-        'Adaptive with different stations for different needs',
-      ],
-    },
-    {
-      id: 'q4',
-      question: 'How do you assess student understanding?',
-      options: [
-        'Regular quizzes and structured assessments',
-        'Projects and demonstrations of learning',
-        'Group presentations and peer evaluations',
-        'Individual conferences and personalized check-ins',
-      ],
-    },
-    {
-      id: 'q5',
-      question:
-        'What role do you see yourself playing in the classroom?',
-      options: [
-        'Expert and knowledge provider',
-        'Facilitator and guide',
-        'Collaborator and learning partner',
-        'Coach and mentor',
-      ],
-    },
-  ];
+  const question = teachingStyleQuestions[index];
+  const total = teachingStyleQuestions.length;
+  const isLastQuestion = index === total - 1;
+  const progress = ((index + 1) / total) * 100;
 
-  const currentQuestion = questions[currentQuestionIndex];
-  const isLastQuestion = currentQuestionIndex === questions.length - 1;
-
-  const handleAnswer = (index: number) => {
-    setSelectedAnswer(index);
+  const finish = (finalAnswers: Record<number, number>) => {
+    // calculateTeachingStyleScore expects a 1-indexed-by-id sparse array.
+    const maxId = teachingStyleQuestions[teachingStyleQuestions.length - 1].id;
+    const responses: number[] = new Array(maxId).fill(0);
+    teachingStyleQuestions.forEach((q) => {
+      if (finalAnswers[q.id]) responses[q.id - 1] = finalAnswers[q.id];
+    });
+    const score = calculateTeachingStyleScore(responses);
+    // No backend persistence for this assessment (see TeachingStyleResultsScreen —
+    // the score is passed via nav params, not fetched), so award right after
+    // computing rather than after a submit that doesn't exist.
+    if (user?.id) recordAssessmentCompletion(user.id).catch(() => {});
+    markTeachingStyleDone();
+    navigation.navigate('TeachingStyleResults', { score });
   };
 
-  const handleNext = () => {
-    if (selectedAnswer !== null) {
-      const newAnswers = [...answers, selectedAnswer];
-      setAnswers(newAnswers);
-
-      if (isLastQuestion) {
-        navigation.navigate('TeachingStyleResults', { answers: newAnswers });
-      } else {
-        setCurrentQuestionIndex(currentQuestionIndex + 1);
-        setSelectedAnswer(null);
-      }
+  const choose = (value: number) => {
+    const updated = { ...answers, [question.id]: value };
+    setAnswers(updated);
+    if (isLastQuestion) {
+      finish(updated);
+    } else {
+      setIndex(index + 1);
     }
+  };
+
+  const goBack = () => {
+    if (index === 0) return;
+    setIndex(index - 1);
   };
 
   return (
     <ScreenBackground>
-      <ScrollView
-        contentContainerStyle={styles.scroll}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.header}>
-          <View style={styles.progressHeader}>
-            <Text style={styles.progressText}>
-              Question {currentQuestionIndex + 1} of {questions.length}
-            </Text>
-          </View>
-          <View style={styles.progressTrack}>
-            <View
-              style={[
-                styles.progressFill,
-                {
-                  width: `${((currentQuestionIndex + 1) / questions.length) * 100}%`,
-                },
-              ]}
-            />
-          </View>
-        </View>
-
-        <GlassCard padding={24} style={styles.questionCard}>
-          <View style={styles.questionHeader}>
-            <LinearGradient
-              colors={['#10B981', '#059669']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.questionIconWrap}
-            >
-              <AppIcon name="🎯" size={22} style={styles.questionIcon} />
-            </LinearGradient>
-          </View>
-          <Text style={styles.questionText}>{currentQuestion.question}</Text>
-        </GlassCard>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Select Your Response</Text>
-          {currentQuestion.options.map((option, index) => {
-            const isSelected = selectedAnswer === index;
-
-            return (
-              <TouchableOpacity key={index} onPress={() => handleAnswer(index)}>
-                <GlassCard
-                  padding={16}
-                  style={[
-                    styles.optionCard,
-                    isSelected && { borderColor: colors.success, borderWidth: 2 },
-                  ]}
-                >
-                  <View style={styles.optionRow}>
-                    <View
-                      style={[
-                        styles.optionCircle,
-                        isSelected && styles.optionCircleSelected,
-                      ]}
-                    >
-                      {isSelected && <AppIcon name="✓" size={18} style={styles.checkmark} />}
-                    </View>
-                    <Text style={styles.optionText}>{option}</Text>
-                  </View>
-                </GlassCard>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-
-        {selectedAnswer !== null && (
-          <TouchableOpacity onPress={handleNext}>
-            <LinearGradient
-              colors={['#10B981', '#059669']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.nextButton}
-            >
-              <Text style={styles.nextButtonText}>
-                {isLastQuestion ? 'View Results' : 'Next Question'} →
-              </Text>
-            </LinearGradient>
+      <View style={styles.container}>
+        <View style={styles.topBar}>
+          <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={12} accessibilityRole="button" accessibilityLabel="Exit assessment">
+            <AppIcon name="✕" size={22} color={colors.textMuted} />
           </TouchableOpacity>
-        )}
-      </ScrollView>
+          <Text style={styles.framework}>Teaching Style</Text>
+          <View style={{ width: 22 }} />
+        </View>
+        <View style={styles.progressTrack}>
+          <View style={[styles.progressFill, { width: `${progress}%` }]} />
+        </View>
+
+        <View style={styles.body}>
+          <Text style={styles.counter}>QUESTION {index + 1} OF {total}</Text>
+          <Text style={styles.question}>{question.text}</Text>
+
+          <View style={styles.options}>
+            {LIKERT.map((opt) => {
+              const isSel = answers[question.id] === opt.value;
+              return (
+                <TouchableOpacity
+                  key={opt.value}
+                  activeOpacity={0.85}
+                  style={[styles.option, isSel && { borderColor: opt.tint, backgroundColor: `${opt.tint}22` }]}
+                  onPress={() => choose(opt.value)}
+                  accessibilityRole="button"
+                  accessibilityLabel={opt.label}
+                >
+                  <View style={[styles.dot, { borderColor: opt.tint }, isSel && { backgroundColor: opt.tint }]} />
+                  <Text style={[styles.optionText, isSel && { color: colors.text, fontWeight: '700' }]}>{opt.label}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+
+        <View style={styles.footer}>
+          {index > 0 ? (
+            <TouchableOpacity onPress={goBack} hitSlop={10} accessibilityRole="button" accessibilityLabel="Previous question">
+              <Text style={styles.backText}>← Previous</Text>
+            </TouchableOpacity>
+          ) : <View />}
+        </View>
+      </View>
     </ScreenBackground>
   );
 }
 
 const makeStyles = (colors: Palette) => StyleSheet.create({
-  scroll: {
-    paddingTop: 20,
-    paddingHorizontal: spacing.xl,
-    paddingBottom: 120,
+  container: { flex: 1, paddingHorizontal: spacing.xl, paddingTop: 8 },
+  topBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 },
+  framework: { fontSize: rs(13), fontWeight: '700', color: colors.textMuted, letterSpacing: 0.3 },
+  progressTrack: { height: 4, backgroundColor: colors.bgTertiary, borderRadius: 2, overflow: 'hidden' },
+  progressFill: { height: '100%', borderRadius: 2, backgroundColor: colors.success },
+  body: { flex: 1, justifyContent: 'center' },
+  counter: { fontSize: rs(12), fontWeight: '700', color: colors.success, letterSpacing: 1.5, marginBottom: 16, textAlign: 'center' },
+  question: {
+    fontSize: rs(24), fontWeight: '800', color: colors.text, textAlign: 'center',
+    lineHeight: rs(32), letterSpacing: -0.5, marginBottom: 40, paddingHorizontal: 4,
   },
-  header: {
-    marginBottom: spacing.xl,
+  options: { gap: 12 },
+  option: {
+    flexDirection: 'row', alignItems: 'center', gap: 14,
+    paddingVertical: 18, paddingHorizontal: 18, borderRadius: radii.lg,
+    backgroundColor: colors.glassMedium, borderWidth: 1.5, borderColor: colors.borderLight,
   },
-  progressHeader: {
-    marginBottom: spacing.sm,
-  },
-  progressText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.text,
-  },
-  progressTrack: {
-    height: 8,
-    backgroundColor: 'rgba(16, 185, 129, 0.2)',
-    borderRadius: 4,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    backgroundColor: colors.success,
-    borderRadius: 4,
-  },
-  questionCard: {
-    marginBottom: spacing.xl,
-  },
-  questionHeader: {
-    alignItems: 'center',
-    marginBottom: spacing.md,
-  },
-  questionIconWrap: {
-    width: 64,
-    height: 64,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  questionIcon: {
-    fontSize: 32,
-  },
-  questionText: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: colors.text,
-    lineHeight: 26,
-    textAlign: 'center',
-  },
-  section: {
-    marginBottom: spacing.xl,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: colors.textPrimary,
-    marginBottom: spacing.md,
-  },
-  optionCard: {
-    marginBottom: spacing.md,
-  },
-  optionRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  optionCircle: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: colors.textMuted,
-    marginRight: spacing.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  optionCircleSelected: {
-    borderColor: colors.success,
-    backgroundColor: colors.success,
-  },
-  checkmark: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  optionText: {
-    flex: 1,
-    fontSize: 15,
-    color: colors.text,
-    lineHeight: 21,
-  },
-  nextButton: {
-    borderRadius: radii.lg,
-    paddingVertical: 16,
-    alignItems: 'center',
-    marginBottom: spacing.xxl,
-    ...shadow.glow,
-  },
-  nextButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '700',
-    letterSpacing: 0.5,
-  },
+  dot: { width: 22, height: 22, borderRadius: 11, borderWidth: 2 },
+  optionText: { flex: 1, fontSize: rs(16), color: colors.textSecondary, fontWeight: '600' },
+  footer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 20, minHeight: 60 },
+  backText: { fontSize: rs(15), color: colors.textMuted, fontWeight: '600' },
 });

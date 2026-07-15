@@ -1,87 +1,80 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
   ScrollView,
   StyleSheet,
-  TouchableOpacity,
+  ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import ScreenBackground from '../../components/ScreenBackground';
 import AppIcon from '../../components/AppIcon';
 import GlassCard from '../../components/GlassCard';
+import { getAllAssessmentResults } from '../../utils/api';
+import { getGamificationProfile } from '../../utils/gamificationApi';
+import { useAuth } from '../../context/AuthContext';
 import { colors, radii, shadow, spacing, Palette } from '../../theme';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 
-interface Goal {
-  id: string;
+interface TimelineItem {
+  date: string;
   title: string;
-  category: string;
-  progress: number;
-  target: string;
-  gradient: [string, string];
+  type: 'assessment' | 'badge';
+  icon: string;
 }
 
 export default function GrowthTrackerScreen({ navigation }: any) {
   const colors = useTheme();
   const styles = useThemedStyles(makeStyles);
-  const goals: Goal[] = [
-    {
-      id: '1',
-      title: 'Implement differentiated instruction',
-      category: 'Pedagogy',
-      progress: 65,
-      target: 'June 2026',
-      gradient: ['#10B981', '#059669'],
-    },
-    {
-      id: '2',
-      title: 'Master formative assessment techniques',
-      category: 'Assessment',
-      progress: 85,
-      target: 'May 2026',
-      gradient: ['#3D52C9', '#2E3FA8'],
-    },
-    {
-      id: '3',
-      title: 'Integrate technology tools',
-      category: 'Technology',
-      progress: 40,
-      target: 'July 2026',
-      gradient: ['#6366F1', '#4F46E5'],
-    },
-    {
-      id: '4',
-      title: 'Build culturally responsive practices',
-      category: 'Equity',
-      progress: 25,
-      target: 'August 2026',
-      gradient: ['#F59E0B', '#D97706'],
-    },
-  ];
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const [timeline, setTimeline] = useState<TimelineItem[]>([]);
+  const [badgeCount, setBadgeCount] = useState(0);
+  const [assessmentCount, setAssessmentCount] = useState(0);
+  const [streak, setStreak] = useState(0);
 
-  const milestones = [
-    {
-      date: 'May 10, 2026',
-      title: 'Completed Assessment Strategies Module',
-      type: 'completed',
-    },
-    {
-      date: 'May 5, 2026',
-      title: 'Peer Observation Session',
-      type: 'completed',
-    },
-    {
-      date: 'Apr 28, 2026',
-      title: 'Workshop: Classroom Management',
-      type: 'completed',
-    },
-    {
-      date: 'May 25, 2026',
-      title: 'Upcoming: Technology Integration Workshop',
-      type: 'upcoming',
-    },
-  ];
+  useEffect(() => {
+    if (!user?.id) { setLoading(false); return; }
+    Promise.all([
+      getAllAssessmentResults().catch(() => ({ results: [] })),
+      getGamificationProfile(user.id).catch(() => null),
+    ]).then(([assessmentsRes, profile]) => {
+      const results = assessmentsRes?.results ?? [];
+      const badges = profile?.badges ?? [];
+
+      const items: TimelineItem[] = [
+        ...results
+          .filter((r: any) => r?.completedAt)
+          .map((r: any) => ({
+            date: r.completedAt,
+            title: `Completed ${r.assessmentType} assessment`,
+            type: 'assessment' as const,
+            icon: '✅',
+          })),
+        ...badges
+          .filter((b: any) => b?.unlockedAt)
+          .map((b: any) => ({
+            date: b.unlockedAt,
+            title: `Earned badge: ${b.name}`,
+            type: 'badge' as const,
+            icon: b.icon ?? '🏆',
+          })),
+      ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+      setTimeline(items);
+      setBadgeCount(badges.length);
+      setAssessmentCount(results.length);
+      setStreak(profile?.currentStreak ?? 0);
+    }).finally(() => setLoading(false));
+  }, [user?.id]);
+
+  if (loading) {
+    return (
+      <ScreenBackground>
+        <View style={styles.centered}><ActivityIndicator size="large" color={colors.purple} /></View>
+      </ScreenBackground>
+    );
+  }
 
   return (
     <ScreenBackground>
@@ -91,9 +84,9 @@ export default function GrowthTrackerScreen({ navigation }: any) {
       >
         <View style={styles.header}>
           <Text style={styles.greeting}>Growth Tracker</Text>
- <Text style={styles.name}>Your Professional Journey</Text>
+          <Text style={styles.name}>Your Professional Journey</Text>
           <Text style={styles.tagline}>
-            Monitor progress and celebrate milestones
+            Real activity — assessments completed and badges earned
           </Text>
         </View>
 
@@ -106,99 +99,48 @@ export default function GrowthTrackerScreen({ navigation }: any) {
           <Text style={styles.statsLabel}>OVERALL PROGRESS</Text>
           <View style={styles.statsRow}>
             <View style={styles.stat}>
-              <Text style={styles.statValue}>54%</Text>
-              <Text style={styles.statLabel}>Complete</Text>
+              <Text style={styles.statValue}>{assessmentCount}</Text>
+              <Text style={styles.statLabel}>Assessments</Text>
             </View>
             <View style={styles.statDivider} />
             <View style={styles.stat}>
-              <Text style={styles.statValue}>4</Text>
-              <Text style={styles.statLabel}>Active Goals</Text>
+              <Text style={styles.statValue}>{badgeCount}</Text>
+              <Text style={styles.statLabel}>Badges</Text>
             </View>
             <View style={styles.statDivider} />
             <View style={styles.stat}>
-              <Text style={styles.statValue}>12</Text>
-              <Text style={styles.statLabel}>Hours Logged</Text>
+              <Text style={styles.statValue}>{streak}</Text>
+              <Text style={styles.statLabel}>Day Streak</Text>
             </View>
           </View>
         </LinearGradient>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Active Goals</Text>
-          {goals.map((goal) => (
-            <GlassCard key={goal.id} padding={20} style={styles.goalCard}>
-              <View style={styles.goalHeader}>
-                <Text style={styles.goalTitle}>{goal.title}</Text>
-                <Text style={styles.goalCategory}>{goal.category}</Text>
-              </View>
-              <View style={styles.goalMetaRow}>
-                <Text style={styles.goalTarget}>Target: {goal.target}</Text>
-                <Text style={styles.goalProgress}>{goal.progress}%</Text>
-              </View>
-              <View style={styles.progressBarTrack}>
-                <LinearGradient
-                  colors={goal.gradient}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={[styles.progressBarFill, { width: `${goal.progress}%` }]}
-                />
-              </View>
+          <Text style={styles.sectionTitle}>Activity Timeline</Text>
+          {timeline.length === 0 ? (
+            <GlassCard padding={24}>
+              <Text style={styles.emptyText}>
+                Complete an assessment or earn a badge to start building your growth timeline.
+              </Text>
             </GlassCard>
-          ))}
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Milestones</Text>
-          {milestones.map((milestone, index) => (
-            <GlassCard key={index} padding={16} style={styles.milestoneCard}>
-              <View style={styles.milestoneRow}>
-                <View
-                  style={[
-                    styles.milestoneDot,
-                    {
-                      backgroundColor:
-                        milestone.type === 'completed'
-                          ? colors.success
-                          : colors.cyan,
-                    },
-                  ]}
-                />
-                <View style={styles.milestoneContent}>
-                  <Text style={styles.milestoneTitle}>{milestone.title}</Text>
-                  <Text style={styles.milestoneDate}>{milestone.date}</Text>
-                </View>
-                {milestone.type === 'completed' && (
-                  <View style={styles.completedBadge}>
-                    <AppIcon name="✓" size={18} style={styles.completedText} />
+          ) : (
+            timeline.map((item, index) => (
+              <GlassCard key={index} padding={16} style={styles.milestoneCard}>
+                <View style={styles.milestoneRow}>
+                  <AppIcon name={item.icon} size={20} style={styles.milestoneIcon} />
+                  <View style={styles.milestoneContent}>
+                    <Text style={styles.milestoneTitle}>{item.title}</Text>
+                    <Text style={styles.milestoneDate}>{new Date(item.date).toLocaleDateString()}</Text>
                   </View>
-                )}
-              </View>
-            </GlassCard>
-          ))}
+                </View>
+              </GlassCard>
+            ))
+          )}
         </View>
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Quick Actions</Text>
-          <GlassCard padding={16} style={styles.actionCard}>
-            <View style={styles.actionRow}>
-              <LinearGradient
-                colors={['#6E4D9C', '#5A3E82']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.actionIconWrap}
-              >
-                <AppIcon name="➕" size={22} style={styles.actionIcon} />
-              </LinearGradient>
-              <View style={styles.actionContent}>
-                <Text style={styles.actionTitle}>Add New Goal</Text>
-                <Text style={styles.actionDescription}>
-                  Set a new professional development goal
-                </Text>
-              </View>
-              <AppIcon name="→" size={18} style={styles.actionArrow} />
-            </View>
-          </GlassCard>
-
-          <GlassCard padding={16} style={styles.actionCard}>
+          <GlassCard padding={16} style={styles.actionCard} onPress={() => navigation.navigate('Badges')}>
             <View style={styles.actionRow}>
               <LinearGradient
                 colors={['#3D52C9', '#2E3FA8']}
@@ -211,7 +153,7 @@ export default function GrowthTrackerScreen({ navigation }: any) {
               <View style={styles.actionContent}>
                 <Text style={styles.actionTitle}>View Full Report</Text>
                 <Text style={styles.actionDescription}>
-                  See detailed analytics and insights
+                  See your detailed Cognitive Growth breakdown
                 </Text>
               </View>
               <AppIcon name="→" size={18} style={styles.actionArrow} />
@@ -229,6 +171,7 @@ const makeStyles = (colors: Palette) => StyleSheet.create({
     paddingHorizontal: spacing.xl,
     paddingBottom: 120,
   },
+  centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   header: {
     marginBottom: spacing.xxl,
   },
@@ -298,50 +241,7 @@ const makeStyles = (colors: Palette) => StyleSheet.create({
     marginBottom: spacing.md,
     letterSpacing: -0.4,
   },
-  goalCard: {
-    marginBottom: spacing.md,
-  },
-  goalHeader: {
-    marginBottom: spacing.sm,
-  },
-  goalTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: colors.text,
-    marginBottom: 4,
-  },
-  goalCategory: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: colors.success,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  goalMetaRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: spacing.sm,
-  },
-  goalTarget: {
-    fontSize: 13,
-    color: colors.textMuted,
-  },
-  goalProgress: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: colors.success,
-  },
-  progressBarTrack: {
-    height: 8,
-    backgroundColor: 'rgba(16, 185, 129, 0.2)',
-    borderRadius: 4,
-    overflow: 'hidden',
-  },
-  progressBarFill: {
-    height: '100%',
-    borderRadius: 4,
-  },
+  emptyText: { fontSize: 14, color: colors.textMuted, lineHeight: 20, textAlign: 'center' },
   milestoneCard: {
     marginBottom: spacing.md,
   },
@@ -349,10 +249,8 @@ const makeStyles = (colors: Palette) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  milestoneDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
+  milestoneIcon: {
+    fontSize: 20,
     marginRight: spacing.md,
   },
   milestoneContent: {
@@ -367,19 +265,6 @@ const makeStyles = (colors: Palette) => StyleSheet.create({
   milestoneDate: {
     fontSize: 12,
     color: colors.textMuted,
-  },
-  completedBadge: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: colors.successSoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  completedText: {
-    color: colors.success,
-    fontSize: 14,
-    fontWeight: '700',
   },
   actionCard: {
     marginBottom: spacing.md,

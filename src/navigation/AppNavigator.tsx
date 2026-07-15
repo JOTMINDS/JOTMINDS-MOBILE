@@ -28,6 +28,7 @@ import StudentDashboard from '../screens/dashboards/StudentDashboard';
 import TeacherDashboard from '../screens/dashboards/TeacherDashboard';
 import ParentDashboard from '../screens/dashboards/ParentDashboard';
 import ProfessionalDashboard from '../screens/dashboards/ProfessionalDashboard';
+import TeamScreen from '../screens/dashboards/TeamScreen';
 
 // ── Discover ──────────────────────────────────────────────────────────────────
 import DiscoverScreen from '../screens/discover/DiscoverScreen';
@@ -53,6 +54,8 @@ import CareerMatchesScreen from '../screens/rolefit/CareerMatchesScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import AccessibilityScreen from '../screens/profile/AccessibilityScreen';
 import NotificationsScreen from '../screens/profile/NotificationsScreen';
+import BadgesScreen from '../screens/profile/BadgesScreen';
+import FamilySharingScreen from '../screens/profile/FamilySharingScreen';
 import PrivacySettingsScreen from '../screens/profile/PrivacySettingsScreen';
 import HelpSupportScreen from '../screens/profile/HelpSupportScreen';
 import EditProfileScreen from '../screens/profile/EditProfileScreen';
@@ -62,6 +65,8 @@ import EditProfileScreen from '../screens/profile/EditProfileScreen';
 import AssessmentListScreen from '../screens/assessments/AssessmentListScreen';
 import AssessmentTakingScreen from '../screens/assessments/AssessmentTakingScreen';
 import AssessmentResultsScreen from '../screens/assessments/AssessmentResultsScreen';
+import ThinkingStylesAssessmentScreen from '../screens/assessments/ThinkingStylesAssessmentScreen';
+import ThinkingStylesResultsScreen from '../screens/assessments/ThinkingStylesResultsScreen';
 
 // ── Teacher ───────────────────────────────────────────────────────────────────
 import TeacherDevelopmentScreen from '../screens/teacher/TeacherDevelopmentScreen';
@@ -72,7 +77,11 @@ import GrowthTrackerScreen from '../screens/teacher/GrowthTrackerScreen';
 // ── Parent ────────────────────────────────────────────────────────────────────
 import CoachingPathwaysScreen from '../screens/parent/CoachingPathwaysScreen';
 import PathwayDetailScreen from '../screens/parent/PathwayDetailScreen';
-import ExpertConsultationScreen from '../screens/parent/ExpertConsultationScreen';
+import SupportRequestScreen from '../screens/parent/SupportRequestScreen';
+import ParentChildDetailScreen from '../screens/parent/ParentChildDetailScreen';
+import ParentObservationScreen from '../screens/parent/ParentObservationScreen';
+import ParentObservationResultsScreen from '../screens/parent/ParentObservationResultsScreen';
+import PairingInsightsScreen from '../screens/parent/PairingInsightsScreen';
 
 // ── Learning ──────────────────────────────────────────────────────────────────
 import SkillBuilderScreen from '../screens/learning/SkillBuilderScreen';
@@ -233,6 +242,8 @@ export default function AppNavigator() {
             {/* Profile */}
             <Stack.Screen name="Accessibility" component={AccessibilityScreen} />
             <Stack.Screen name="Notifications" component={NotificationsScreen} />
+            <Stack.Screen name="Badges" component={BadgesScreen} options={{ headerShown: true, title: 'Cognitive Growth' }} />
+            <Stack.Screen name="FamilySharing" component={FamilySharingScreen} />
             <Stack.Screen name="EditProfile" component={EditProfileScreen} />
             <Stack.Screen name="PrivacySettings" component={PrivacySettingsScreen} />
             <Stack.Screen name="HelpSupport" component={HelpSupportScreen} />
@@ -254,6 +265,16 @@ export default function AppNavigator() {
               component={AssessmentResultsScreen}
               options={{ headerShown: true, title: 'Results' }}
             />
+            <Stack.Screen
+              name="ThinkingStylesAssessment"
+              component={ThinkingStylesAssessmentScreen}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="ThinkingStylesResults"
+              component={ThinkingStylesResultsScreen}
+              options={{ headerShown: true, title: 'Thinking Styles' }}
+            />
 
             {/* Teacher */}
             <Stack.Screen name="TeacherDevelopment" component={TeacherDevelopmentScreen} options={{ headerShown: true, title: 'Professional Development' }} />
@@ -262,9 +283,14 @@ export default function AppNavigator() {
             <Stack.Screen name="GrowthTracker" component={GrowthTrackerScreen} options={{ headerShown: true, title: 'Growth Tracker' }} />
 
             {/* Parent */}
-            <Stack.Screen name="CoachingPathways" component={CoachingPathwaysScreen} options={{ headerShown: true, title: 'Coaching Pathways' }} />
-            <Stack.Screen name="PathwayDetail" component={PathwayDetailScreen} options={{ headerShown: true, title: 'Pathway' }} />
-            <Stack.Screen name="ExpertConsultation" component={ExpertConsultationScreen} options={{ headerShown: true, title: 'Expert Consultation' }} />
+            <Stack.Screen name="CoachingPathways" component={CoachingPathwaysScreen} />
+            <Stack.Screen name="PathwayDetail" component={PathwayDetailScreen} />
+            <Stack.Screen name="SupportRequest" component={SupportRequestScreen} />
+            <Stack.Screen name="ParentChildDetail" component={ParentChildDetailScreen} options={{ headerShown: true, title: 'Child Profile' }} />
+            <Stack.Screen name="Team" component={TeamScreen} />
+            <Stack.Screen name="ParentObservation" component={ParentObservationScreen} />
+            <Stack.Screen name="ParentObservationResults" component={ParentObservationResultsScreen} options={{ headerShown: true, title: 'Observation Results' }} />
+            <Stack.Screen name="PairingInsights" component={PairingInsightsScreen} options={{ headerShown: true, title: 'Pairing Insights' }} />
 
             {/* Learning */}
             <Stack.Screen name="SkillBuilder" component={SkillBuilderScreen} options={{ headerShown: true, title: 'Skill Builder' }} />

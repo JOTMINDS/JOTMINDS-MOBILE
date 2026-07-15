@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { saveBrainGymResult } from '../../utils/brainGym';
+import { N_BACK_PARAMS, Difficulty, saveDifficultyBest } from '../../utils/brainGymDifficulty';
 import ScreenBackground from '../../components/ScreenBackground';
 import GlassCard from '../../components/GlassCard';
 import AppIcon from '../../components/AppIcon';
@@ -12,28 +13,29 @@ import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 
 const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'];
 const TRIALS = 15;
-const INTERVAL = 2200;
 
-function buildSequence(): string[] {
+function buildSequence(n: number): string[] {
   const seq: string[] = [];
   for (let i = 0; i < TRIALS; i++) {
-    // ~33% chance this trial repeats the previous letter (a "match")
-    if (i > 0 && Math.random() < 0.33) {
-      seq.push(seq[i - 1]);
+    // ~33% chance this trial repeats the letter from n trials back (a "match")
+    if (i >= n && Math.random() < 0.33) {
+      seq.push(seq[i - n]);
     } else {
       let l = LETTERS[Math.floor(Math.random() * LETTERS.length)];
-      if (i > 0) while (l === seq[i - 1]) l = LETTERS[Math.floor(Math.random() * LETTERS.length)];
+      if (i >= n) while (l === seq[i - n]) l = LETTERS[Math.floor(Math.random() * LETTERS.length)];
       seq.push(l);
     }
   }
   return seq;
 }
 
-export default function NBackScreen({ navigation }: any) {
+export default function NBackScreen({ navigation, route }: any) {
   const colors = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const difficulty: Difficulty = route.params?.difficulty ?? 'easy';
+  const { n, intervalMs } = N_BACK_PARAMS[difficulty];
   const [phase, setPhase] = useState<'intro' | 'play' | 'done'>('intro');
-  const [seq] = useState<string[]>(buildSequence);
+  const [seq] = useState<string[]>(() => buildSequence(n));
   const [index, setIndex] = useState(0);
   const [flash, setFlash] = useState<'none' | 'hit' | 'miss'>('none');
   const tapped = useRef(false);
@@ -48,11 +50,11 @@ export default function NBackScreen({ navigation }: any) {
     const t = setTimeout(() => {
       responses.current[index] = tapped.current;
       setIndex((i) => i + 1);
-    }, INTERVAL);
+    }, intervalMs);
     return () => clearTimeout(t);
   }, [index, phase]);
 
-  const isMatch = (i: number) => i > 0 && seq[i] === seq[i - 1];
+  const isMatch = (i: number) => i >= n && seq[i] === seq[i - n];
 
   const onMatch = () => {
     if (tapped.current) return;
@@ -75,6 +77,7 @@ export default function NBackScreen({ navigation }: any) {
     const s = Math.max(0, hits * 100 - falseAlarms * 60);
     setScore(s); setAccuracy(acc); setPhase('done');
     saveBrainGymResult({ game: 'n-back', score: s, accuracy: acc });
+    saveDifficultyBest('n-back', difficulty, s);
   };
 
   const start = () => { responses.current = []; setIndex(0); setPhase('play'); };
@@ -96,10 +99,10 @@ export default function NBackScreen({ navigation }: any) {
       <ScreenBackground>
         <View style={styles.introWrap}>
           <AppIcon name="🧠" size={56} color={colors.purpleSoft} />
-          <Text style={styles.introTitle}>N-Back (1-back)</Text>
+          <Text style={styles.introTitle}>N-Back ({n}-back)</Text>
           <Text style={styles.introText}>
             Letters appear one at a time. Tap <Text style={styles.bold}>Match</Text> whenever the current letter is the
-            same as the one immediately before it. Stay sharp!
+            same as the one from {n} step{n > 1 ? 's' : ''} before. Stay sharp!
           </Text>
           <TouchableOpacity style={styles.startBtn} onPress={start} accessibilityRole="button" accessibilityLabel="Start game">
             <LinearGradient colors={['#3D52C9', '#6E4D9C']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.startGradient}>

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -10,61 +10,51 @@ import { LinearGradient } from 'expo-linear-gradient';
 import ScreenBackground from '../../components/ScreenBackground';
 import AppIcon from '../../components/AppIcon';
 import GlassCard from '../../components/GlassCard';
+import { teachingStyleProfiles, axisDescriptions } from '../../data/teachingStyleProfiles';
+import { TeachingStyleScore } from '../../utils/teachingStyleScoring';
+import CertificateModal from '../../components/CertificateModal';
+import { useAuth } from '../../context/AuthContext';
 import { colors, radii, shadow, spacing, Palette } from '../../theme';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
+
+const PROFILE_STYLE: Record<string, { icon: string; gradient: [string, string] }> = {
+  'Authoritative Instructor': { icon: '📐', gradient: ['#6E4D9C', '#5A3E82'] },
+  'Structured Educator': { icon: '📚', gradient: ['#3D52C9', '#2E3FA8'] },
+  'Facilitator Coach': { icon: '🌱', gradient: ['#10B981', '#059669'] },
+  'Engagement Driver': { icon: '⚡', gradient: ['#EC4899', '#DB2777'] },
+  'Learning Architect': { icon: '🏗️', gradient: ['#3D52C9', '#14136E'] },
+  'Innovation Leader': { icon: '💡', gradient: ['#F59E0B', '#D97706'] },
+  'Traditionalist': { icon: '📖', gradient: ['#6E4D9C', '#14136E'] },
+  'Student-Centered Mentor': { icon: '🎯', gradient: ['#10B981', '#3D52C9'] },
+};
+
+const AXIS_ORDER: (keyof TeachingStyleScore['scores'])[] = [
+  'axisAuthority', 'axisKnowledge', 'axisMotivation', 'axisAssessment', 'axisAdaptability', 'axisClimate',
+];
 
 export default function TeachingStyleResultsScreen({ route, navigation }: any) {
   const colors = useTheme();
   const styles = useThemedStyles(makeStyles);
-  const { answers } = route.params || { answers: [] };
+  const { user } = useAuth();
+  const score: TeachingStyleScore | undefined = route.params?.score;
+  const [showCertificate, setShowCertificate] = useState(false);
 
-  // Calculate teaching style based on answers (simplified logic)
-  const getTeachingStyle = () => {
-    const counts = [0, 0, 0, 0];
-    answers.forEach((answer: number) => {
-      counts[answer]++;
-    });
-    const maxIndex = counts.indexOf(Math.max(...counts));
+  if (!score) {
+    return (
+      <ScreenBackground>
+        <View style={styles.centered}>
+          <Text style={styles.emptyTitle}>No results yet</Text>
+          <Text style={styles.emptyText}>Take the assessment to view your teaching style.</Text>
+          <TouchableOpacity onPress={() => navigation.navigate('TeachingStyleAssessment')} style={{ marginTop: spacing.lg }}>
+            <Text style={{ color: colors.success, fontWeight: '700' }}>Take Assessment</Text>
+          </TouchableOpacity>
+        </View>
+      </ScreenBackground>
+    );
+  }
 
-    const styles = [
-      {
-        name: 'Structured Instructor',
-        description: 'You excel at providing clear, organized instruction with well-defined learning objectives',
-        strengths: ['Clear communication', 'Organized planning', 'Consistent routines'],
-        growth: ['Incorporate more student choice', 'Try flexible grouping'],
-        icon: '📚',
-        gradient: ['#6E4D9C', '#5A3E82'] as [string, string],
-      },
-      {
-        name: 'Inquiry Facilitator',
-        description: 'You guide students to discover knowledge through exploration and questioning',
-        strengths: ['Fostering curiosity', 'Problem-based learning', 'Critical thinking'],
-        growth: ['Balance with direct instruction', 'Ensure foundational knowledge'],
-        icon: '🔍',
-        gradient: ['#3D52C9', '#2E3FA8'] as [string, string],
-      },
-      {
-        name: 'Collaborative Coach',
-        description: 'You create dynamic learning communities where students learn together',
-        strengths: ['Building relationships', 'Peer learning', 'Communication skills'],
-        growth: ['Monitor individual progress', 'Balance group and solo work'],
-        icon: '👥',
-        gradient: ['#EC4899', '#DB2777'] as [string, string],
-      },
-      {
-        name: 'Differentiated Mentor',
-        description: 'You tailor instruction to meet each student where they are',
-        strengths: ['Personalization', 'Individual support', 'Responsive teaching'],
-        growth: ['Streamline management', 'Use flexible grouping'],
-        icon: '🎯',
-        gradient: ['#10B981', '#059669'] as [string, string],
-      },
-    ];
-
-    return styles[maxIndex];
-  };
-
-  const teachingStyle = getTeachingStyle();
+  const profile = teachingStyleProfiles[score.primaryStyle];
+  const visual = PROFILE_STYLE[score.primaryStyle] ?? { icon: '🎓', gradient: ['#10B981', '#059669'] as [string, string] };
 
   return (
     <ScreenBackground>
@@ -74,94 +64,104 @@ export default function TeachingStyleResultsScreen({ route, navigation }: any) {
       >
         <View style={styles.header}>
           <Text style={styles.greeting}>Assessment Complete!</Text>
-          <Text style={styles.name}>Your Teaching Style {teachingStyle.icon}</Text>
+          <Text style={styles.name}>Your Teaching Style {visual.icon}</Text>
         </View>
 
         <LinearGradient
-          colors={teachingStyle.gradient}
+          colors={visual.gradient}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.styleCard}
         >
           <Text style={styles.styleLabel}>YOUR PRIMARY STYLE</Text>
-          <Text style={styles.styleName}>{teachingStyle.name}</Text>
-          <Text style={styles.styleDescription}>
-            {teachingStyle.description}
-          </Text>
+          <Text style={styles.styleName}>{score.primaryStyle}</Text>
+          {score.secondaryStyle ? (
+            <Text style={styles.styleSecondary}>Secondary: {score.secondaryStyle}</Text>
+          ) : null}
         </LinearGradient>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Your Strengths</Text>
-          {teachingStyle.strengths.map((strength, index) => (
-            <GlassCard key={index} padding={16} style={styles.itemCard}>
-              <View style={styles.itemRow}>
-                <View style={styles.strengthDot} />
-                <Text style={styles.itemText}>{strength}</Text>
-              </View>
-            </GlassCard>
-          ))}
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Growth Opportunities</Text>
-          {teachingStyle.growth.map((opportunity, index) => (
-            <GlassCard key={index} padding={16} style={styles.itemCard}>
-              <View style={styles.itemRow}>
-                <View style={styles.growthDot} />
-                <Text style={styles.itemText}>{opportunity}</Text>
-              </View>
-            </GlassCard>
-          ))}
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Recommended Actions</Text>
-          <GlassCard padding={20} style={styles.actionCard}>
-            <View style={styles.actionRow}>
-              <LinearGradient
-                colors={['#6E4D9C', '#5A3E82']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.actionIconWrap}
-              >
-                <AppIcon name="📚" size={22} style={styles.actionIcon} />
-              </LinearGradient>
-              <View style={styles.actionContent}>
-                <Text style={styles.actionTitle}>
-                  Explore Development Modules
-                </Text>
-                <Text style={styles.actionDescription}>
-                  Find modules tailored to your teaching style
-                </Text>
-              </View>
-              <AppIcon name="→" size={18} style={styles.actionArrow} />
-            </View>
+          <Text style={styles.sectionTitle}>Your Axis Scores</Text>
+          <GlassCard padding={20}>
+            {AXIS_ORDER.map((axis, i, arr) => {
+              const desc = axisDescriptions[axis];
+              const n = score.scores[axis];
+              return (
+                <View key={axis} style={[styles.scoreRow, i === arr.length - 1 && { marginBottom: 0 }]}>
+                  <View style={styles.scoreHeader}>
+                    <Text style={styles.scoreLabel}>{desc.title}</Text>
+                    <Text style={styles.scoreValue}>{n}/100</Text>
+                  </View>
+                  <View style={styles.scoreBar}>
+                    <LinearGradient
+                      colors={visual.gradient}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 0 }}
+                      style={[styles.scoreBarFill, { width: `${n}%` }]}
+                    />
+                  </View>
+                  <View style={styles.scorePoles}>
+                    <Text style={styles.scorePoleText}>{desc.low}</Text>
+                    <Text style={styles.scorePoleText}>{desc.high}</Text>
+                  </View>
+                </View>
+              );
+            })}
           </GlassCard>
+        </View>
 
-          <GlassCard
-            padding={20}
-            style={styles.actionCard}
-            onPress={() => navigation.navigate('GrowthTracker')}
+        {profile && (
+          <>
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Your Strengths</Text>
+              {profile.strengths.map((strength, index) => (
+                <GlassCard key={index} padding={16} style={styles.itemCard}>
+                  <View style={styles.itemRow}>
+                    <View style={styles.strengthDot} />
+                    <Text style={styles.itemText}>{strength}</Text>
+                  </View>
+                </GlassCard>
+              ))}
+            </View>
+
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Blind Spots</Text>
+              {profile.blindSpots.map((spot, index) => (
+                <GlassCard key={index} padding={16} style={styles.itemCard}>
+                  <View style={styles.itemRow}>
+                    <View style={styles.growthDot} />
+                    <Text style={styles.itemText}>{spot}</Text>
+                  </View>
+                </GlassCard>
+              ))}
+            </View>
+
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Recommendations</Text>
+              {profile.recommendations.map((rec, index) => (
+                <GlassCard key={index} padding={16} style={styles.itemCard}>
+                  <View style={styles.itemRow}>
+                    <AppIcon name="💡" size={18} style={{ marginRight: spacing.md }} />
+                    <Text style={styles.itemText}>{rec}</Text>
+                  </View>
+                </GlassCard>
+              ))}
+            </View>
+          </>
+        )}
+
+        <TouchableOpacity onPress={() => setShowCertificate(true)}>
+          <LinearGradient
+            colors={visual.gradient}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.continueButton}
           >
-            <View style={styles.actionRow}>
-              <LinearGradient
-                colors={['#10B981', '#059669']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.actionIconWrap}
-              >
-                <AppIcon name="📈" size={22} style={styles.actionIcon} />
-              </LinearGradient>
-              <View style={styles.actionContent}>
-                <Text style={styles.actionTitle}>Track Your Growth</Text>
-                <Text style={styles.actionDescription}>
-                  Set goals and monitor your progress
-                </Text>
-              </View>
-              <AppIcon name="→" size={18} style={styles.actionArrow} />
-            </View>
-          </GlassCard>
-        </View>
+            <Text style={styles.continueButtonText}>
+              Share Your Results 📤
+            </Text>
+          </LinearGradient>
+        </TouchableOpacity>
 
         <TouchableOpacity
           onPress={() => navigation.navigate('TeacherDevelopment')}
@@ -179,12 +179,22 @@ export default function TeachingStyleResultsScreen({ route, navigation }: any) {
         </TouchableOpacity>
 
         <TouchableOpacity
-          onPress={() => navigation.goBack()}
+          onPress={() => navigation.navigate('TeachingStyleAssessment')}
           style={styles.retryButton}
         >
           <Text style={styles.retryButtonText}>Retake Assessment</Text>
         </TouchableOpacity>
       </ScrollView>
+
+      <CertificateModal
+        visible={showCertificate}
+        onClose={() => setShowCertificate(false)}
+        icon={visual.icon}
+        headline={score.primaryStyle}
+        subtitle="Teaching Style · JotMinds"
+        name={user?.name ?? 'JotMinds User'}
+        date={new Date().toLocaleDateString()}
+      />
     </ScreenBackground>
   );
 }
@@ -195,6 +205,9 @@ const makeStyles = (colors: Palette) => StyleSheet.create({
     paddingHorizontal: spacing.xl,
     paddingBottom: 120,
   },
+  centered: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: spacing.xl },
+  emptyTitle: { fontSize: 22, fontWeight: '700', color: colors.textPrimary, marginBottom: spacing.sm },
+  emptyText: { fontSize: 14, color: colors.textMuted, textAlign: 'center' },
   header: {
     marginBottom: spacing.xxl,
   },
@@ -231,10 +244,10 @@ const makeStyles = (colors: Palette) => StyleSheet.create({
     fontWeight: '800',
     marginBottom: spacing.md,
   },
-  styleDescription: {
-    color: 'rgba(255,255,255,0.9)',
-    fontSize: 15,
-    lineHeight: 22,
+  styleSecondary: {
+    color: 'rgba(255,255,255,0.85)',
+    fontSize: 14,
+    fontWeight: '600',
   },
   section: {
     marginBottom: spacing.xxl,
@@ -246,6 +259,14 @@ const makeStyles = (colors: Palette) => StyleSheet.create({
     marginBottom: spacing.md,
     letterSpacing: -0.4,
   },
+  scoreRow: { marginBottom: spacing.lg },
+  scoreHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
+  scoreLabel: { fontSize: 14, fontWeight: '600', color: colors.text },
+  scoreValue: { fontSize: 14, fontWeight: '700', color: colors.textMuted },
+  scoreBar: { height: 8, backgroundColor: '#E5EEFF', borderRadius: 4, overflow: 'hidden' },
+  scoreBarFill: { height: '100%', borderRadius: 4 },
+  scorePoles: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 },
+  scorePoleText: { fontSize: 10, color: colors.textSubtle, fontWeight: '600' },
   itemCard: {
     marginBottom: spacing.md,
   },
@@ -273,43 +294,6 @@ const makeStyles = (colors: Palette) => StyleSheet.create({
     fontWeight: '600',
     color: colors.text,
     lineHeight: 21,
-  },
-  actionCard: {
-    marginBottom: spacing.md,
-  },
-  actionRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  actionIconWrap: {
-    width: 48,
-    height: 48,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: spacing.lg,
-  },
-  actionIcon: {
-    fontSize: 24,
-  },
-  actionContent: {
-    flex: 1,
-  },
-  actionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.text,
-    marginBottom: 2,
-  },
-  actionDescription: {
-    fontSize: 13,
-    color: colors.textMuted,
-    lineHeight: 18,
-  },
-  actionArrow: {
-    fontSize: 22,
-    color: colors.success,
-    fontWeight: '700',
   },
   continueButton: {
     borderRadius: radii.lg,

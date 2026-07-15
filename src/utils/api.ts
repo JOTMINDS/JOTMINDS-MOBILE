@@ -1,5 +1,6 @@
 // Compatibility shim — all calls now go through the authenticated Supabase client
 import { callEdgeFn } from './supabase';
+import { WIRE_TYPE, MobileAssessmentType } from './scoring';
 
 export { callEdgeFn };
 
@@ -9,8 +10,21 @@ export const updateUserProfile = (updates: Record<string, any>) =>
 export const getAllAssessmentResults = () =>
   callEdgeFn('/assessment/results');
 
-export const getAssessmentResults = (type: string) =>
-  callEdgeFn(`/assessment/results/${type}`);
+const wireType = (type: string) => WIRE_TYPE[type as MobileAssessmentType] ?? type;
+
+// The three core assessments (learning/thinking/decision) are now stored
+// under the webapp's own names (kolb/sternberg/dual-process) so both apps
+// share one record — see src/utils/scoring.ts's WIRE_TYPE doc comment.
+// Reads fall back to the pre-migration mobile name so older results (or an
+// account that hasn't retaken the assessment since) still show up.
+export const getAssessmentResults = async (type: string) => {
+  const wt = wireType(type);
+  const primary = await callEdgeFn(`/assessment/results/${wt}`);
+  if (wt !== type && !primary?.results && !primary?.result) {
+    return callEdgeFn(`/assessment/results/${type}`);
+  }
+  return primary;
+};
 
 export const saveProgress = (
   assessmentType: string,
@@ -20,11 +34,11 @@ export const saveProgress = (
 ) =>
   callEdgeFn('/assessment/progress', {
     method: 'POST',
-    body: JSON.stringify({ assessmentType, currentQuestion, answers, completed }),
+    body: JSON.stringify({ assessmentType: wireType(assessmentType), currentQuestion, answers, completed }),
   });
 
 export const getProgress = (assessmentType: string) =>
-  callEdgeFn(`/assessment/progress/${assessmentType}`);
+  callEdgeFn(`/assessment/progress/${wireType(assessmentType)}`);
 
 export const submitAssessment = (
   assessmentType: string,
@@ -36,7 +50,14 @@ export const submitAssessment = (
 ) =>
   callEdgeFn('/assessment/submit', {
     method: 'POST',
-    body: JSON.stringify({ assessmentType, answers, results, strengths, weaknesses, recommendations }),
+    body: JSON.stringify({
+      assessmentType: wireType(assessmentType),
+      answers,
+      results,
+      strengths,
+      weaknesses,
+      recommendations,
+    }),
   });
 
 export const getLinkedChildren = () =>

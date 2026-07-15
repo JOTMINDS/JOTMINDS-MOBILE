@@ -1,35 +1,62 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../../context/AuthContext';
+import { getAllAssessmentResults } from '../../utils/api';
 import ScreenBackground from '../../components/ScreenBackground';
 import GlassCard from '../../components/GlassCard';
 import AppIcon from '../../components/AppIcon';
 import { colors, radii, spacing, Palette } from '../../theme';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import { missingCognitiveDomains, domainLabel } from '../../utils/profileCompleteness';
+import { calculateRoleFitScore, mapMobileProfileToDimensions, CognitiveRoleFitScore } from '../../utils/roleFitEngine';
+import { GLOBAL_CAREERS, GlobalCareer } from '../../data/globalCareers';
 
-const SAMPLE_ROLES = [
-  { id: '1', title: 'Data Scientist', category: 'Technology', icon: '📊', fit: 82 },
-  { id: '2', title: 'Product Manager', category: 'Business', icon: '🎯', fit: 74 },
-  { id: '3', title: 'UX Designer', category: 'Creative', icon: '🎨', fit: 68 },
-  { id: '4', title: 'Clinical Psychologist', category: 'Healthcare', icon: '🧠', fit: 91 },
-];
+const CATEGORY_COLOR: Record<string, string> = {
+  'Natural Accelerator': colors.success,
+  'Strong Alignment': colors.cyan,
+  'Adaptable Fit': colors.warning,
+  'Strain Risk': '#F97316',
+  'Misalignment Risk': colors.error,
+};
 
-function fitCategory(score: number) {
-  if (score >= 85) return { label: 'Natural Accelerator', color: colors.success };
-  if (score >= 70) return { label: 'Strong Alignment', color: colors.cyan };
-  if (score >= 55) return { label: 'Adaptable Fit', color: colors.warning };
-  if (score >= 40) return { label: 'Strain Risk', color: '#F97316' };
-  return { label: 'Misalignment Risk', color: colors.error };
-}
+const CAREER_ICONS: Record<string, string> = {
+  'software-engineer': '💻',
+  'product-manager': '🎯',
+  'counseling-psychologist': '🧠',
+  'data-analyst': '📊',
+  'marketing-strategist': '📣',
+  'healthcare-administrator': '🏥',
+  'financial-auditor': '💰',
+  'creative-director': '🎨',
+};
 
 export default function RoleFitHomeScreen({ navigation }: any) {
   const colors = useTheme();
   const styles = useThemedStyles(makeStyles);
   const { user } = useAuth();
-  const missing = missingCognitiveDomains(user?.assessmentsCompleted);
+  const [completedTypes, setCompletedTypes] = useState<string[]>(user?.assessmentsCompleted ?? []);
+  const [topMatches, setTopMatches] = useState<{ career: GlobalCareer; result: CognitiveRoleFitScore }[]>([]);
+  const missing = missingCognitiveDomains(completedTypes);
   const hasProfile = missing.length === 0;
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const data = await getAllAssessmentResults();
+        const results = data?.results ?? [];
+        setCompletedTypes(results.map((r: any) => r.assessmentType));
+        if (missingCognitiveDomains(results.map((r: any) => r.assessmentType)).length === 0) {
+          const candidate = mapMobileProfileToDimensions(results);
+          const scored = GLOBAL_CAREERS.map((career) => ({
+            career,
+            result: calculateRoleFitScore(candidate, career.demands),
+          })).sort((a, b) => b.result.fitScore - a.result.fitScore);
+          setTopMatches(scored.slice(0, 4));
+        }
+      } catch { /* leave empty on failure */ }
+    })();
+  }, []);
 
   return (
     <ScreenBackground>
@@ -114,39 +141,41 @@ export default function RoleFitHomeScreen({ navigation }: any) {
           </View>
         </View>
 
-        {/* Sample matches */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Roles You Might Fit</Text>
-          <Text style={styles.sectionSub}>Based on typical cognitive profiles for your role type</Text>
-          {SAMPLE_ROLES.map((role) => {
-            const cat = fitCategory(role.fit);
-            return (
-              <GlassCard
-                key={role.id}
-                style={styles.roleCard}
-                onPress={() => navigation.navigate('RoleFitResult', { roleId: role.id, role })}
-              >
-                <View style={styles.roleRow}>
-                  <View style={styles.roleIconWrap}>
-                    <AppIcon name={role.icon} size={22} color={colors.textPrimary} />
+        {/* Real matches */}
+        {hasProfile && topMatches.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Roles You Might Fit</Text>
+            <Text style={styles.sectionSub}>Scored against your completed cognitive profile</Text>
+            {topMatches.map(({ career, result }) => {
+              const color = CATEGORY_COLOR[result.fitCategory] ?? colors.cyan;
+              return (
+                <GlassCard
+                  key={career.id}
+                  style={styles.roleCard}
+                  onPress={() => navigation.navigate('RoleFitResult', { roleName: career.title, result })}
+                >
+                  <View style={styles.roleRow}>
+                    <View style={styles.roleIconWrap}>
+                      <AppIcon name={CAREER_ICONS[career.id] ?? '💼'} size={22} color={colors.textPrimary} />
+                    </View>
+                    <View style={styles.roleInfo}>
+                      <Text style={styles.roleTitle}>{career.title}</Text>
+                      <Text style={styles.roleCategory}>{career.category}</Text>
+                    </View>
+                    <View style={styles.roleFitCol}>
+                      <Text style={[styles.roleFitScore, { color }]}>{result.fitScore}</Text>
+                      <Text style={[styles.roleFitLabel, { color }]}>{result.fitCategory}</Text>
+                    </View>
                   </View>
-                  <View style={styles.roleInfo}>
-                    <Text style={styles.roleTitle}>{role.title}</Text>
-                    <Text style={styles.roleCategory}>{role.category}</Text>
+                  {/* Score bar */}
+                  <View style={styles.scoreBarTrack}>
+                    <View style={[styles.scoreBarFill, { width: `${result.fitScore}%`, backgroundColor: color }]} />
                   </View>
-                  <View style={styles.roleFitCol}>
-                    <Text style={[styles.roleFitScore, { color: cat.color }]}>{role.fit}</Text>
-                    <Text style={[styles.roleFitLabel, { color: cat.color }]}>{cat.label}</Text>
-                  </View>
-                </View>
-                {/* Score bar */}
-                <View style={styles.scoreBarTrack}>
-                  <View style={[styles.scoreBarFill, { width: `${role.fit}%`, backgroundColor: cat.color }]} />
-                </View>
-              </GlassCard>
-            );
-          })}
-        </View>
+                </GlassCard>
+              );
+            })}
+          </View>
+        )}
 
         {/* Disclaimer */}
         <Text style={styles.disclaimer}>

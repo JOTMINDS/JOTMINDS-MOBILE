@@ -3,8 +3,7 @@ import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useAuth } from '../../context/AuthContext';
-import { callEdgeFn } from '../../utils/supabase';
+import { getTodayCheckin, getStreak } from '../../utils/mindCheckins';
 import ScreenBackground from '../../components/ScreenBackground';
 import GlassCard from '../../components/GlassCard';
 import AppIcon from '../../components/AppIcon';
@@ -14,7 +13,6 @@ import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 export default function MindHomeScreen({ navigation }: any) {
   const colors = useTheme();
   const styles = useThemedStyles(makeStyles);
-  const { user } = useAuth();
   const [todayDone, setTodayDone] = useState(false);
   const [streak, setStreak] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -26,16 +24,12 @@ export default function MindHomeScreen({ navigation }: any) {
 
   const loadCheckinStatus = async () => {
     try {
-      const data = await callEdgeFn(`/checkin/latest/${user?.id}`);
-      if (data?.checkin) {
-        const checkinDate = new Date(data.checkin.created_at).toDateString();
-        const today = new Date().toDateString();
-        setTodayDone(checkinDate === today);
-        setLastCheckin(data.checkin);
+      const [today, streakVal] = await Promise.all([getTodayCheckin(), getStreak()]);
+      if (today) {
+        setTodayDone(true);
+        setLastCheckin(today);
       }
-      setStreak(data?.streak ?? 0);
-    } catch {
-      // No check-ins yet
+      setStreak(streakVal);
     } finally {
       setLoading(false);
     }

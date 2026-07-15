@@ -10,6 +10,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import ScreenBackground from '../../components/ScreenBackground';
 import AppIcon from '../../components/AppIcon';
 import GlassCard from '../../components/GlassCard';
+import { PRACTICE_MODULES } from '../../data/practiceQuestions';
 import { colors, radii, shadow, spacing, Palette } from '../../theme';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 
@@ -18,6 +19,7 @@ export default function PracticeResultsScreen({ route, navigation }: any) {
   const styles = useThemedStyles(makeStyles);
   const { score, total, moduleId } = route.params;
   const percentage = Math.round((score / total) * 100);
+  const moduleData = PRACTICE_MODULES[moduleId] ?? PRACTICE_MODULES['critical-thinking-1'];
 
   const getPerformanceLevel = () => {
     if (percentage >= 80) return { level: 'Excellent', emoji: '🌟', color: colors.success };
@@ -27,30 +29,6 @@ export default function PracticeResultsScreen({ route, navigation }: any) {
   };
 
   const performance = getPerformanceLevel();
-
-  const recommendations = [
-    {
-      id: '1',
-      title: 'Review Key Concepts',
-      description: 'Go back and review the questions you missed',
-      icon: '📖',
-      gradient: ['#3D52C9', '#2E3FA8'] as [string, string],
-    },
-    {
-      id: '2',
-      title: 'Try Advanced Module',
-      description: 'Challenge yourself with harder exercises',
-      icon: '🚀',
-      gradient: ['#6E4D9C', '#5A3E82'] as [string, string],
-    },
-    {
-      id: '3',
-      title: 'Join Study Group',
-      description: 'Practice with peers in your learning community',
-      icon: '👥',
-      gradient: ['#EC4899', '#DB2777'] as [string, string],
-    },
-  ];
 
   return (
     <ScreenBackground>
@@ -88,9 +66,7 @@ export default function PracticeResultsScreen({ route, navigation }: any) {
               <AppIcon name="💡" size={22} style={styles.insightIcon} />
               <View style={styles.insightContent}>
                 <Text style={styles.insightTitle}>Strength Identified</Text>
-                <Text style={styles.insightText}>
-                  You excel at analyzing arguments and identifying conclusions. Keep building on this skill!
-                </Text>
+                <Text style={styles.insightText}>{moduleData.strengthNote}</Text>
               </View>
             </View>
           </GlassCard>
@@ -100,9 +76,7 @@ export default function PracticeResultsScreen({ route, navigation }: any) {
               <AppIcon name="🎯" size={22} style={styles.insightIcon} />
               <View style={styles.insightContent}>
                 <Text style={styles.insightTitle}>Area for Growth</Text>
-                <Text style={styles.insightText}>
-                  Practice recognizing cognitive biases in real-world scenarios to strengthen your critical thinking.
-                </Text>
+                <Text style={styles.insightText}>{moduleData.growthNote}</Text>
               </View>
             </View>
           </GlassCard>
@@ -110,33 +84,30 @@ export default function PracticeResultsScreen({ route, navigation }: any) {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Recommended Next Steps</Text>
-          {recommendations.map((rec) => (
-            <GlassCard
-              key={rec.id}
-              onPress={() => {}}
-              style={styles.recommendationCard}
-            >
-              <View style={styles.recRow}>
-                <LinearGradient
-                  colors={rec.gradient}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={styles.recIconWrap}
-                >
-                  <AppIcon name={rec.icon} size={22} style={styles.recIcon} />
-                </LinearGradient>
-                <View style={styles.recContent}>
-                  <Text style={styles.recTitle}>{rec.title}</Text>
-                  <Text style={styles.recDescription}>{rec.description}</Text>
-                </View>
-                <AppIcon name="→" size={18} style={styles.recArrow} />
+          <GlassCard
+            onPress={() => navigation.navigate('PracticeModule', { moduleId })}
+            style={styles.recommendationCard}
+          >
+            <View style={styles.recRow}>
+              <LinearGradient
+                colors={['#3D52C9', '#2E3FA8']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.recIconWrap}
+              >
+                <AppIcon name="📖" size={22} style={styles.recIcon} />
+              </LinearGradient>
+              <View style={styles.recContent}>
+                <Text style={styles.recTitle}>Review Key Concepts</Text>
+                <Text style={styles.recDescription}>Retry this module to reinforce what you learned</Text>
               </View>
-            </GlassCard>
-          ))}
+              <AppIcon name="→" size={18} style={styles.recArrow} />
+            </View>
+          </GlassCard>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Achievements</Text>
+          <Text style={styles.sectionTitle}>Result</Text>
           <GlassCard padding={20}>
             <View style={styles.achievementRow}>
               <LinearGradient
@@ -150,11 +121,11 @@ export default function PracticeResultsScreen({ route, navigation }: any) {
               <View style={styles.achievementContent}>
                 <Text style={styles.achievementTitle}>Module Completed</Text>
                 <Text style={styles.achievementDescription}>
-                  You've earned 50 points
+                  You answered {score} of {total} correctly
                 </Text>
               </View>
               <View style={styles.pointsBadge}>
- <Text style={styles.pointsText}>+50</Text>
+                <Text style={styles.pointsText}>{percentage}%</Text>
               </View>
             </View>
           </GlassCard>

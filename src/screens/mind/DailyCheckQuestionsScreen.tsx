@@ -3,9 +3,8 @@ import {
   View, Text, StyleSheet, TouchableOpacity, ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
-import { submitWithOutbox } from '../../utils/outbox';
+import { saveCheckin } from '../../utils/mindCheckins';
 import ScreenBackground from '../../components/ScreenBackground';
 import GlassCard from '../../components/GlassCard';
 import AppIcon from '../../components/AppIcon';
@@ -23,7 +22,6 @@ const EMOTIONS = [
 export default function DailyCheckQuestionsScreen({ navigation }: any) {
   const colors = useTheme();
   const styles = useThemedStyles(makeStyles);
-  const { user } = useAuth();
   const toast = useToast();
   const [step, setStep] = useState(1);
   const [focusScore, setFocusScore] = useState<number | null>(null);
@@ -37,21 +35,14 @@ export default function DailyCheckQuestionsScreen({ navigation }: any) {
     if (!focusScore || decisionDelay === null || !emotionalState) return;
     setSubmitting(true);
     const checkin = {
-      user_id: user?.id,
       focus_score: focusScore,
       decision_delay: decisionDelay,
       emotional_state: emotionalState,
       created_at: new Date().toISOString(),
     };
     try {
-      // Works offline: if there's no connection the check-in is queued and
-      // synced later; the user still gets their instant feedback now.
-      const { queued, data } = await submitWithOutbox('/checkin', checkin, 'checkin');
-      if (queued) toast.info("You're offline — saved. We'll sync it when you reconnect.");
-      navigation.replace('InstantFeedback', {
-        checkin,
-        feedback: data?.feedback, // undefined → screen computes feedback locally
-      });
+      await saveCheckin(checkin);
+      navigation.replace('InstantFeedback', { checkin });
     } catch {
       toast.error('Could not save check-in. Please try again.');
     } finally {

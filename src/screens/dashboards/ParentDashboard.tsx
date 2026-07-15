@@ -13,12 +13,12 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../../context/AuthContext';
 import {
-  getLinkedChildren,
   createAccessRequest,
   getPendingAccessRequests,
   approveAccessRequest,
   denyAccessRequest,
 } from '../../utils/api';
+import { getLinkedChildrenWithAssessments } from '../../utils/parentApi';
 import ScreenBackground from '../../components/ScreenBackground';
 import GlassCard from '../../components/GlassCard';
 import GradientButton from '../../components/GradientButton';
@@ -39,7 +39,7 @@ export default function ParentDashboard({ navigation }: any) {
 
   const fetchData = async () => {
     try {
-      const [c, r] = await Promise.all([getLinkedChildren(), getPendingAccessRequests()]);
+      const [c, r] = await Promise.all([getLinkedChildrenWithAssessments(), getPendingAccessRequests()]);
       setChildren(c.children || []);
       setRequests(r.requests || []);
     } catch (e) {
@@ -133,7 +133,7 @@ export default function ParentDashboard({ navigation }: any) {
             <View style={styles.snapshotDivider} />
             <View style={styles.snapshotStat}>
               <Text style={styles.snapshotStatValue}>
-                {children.reduce((s, c) => s + (c.assessmentsCompleted?.length || 0), 0)}
+                {children.reduce((s, c) => s + (c.assessments?.length || 0), 0)}
               </Text>
               <Text style={styles.snapshotStatLabel}>Insights</Text>
             </View>
@@ -196,20 +196,26 @@ export default function ParentDashboard({ navigation }: any) {
               </View>
             </GlassCard>
           ) : (
-            children.map((child, i) => (
-              <GlassCard key={i} style={styles.spacedCard} padding={16}>
+            children.map((entry, i) => (
+              <GlassCard
+                key={i}
+                style={styles.spacedCard}
+                padding={16}
+                onPress={() => navigation.navigate('ParentChildDetail', { child: entry })}
+              >
                 <View style={styles.row}>
                   <LinearGradient colors={['#EC4899', '#DB2777']} style={styles.avatar} start={{x:0,y:0}} end={{x:1,y:1}}>
-                    <Text style={styles.avatarText}>{(child.name || '?')[0].toUpperCase()}</Text>
+                    <Text style={styles.avatarText}>{(entry.child?.name || '?')[0].toUpperCase()}</Text>
                   </LinearGradient>
                   <View style={{ flex: 1, marginLeft: spacing.md }}>
-                    <Text style={styles.cardTitle}>{child.name}</Text>
-                    <Text style={styles.cardSubtle}>{child.email}</Text>
+                    <Text style={styles.cardTitle}>{entry.child?.name}</Text>
+                    <Text style={styles.cardSubtle}>{entry.child?.email}</Text>
                   </View>
                   <View style={styles.statBadge}>
-                    <Text style={styles.statBadgeText}>{child.assessmentsCompleted?.length || 0}</Text>
+                    <Text style={styles.statBadgeText}>{entry.assessments?.length || 0}</Text>
                     <Text style={styles.statBadgeLabel}>tests</Text>
                   </View>
+                  <AppIcon name="arrow-forward" size={16} color={colors.purple} style={{ marginLeft: spacing.sm }} />
                 </View>
               </GlassCard>
             ))
@@ -218,34 +224,12 @@ export default function ParentDashboard({ navigation }: any) {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Parent Resources</Text>
-          <GlassCard
-            padding={16}
-            style={styles.spacedCard}
-            onPress={() => navigation.navigate('CoachingPathways')}
-          >
-            <View style={styles.row}>
-              <LinearGradient
-                colors={['#EC4899', '#DB2777']}
-                style={styles.resourceIcon}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
-                <AppIcon name="🎓" size={22} color="#FFFFFF" />
-              </LinearGradient>
-              <View style={{ flex: 1, marginLeft: spacing.md }}>
-                <Text style={styles.cardTitle}>Coaching Pathways</Text>
-                <Text style={styles.cardSubtle}>
-                  Expert-guided programs to support your child
-                </Text>
-              </View>
-              <Text style={styles.resourceArrow}>→</Text>
-            </View>
-          </GlassCard>
+          <Text style={styles.resourceHint}>Tap a child above for their personalized Coaching Pathways.</Text>
 
           <GlassCard
             padding={16}
             style={styles.spacedCard}
-            onPress={() => navigation.navigate('ExpertConsultation')}
+            onPress={() => navigation.navigate('SupportRequest')}
           >
             <View style={styles.row}>
               <LinearGradient
@@ -254,12 +238,12 @@ export default function ParentDashboard({ navigation }: any) {
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
               >
-                <AppIcon name="⚕️" size={22} color="#FFFFFF" />
+                <AppIcon name="✉️" size={22} color="#FFFFFF" />
               </LinearGradient>
               <View style={{ flex: 1, marginLeft: spacing.md }}>
-                <Text style={styles.cardTitle}>Expert Consultation</Text>
+                <Text style={styles.cardTitle}>Get Support</Text>
                 <Text style={styles.cardSubtle}>
-                  Book 1-on-1 sessions with specialists
+                  Reach our team about a concern
                 </Text>
               </View>
               <Text style={styles.resourceArrow}>→</Text>
@@ -287,6 +271,7 @@ const makeStyles = (colors: Palette) => StyleSheet.create({
   snapshotDivider: { width: 1, height: 32, backgroundColor: 'rgba(255,255,255,0.25)' },
   section: { marginBottom: spacing.xxl },
   sectionTitle: { fontSize: 20, fontWeight: '700', color: colors.textPrimary, marginBottom: spacing.md, letterSpacing: -0.4 },
+  resourceHint: { fontSize: 12, color: colors.textSubtle, marginTop: -8, marginBottom: spacing.md },
   sectionHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.sm },
   addLink: { color: colors.purple, fontSize: 15, fontWeight: '700' },
   spacedCard: { marginBottom: spacing.md },

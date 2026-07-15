@@ -4,50 +4,106 @@ import { LinearGradient } from 'expo-linear-gradient';
 import ScreenBackground from '../../components/ScreenBackground';
 import GlassCard from '../../components/GlassCard';
 import AppIcon from '../../components/AppIcon';
+import { generatePersonalizedReport, RoleCognitiveDemand } from '../../utils/roleFitEngine';
 import { colors, radii, spacing, Palette } from '../../theme';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 
-const DEFAULT_RECS = [
-  {
-    week: 'Week 1–2',
-    focus: 'Awareness',
-    icon: '👁️',
-    color: colors.cyan,
+const DIMENSION_ACTIONS: Record<keyof RoleCognitiveDemand, { focus: string; icon: string; actions: string[] }> = {
+  analyticalDepth: {
+    focus: 'Analytical Depth',
+    icon: '🔍',
     actions: [
-      'Shadow someone in this role for 2 hours',
-      'Journal daily on where you felt cognitively stretched',
-      'Take the full Decision Style assessment if not completed',
+      'Practice breaking a complex problem into a structured list of sub-questions before answering it.',
+      'Ask "what evidence would change my mind here?" before finalizing a judgment call.',
     ],
   },
-  {
-    week: 'Week 3–4',
-    focus: 'Skill Building',
-    icon: '🏋️',
-    color: colors.purple,
+  ambiguityTolerance: {
+    focus: 'Ambiguity Tolerance',
+    icon: '🌫️',
     actions: [
-      'Complete one structured problem-solving exercise per day',
-      'Practice the 10-10-10 decision framework on low-stakes choices',
-      'Seek feedback on a recent project deliverable',
+      'Practice making one decision this week with intentionally incomplete information.',
+      'Set a firm decision deadline for an ambiguous choice and stick to it.',
     ],
   },
-  {
-    week: 'Week 5–8',
-    focus: 'Integration',
-    icon: '🔗',
-    color: colors.success,
+  emotionalLaborLoad: {
+    focus: 'Emotional Labor',
+    icon: '❤️',
     actions: [
-      'Apply your cognitive strengths in a stretch project',
-      'Set a 90-day performance goal aligned to this role',
-      'Re-run the Role Fit match to track improvement',
+      'Build a short decompression ritual for after emotionally demanding conversations.',
+      'Practice naming what you need before entering a high-emotion interaction.',
     ],
   },
-];
+  decisionSpeed: {
+    focus: 'Decision Speed',
+    icon: '⚡',
+    actions: [
+      'Practice the 10-10-10 framework (how will this feel in 10 minutes, 10 months, 10 years) on low-stakes choices.',
+      'Time-box small decisions and notice when more deliberation stops adding value.',
+    ],
+  },
+  stakeholderComplexity: {
+    focus: 'Stakeholder Complexity',
+    icon: '👥',
+    actions: [
+      'Before a decision, map out everyone it affects and what each of them actually needs.',
+      'Practice summarizing each competing viewpoint in a single sentence before responding.',
+    ],
+  },
+  repetitionVsInnovation: {
+    focus: 'Repetition vs. Innovation',
+    icon: '🔁',
+    actions: [
+      'Notice one moment this week you defaulted to the familiar solution — try an alternative instead.',
+      'Block time for a genuinely novel problem, even a small one, at least once a week.',
+    ],
+  },
+  socialExposure: {
+    focus: 'Social Exposure',
+    icon: '🗣️',
+    actions: [
+      'Practice brief, low-stakes social check-ins to build comfort incrementally.',
+      'Schedule recovery time after high-exposure days rather than stacking them back to back.',
+    ],
+  },
+  detailSensitivity: {
+    focus: 'Detail Sensitivity',
+    icon: '🔬',
+    actions: [
+      'Build a personal review checklist for the type of detail-heavy work this role involves.',
+      'Practice a deliberate "second pass" before submitting anything important.',
+    ],
+  },
+  autonomyRequired: {
+    focus: 'Autonomy',
+    icon: '🧭',
+    actions: [
+      'Make one decision independently this week that you\'d normally check in about first.',
+      'Ask directly where you do — and don\'t — need sign-off, to reduce unnecessary hesitation.',
+    ],
+  },
+  cognitiveLoadVolatility: {
+    focus: 'Cognitive Load Management',
+    icon: '🌊',
+    actions: [
+      'Build in a buffer between your most intense tasks instead of stacking them.',
+      'Notice your own early signs of overload and protect one low-demand block in your day.',
+    ],
+  },
+};
 
 export default function AdaptationScreen({ route, navigation }: any) {
   const colors = useTheme();
   const styles = useThemedStyles(makeStyles);
   const { result, roleName } = route.params;
-  const score = result?.fit_score ?? 0;
+  const score = result?.fitScore ?? 0;
+
+  const gapMap = result?.gapMap ?? {};
+  const weakestDimensions = (Object.keys(gapMap) as (keyof RoleCognitiveDemand)[])
+    .filter((key) => DIMENSION_ACTIONS[key])
+    .sort((a, b) => gapMap[a].gap - gapMap[b].gap)
+    .slice(0, 3);
+
+  const report = result ? generatePersonalizedReport(result, roleName, true) : null;
 
   return (
     <ScreenBackground>
@@ -59,7 +115,7 @@ export default function AdaptationScreen({ route, navigation }: any) {
         <View style={styles.header}>
           <Text style={styles.title}>Adaptation Plan</Text>
           <Text style={styles.subtitle}>
-            Personalised steps to bridge your gap for{'\n'}
+            Built from your real gap areas for{'\n'}
             <Text style={styles.roleName}>{roleName}</Text>
           </Text>
         </View>
@@ -73,32 +129,43 @@ export default function AdaptationScreen({ route, navigation }: any) {
           <Text style={styles.bannerLabel}>STARTING POINT</Text>
           <Text style={styles.bannerScore}>{score}/100 Fit Score</Text>
           <Text style={styles.bannerSub}>
-            Follow this 8-week plan to strengthen your cognitive alignment
+            {report?.struggles ?? 'Focus on the areas below where your profile has the biggest gap from this role\'s demands.'}
           </Text>
         </LinearGradient>
 
-        {DEFAULT_RECS.map((phase, i) => (
-          <GlassCard key={phase.week} style={styles.phaseCard}>
-            <View style={styles.phaseHeader}>
-              <View style={[styles.phaseIconWrap, { backgroundColor: `${phase.color}22` }]}>
-                <AppIcon name={phase.icon} size={22} color={phase.color} />
-              </View>
-              <View style={styles.phaseInfo}>
-                <Text style={[styles.phaseWeek, { color: phase.color }]}>{phase.week}</Text>
-                <Text style={styles.phaseFocus}>{phase.focus}</Text>
-              </View>
-              <View style={styles.phaseNum}>
-                <Text style={styles.phaseNumText}>Phase {i + 1}</Text>
-              </View>
-            </View>
-            {phase.actions.map((action, j) => (
-              <View key={j} style={styles.actionRow}>
-                <View style={[styles.actionDot, { backgroundColor: phase.color }]} />
-                <Text style={styles.actionText}>{action}</Text>
-              </View>
-            ))}
+        {weakestDimensions.length === 0 ? (
+          <GlassCard style={styles.phaseCard}>
+            <Text style={styles.actionText}>No significant gaps detected — your profile is well aligned with this role.</Text>
           </GlassCard>
-        ))}
+        ) : (
+          weakestDimensions.map((dim, i) => {
+            const { focus, icon, actions } = DIMENSION_ACTIONS[dim];
+            const gap = gapMap[dim];
+            const phaseColor = [colors.cyan, colors.purple, colors.success][i] ?? colors.cyan;
+            return (
+              <GlassCard key={dim} style={styles.phaseCard}>
+                <View style={styles.phaseHeader}>
+                  <View style={[styles.phaseIconWrap, { backgroundColor: `${phaseColor}22` }]}>
+                    <AppIcon name={icon} size={22} color={phaseColor} />
+                  </View>
+                  <View style={styles.phaseInfo}>
+                    <Text style={[styles.phaseWeek, { color: phaseColor }]}>PRIORITY {i + 1}</Text>
+                    <Text style={styles.phaseFocus}>{focus}</Text>
+                  </View>
+                  <View style={styles.phaseNum}>
+                    <Text style={styles.phaseNumText}>Gap: {gap.gap}</Text>
+                  </View>
+                </View>
+                {actions.map((action, j) => (
+                  <View key={j} style={styles.actionRow}>
+                    <View style={[styles.actionDot, { backgroundColor: phaseColor }]} />
+                    <Text style={styles.actionText}>{action}</Text>
+                  </View>
+                ))}
+              </GlassCard>
+            );
+          })
+        )}
 
         <GlassCard style={styles.mindCard}>
           <View style={styles.mindTitleRow}>

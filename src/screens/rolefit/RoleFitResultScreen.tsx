@@ -4,30 +4,38 @@ import { LinearGradient } from 'expo-linear-gradient';
 import ScreenBackground from '../../components/ScreenBackground';
 import GlassCard from '../../components/GlassCard';
 import AppIcon from '../../components/AppIcon';
+import { CognitiveRoleFitScore } from '../../utils/roleFitEngine';
 import { colors, radii, spacing, Palette } from '../../theme';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 
-function fitInfo(score: number) {
-  if (score >= 85) return { label: 'Natural Accelerator', color: colors.success, desc: 'Your cognitive profile is a natural match. Expect rapid growth and low friction.' };
-  if (score >= 70) return { label: 'Strong Alignment', color: colors.cyan, desc: 'Strong compatibility. You have the core traits for this role with minor gaps.' };
-  if (score >= 55) return { label: 'Adaptable Fit', color: colors.warning, desc: 'You can succeed here with targeted development in a few key areas.' };
-  if (score >= 40) return { label: 'Strain Risk', color: '#F97316', desc: 'Some misalignment that could lead to burnout. Proceed with awareness.' };
-  return { label: 'Misalignment Risk', color: colors.error, desc: 'Significant cognitive mismatch. Consider whether this role suits your traits.' };
-}
+const CATEGORY_COLOR: Record<CognitiveRoleFitScore['fitCategory'], string> = {
+  'Natural Accelerator': colors.success,
+  'Strong Alignment': colors.cyan,
+  'Adaptable Fit': colors.warning,
+  'Strain Risk': '#F97316',
+  'Misalignment Risk': colors.error,
+};
+
+const CATEGORY_DESC: Record<CognitiveRoleFitScore['fitCategory'], string> = {
+  'Natural Accelerator': 'Your cognitive profile is a natural match. Expect rapid growth and low friction.',
+  'Strong Alignment': 'Strong compatibility. You have the core traits for this role with minor gaps.',
+  'Adaptable Fit': 'You can succeed here with targeted development in a few key areas.',
+  'Strain Risk': 'Some misalignment that could lead to burnout. Proceed with awareness.',
+  'Misalignment Risk': 'Significant cognitive mismatch. Consider whether this role suits your traits.',
+};
 
 export default function RoleFitResultScreen({ route, navigation }: any) {
   const colors = useTheme();
   const styles = useThemedStyles(makeStyles);
   const { result, roleName, role } = route.params;
+  const fitResult: CognitiveRoleFitScore | undefined = result;
   const name = roleName ?? role?.title ?? 'This Role';
-  const score = result?.fit_score ?? role?.fit ?? 0;
-  const info = fitInfo(score);
+  const score = fitResult?.fitScore ?? role?.fit ?? 0;
+  const category = fitResult?.fitCategory ?? 'Adaptable Fit';
+  const info = { label: category, color: CATEGORY_COLOR[category], desc: CATEGORY_DESC[category] };
 
-  const gapMap: Record<string, number> = result?.gap_map ?? {};
-  const riskFlags: string[] = result?.risk_flags ?? [];
-
-  const circumference = 2 * Math.PI * 54;
-  const strokeDashoffset = circumference - (score / 100) * circumference;
+  const gapMap = fitResult?.gapMap ?? {};
+  const riskFlags: string[] = fitResult?.riskFlags ?? [];
 
   return (
     <ScreenBackground>
@@ -77,28 +85,31 @@ export default function RoleFitResultScreen({ route, navigation }: any) {
           <GlassCard style={styles.gapCard}>
             <Text style={styles.gapTitle}>Gap Map</Text>
             <Text style={styles.gapSub}>Your cognitive traits vs. role demands</Text>
-            {Object.entries(gapMap).map(([dim, gap]) => (
-              <View key={dim} style={styles.gapRow}>
-                <Text style={styles.gapDim}>{dim.replace(/_/g, ' ')}</Text>
-                <View style={styles.gapBarTrack}>
-                  <View style={styles.gapBarCenter} />
-                  <View
-                    style={[
-                      styles.gapBarFill,
-                      {
-                        width: `${Math.abs(gap) * 10}%`,
-                        backgroundColor: gap > 0 ? colors.success : colors.error,
-                        left: gap > 0 ? '50%' : undefined,
-                        right: gap < 0 ? '50%' : undefined,
-                      },
-                    ]}
-                  />
+            {Object.entries(gapMap).map(([dim, entry]) => {
+              const gap = (entry as { gap: number }).gap;
+              return (
+                <View key={dim} style={styles.gapRow}>
+                  <Text style={styles.gapDim}>{dim.replace(/([A-Z])/g, ' $1').trim()}</Text>
+                  <View style={styles.gapBarTrack}>
+                    <View style={styles.gapBarCenter} />
+                    <View
+                      style={[
+                        styles.gapBarFill,
+                        {
+                          width: `${Math.abs(gap) * 10}%`,
+                          backgroundColor: gap > 0 ? colors.success : colors.error,
+                          left: gap > 0 ? '50%' : undefined,
+                          right: gap < 0 ? '50%' : undefined,
+                        },
+                      ]}
+                    />
+                  </View>
+                  <Text style={[styles.gapValue, { color: gap > 0 ? colors.success : colors.error }]}>
+                    {gap > 0 ? `+${gap}` : gap}
+                  </Text>
                 </View>
-                <Text style={[styles.gapValue, { color: gap > 0 ? colors.success : colors.error }]}>
-                  {gap > 0 ? `+${gap}` : gap}
-                </Text>
-              </View>
-            ))}
+              );
+            })}
           </GlassCard>
         )}
 

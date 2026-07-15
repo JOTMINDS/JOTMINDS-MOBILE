@@ -51,7 +51,13 @@ export default function KidsAssessmentResultsScreen({ route, navigation }: any) 
       },
     ];
 
-    const styleIndex = answers[0] || 0;
+    // Tally the most frequent answer index across all 3 real answers,
+    // rather than only looking at the first one — each question's options
+    // are ordered the same way (0=reading/writing, 1=visual, 2=hands-on,
+    // 3=social), so the mode across all 3 is a fair aggregate style.
+    const counts = [0, 0, 0, 0];
+    answers.forEach((a: number) => { if (a >= 0 && a < 4) counts[a] += 1; });
+    const styleIndex = counts.indexOf(Math.max(...counts));
     return styles[styleIndex];
   };
 
@@ -98,26 +104,13 @@ export default function KidsAssessmentResultsScreen({ route, navigation }: any) 
 
         <View style={styles.section}>
  <Text style={styles.sectionTitle}>Fun Activities</Text>
-          <GlassCard padding={20} style={styles.activityCard}>
+          <GlassCard padding={20} style={styles.activityCard} onPress={() => navigation.navigate('BrainGym')}>
             <View style={styles.activityRow}>
               <AppIcon name="🌟" size={22} style={styles.activityEmoji} />
               <View style={styles.activityContent}>
                 <Text style={styles.activityTitle}>Brain Games</Text>
                 <Text style={styles.activityDescription}>
                   Play fun games to make your brain stronger
-                </Text>
-              </View>
-              <AppIcon name="→" size={18} style={styles.activityArrow} />
-            </View>
-          </GlassCard>
-
-          <GlassCard padding={20} style={styles.activityCard}>
-            <View style={styles.activityRow}>
-              <AppIcon name="🎯" size={22} style={styles.activityEmoji} />
-              <View style={styles.activityContent}>
-                <Text style={styles.activityTitle}>Daily Challenge</Text>
-                <Text style={styles.activityDescription}>
-                  Try a new challenge every day
                 </Text>
               </View>
               <AppIcon name="→" size={18} style={styles.activityArrow} />

@@ -38,3 +38,15 @@ export function isCognitiveProfileComplete(types: string[] = []): boolean {
 }
 
 export const domainLabel = (d: string) => DOMAIN_LABELS[d as CognitiveDomain] ?? d;
+
+/**
+ * Find the stored result entry for a domain regardless of which client (or
+ * naming scheme) wrote it — e.g. a 'learning' row from mobile or a 'kolb'
+ * row from the webapp both satisfy the 'learning' domain.
+ */
+export function findResultForDomain<T extends { assessmentType: string }>(
+  results: T[],
+  domain: CognitiveDomain,
+): T | undefined {
+  return results.find((r) => DOMAIN_ALIASES[r.assessmentType] === domain);
+}

@@ -4,11 +4,15 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { submitAssessment } from '../../utils/api';
+import { recordAssessmentCompletion } from '../../utils/gamificationApi';
+import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { useAccessibility } from '../../context/AccessibilityContext';
 import { select as hapticSelect } from '../../utils/haptics';
 import { rs } from '../../utils/responsive';
-import { normalizeLikert, dimensionScore, compositeScore, determineStyle } from '../../utils/scoring';
+import {
+  calculateKolbScore, calculateSternbergScore, calculateDualProcessScore, WIRE_RESULT_KEY,
+} from '../../utils/scoring';
 import { QUESTION_BANK, AssessmentType } from '../../data/questionBank';
 import ScreenBackground from '../../components/ScreenBackground';
 import AppIcon from '../../components/AppIcon';
@@ -33,6 +37,7 @@ export default function AssessmentTakingScreen({ navigation, route }: any) {
   const styles = useThemedStyles(makeStyles);
   const assessmentType: AssessmentType = route.params?.assessmentType ?? 'learning';
   const bank = QUESTION_BANK[assessmentType] ?? QUESTION_BANK.learning;
+  const { user } = useAuth();
   const toast = useToast();
   const { reduceMotion } = useAccessibility();
 
@@ -57,35 +62,31 @@ export default function AssessmentTakingScreen({ navigation, route }: any) {
     });
   };
 
-  const computeResults = (source: Record<number, number> = answers) => {
-    const byStyle: Record<string, { normalized: number; weight: number }[]> = {};
-    bank.styles.forEach((s) => (byStyle[s] = []));
-    bank.questions.forEach((q) => {
-      const v = source[q.id];
-      if (v) byStyle[q.style].push({ normalized: normalizeLikert(v), weight: 1 });
-    });
-    const scores: Record<string, number> = {};
-    bank.styles.forEach((s) => { scores[s] = byStyle[s].length ? dimensionScore(byStyle[s]) : 0; });
-    const composite = compositeScore(bank.styles.map((s) => ({ score: scores[s], weight: 1 })));
-    const { primaryStyle, secondaryStyle } = determineStyle(assessmentType, scores);
-    const ranked = Object.entries(scores).sort((a, b) => b[1] - a[1]);
-    return { primaryStyle, secondaryStyle, composite, scores, ranked };
+  // responses[i] must line up with bank.questions[i].dimension — the real
+  // webapp algorithms (calculateKolbScore etc.) are index-aligned, not id-keyed.
+  const computeResult = (source: Record<number, number> = answers) => {
+    const orderedResponses = bank.questions.map((q) => source[q.id] ?? 0);
+    if (assessmentType === 'learning') return calculateKolbScore(orderedResponses, bank.questions);
+    if (assessmentType === 'thinking') return calculateSternbergScore(orderedResponses, bank.questions);
+    return calculateDualProcessScore(orderedResponses, bank.questions);
   };
 
   const handleSubmit = async (finalAnswers: Record<number, number>) => {
     setSubmitting(true);
-    const r = computeResults(finalAnswers);
-    const top = r.ranked[0][0];
-    const low = r.ranked[r.ranked.length - 1][0];
+    const result = computeResult(finalAnswers);
     const answerList = Object.entries(finalAnswers).map(([qid, value]) => ({ questionId: Number(qid), value }));
     try {
       await submitAssessment(
         assessmentType, answerList,
-        { primaryStyle: r.primaryStyle, secondaryStyle: r.secondaryStyle, composite: r.composite, scores: r.scores },
-        [`Strong ${top} orientation`, `${bank.framework} profile complete`],
-        [`Room to develop your ${low} side`],
-        [`Lean into your ${top} strengths`, `Try one activity that builds ${low}`, 'Re-take in 4 weeks to track movement'],
+        // Nested under kolb/sternberg/dualProcess — matches the real shape
+        // the webapp submits, confirmed against a live production row.
+        // Strengths/weaknesses/recommendations are computed at view time
+        // (AssessmentResultsScreen, via getStyleInsights) — the webapp
+        // itself submits these empty and derives them on render too.
+        { [WIRE_RESULT_KEY[assessmentType]]: result },
+        [], [], [],
       );
+      if (user?.id) recordAssessmentCompletion(user.id).catch(() => {});
       navigation.replace('AssessmentResults', { assessmentType });
     } catch {
       toast.error('Could not save your results. Please check your connection.');

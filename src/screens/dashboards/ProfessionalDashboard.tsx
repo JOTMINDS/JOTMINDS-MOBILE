@@ -54,8 +54,7 @@ export default function ProfessionalDashboard({ navigation }: any) {
 
   const actions: { icon: string; title: string; desc: string; g: [string, string]; onPress?: () => void }[] = [
     { icon: '🎯', title: 'Take Assessment', desc: 'Discover your cognitive profile', g: ['#F59E0B', '#D97706'], onPress: () => navigation.navigate('AssessmentList') },
-    { icon: '👥', title: 'View Team', desc: 'See organization members', g: ['#3B82F6', '#2563EB'] },
-    { icon: '📊', title: 'Team Analytics', desc: 'View team performance insights', g: ['#6E4D9C', '#5A3E82'] },
+    { icon: '👥', title: 'View Team', desc: 'See organization members', g: ['#3B82F6', '#2563EB'], onPress: () => navigation.navigate('Team') },
   ];
 
   return (
@@ -93,7 +92,7 @@ export default function ProfessionalDashboard({ navigation }: any) {
             </View>
             <View style={styles.snapshotDivider} />
             <View style={styles.snapshotStat}>
-              <Text style={styles.snapshotStatValue}>{Math.min(100, assessments.length * 33)}%</Text>
+              <Text style={styles.snapshotStatValue}>{Math.min(100, Math.round((assessments.length / 3) * 100))}%</Text>
               <Text style={styles.snapshotStatLabel}>Profile</Text>
             </View>
           </View>

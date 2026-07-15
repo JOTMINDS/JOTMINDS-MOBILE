@@ -3,14 +3,12 @@ import {
   View, Text, ScrollView, StyleSheet, ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useAuth } from '../../context/AuthContext';
-import { callEdgeFn } from '../../utils/supabase';
+import { getLast7Days, DayEntry } from '../../utils/mindCheckins';
 import ScreenBackground from '../../components/ScreenBackground';
 import GlassCard from '../../components/GlassCard';
 import { colors, radii, spacing, Palette } from '../../theme';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 
-const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const EMOTION_COLORS: Record<string, string> = {
   calm: colors.success,
   confident: colors.cyan,
@@ -22,31 +20,12 @@ const EMOTION_COLORS: Record<string, string> = {
 export default function BehavioralDashboardScreen({ navigation }: any) {
   const colors = useTheme();
   const styles = useThemedStyles(makeStyles);
-  const { user } = useAuth();
-  const [checkins, setCheckins] = useState<any[]>([]);
+  const [days, setDays] = useState<DayEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadCheckins();
+    getLast7Days().then(setDays).finally(() => setLoading(false));
   }, []);
-
-  const loadCheckins = async () => {
-    try {
-      const res = await callEdgeFn(`/checkin/user/${user?.id}`);
-      setCheckins(res?.checkins ?? []);
-    } catch {
-      // Use placeholder data
-      setCheckins([
-        { day: 'Mon', focus_score: 4, emotional_state: 'confident', decision_delay: false },
-        { day: 'Tue', focus_score: 3, emotional_state: 'calm', decision_delay: false },
-        { day: 'Wed', focus_score: 2, emotional_state: 'anxious', decision_delay: true },
-        { day: 'Thu', focus_score: 4, emotional_state: 'confident', decision_delay: false },
-        { day: 'Fri', focus_score: 5, emotional_state: 'calm', decision_delay: false },
-      ]);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   if (loading) {
     return (
@@ -60,8 +39,8 @@ export default function BehavioralDashboardScreen({ navigation }: any) {
 
   // Count emotion distribution
   const emotionCounts: Record<string, number> = {};
-  checkins.forEach((c) => {
-    emotionCounts[c.emotional_state] = (emotionCounts[c.emotional_state] ?? 0) + 1;
+  days.forEach((d) => {
+    if (d.checkin) emotionCounts[d.checkin.emotional_state] = (emotionCounts[d.checkin.emotional_state] ?? 0) + 1;
   });
 
   const maxCount = Math.max(...Object.values(emotionCounts), 1);
@@ -79,20 +58,19 @@ export default function BehavioralDashboardScreen({ navigation }: any) {
           <Text style={styles.cardTitle}>Focus Score Trend</Text>
           <Text style={styles.cardSub}>Daily performance over 7 days</Text>
           <View style={styles.focusChart}>
-            {DAYS.map((day, i) => {
-              const checkin = checkins[i];
-              const score = checkin?.focus_score ?? 0;
+            {days.map((d, i) => {
+              const score = d.checkin?.focus_score ?? 0;
               const height = (score / 5) * 80;
               return (
-                <View key={day} style={styles.focusBarCol}>
-                  <Text style={styles.focusScore}>{checkin ? score : '—'}</Text>
+                <View key={i} style={styles.focusBarCol}>
+                  <Text style={styles.focusScore}>{d.checkin ? score : '—'}</Text>
                   <LinearGradient
                     colors={score >= 4 ? ['#10B981', '#059669'] : score >= 3 ? ['#6E4D9C', '#5A3E82'] : ['#EF4444', '#DC2626']}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 0, y: 1 }}
                     style={[styles.focusBar, { height: Math.max(height, 8) }]}
                   />
-                  <Text style={styles.focusDay}>{day}</Text>
+                  <Text style={styles.focusDay}>{d.label}</Text>
                 </View>
               );
             })}
@@ -133,26 +111,23 @@ export default function BehavioralDashboardScreen({ navigation }: any) {
         <GlassCard style={styles.card}>
           <Text style={styles.cardTitle}>Decision Delay Log</Text>
           <View style={styles.delayRow}>
-            {DAYS.map((day, i) => {
-              const checkin = checkins[i];
-              return (
-                <View key={day} style={styles.delayCol}>
-                  <View
-                    style={[
-                      styles.delayDot,
-                      {
-                        backgroundColor: !checkin
-                          ? colors.bgTertiary
-                          : checkin.decision_delay
-                          ? colors.error
-                          : colors.success,
-                      },
-                    ]}
-                  />
-                  <Text style={styles.delayDay}>{day}</Text>
-                </View>
-              );
-            })}
+            {days.map((d, i) => (
+              <View key={i} style={styles.delayCol}>
+                <View
+                  style={[
+                    styles.delayDot,
+                    {
+                      backgroundColor: !d.checkin
+                        ? colors.bgTertiary
+                        : d.checkin.decision_delay
+                        ? colors.error
+                        : colors.success,
+                    },
+                  ]}
+                />
+                <Text style={styles.delayDay}>{d.label}</Text>
+              </View>
+            ))}
           </View>
           <View style={styles.delayLegend}>
             <View style={styles.legendItem}>
