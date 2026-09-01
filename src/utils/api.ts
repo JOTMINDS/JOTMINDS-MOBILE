@@ -120,3 +120,47 @@ export const signInWithStudentCode = (
     method: 'POST',
     body: JSON.stringify({ code: code.trim().toUpperCase() }),
   });
+// ── Class management ──────────────────────────────────────────────────────
+export interface SchoolClass {
+  id: string;
+  name: string;
+  academicYear?: string;
+  classTeacherId?: string;
+  institutionId?: string;
+  studentCount?: number;
+  status?: string;
+  classCode?: string;
+  createdAt?: string;
+}
+
+export const getClasses = (institutionId?: string): Promise<{ classes: SchoolClass[] }> =>
+  callEdgeFn(`/institutions/classes${institutionId ? `?institutionId=${encodeURIComponent(institutionId)}` : ''}`);
+
+export const saveClass = (cls: Partial<SchoolClass>): Promise<{ class: SchoolClass }> =>
+  callEdgeFn('/institutions/classes', { method: 'POST', body: JSON.stringify(cls) });
+
+export const deleteClass = (id: string): Promise<{ success: boolean }> =>
+  callEdgeFn(`/institutions/classes/${id}`, { method: 'DELETE' });
+
+export const assignStudentToClass = (args: {
+  userId: string;
+  classId: string | null;
+  className?: string;
+  institutionId?: string;
+  teacherId?: string;
+}): Promise<{ success: boolean }> =>
+  callEdgeFn('/institutions/members/assign-class', {
+    method: 'POST',
+    body: JSON.stringify({ ...args, role: 'student' }),
+  });
+
+export const enrollStudent = (args: {
+  studentName: string;
+  dateOfBirth: string;
+  classId?: string;
+  className?: string;
+  teacherId?: string;
+  institutionId?: string;
+  educationLevel?: string;
+}): Promise<{ student?: { id: string; name: string; studentCode: string }; code?: string; error?: string }> =>
+  callEdgeFn('/enroll-student', { method: 'POST', body: JSON.stringify(args) });

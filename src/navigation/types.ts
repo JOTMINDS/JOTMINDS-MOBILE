@@ -70,6 +70,7 @@ export type RootStackParamList = {
   ExpertChat: undefined;
   AskJotti: { prompt?: string } | undefined;
   DailyChallenge: undefined;
+  ClassManagement: undefined;
 };
 
 export type AppNavigation = NativeStackNavigationProp<RootStackParamList>;
