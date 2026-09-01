@@ -10,6 +10,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import ScreenBackground from '../../components/ScreenBackground';
 import AppIcon from '../../components/AppIcon';
 import GlassCard from '../../components/GlassCard';
+import AITipCard from '../../components/AITipCard';
 import { getGamificationProfile } from '../../utils/gamificationApi';
 import { isTeachingStyleDone } from '../../utils/teachingStyleStatus';
 import { useAuth } from '../../context/AuthContext';
@@ -39,12 +40,6 @@ const WEEKLY_TIPS = [
   'Ending class with a 1-sentence student self-assessment ("what\'s one thing you understood well today?") surfaces gaps early.',
 ];
 
-function tipOfTheWeek() {
-  const dayOfYear = Math.floor(
-    (Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000,
-  );
-  return WEEKLY_TIPS[dayOfYear % WEEKLY_TIPS.length];
-}
 
 export default function TeacherDevelopmentScreen({ navigation }: any) {
   const colors = useTheme();
@@ -370,22 +365,12 @@ export default function TeacherDevelopmentScreen({ navigation }: any) {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Community Insights</Text>
-          <GlassCard padding={20}>
-            <View style={styles.insightRow}>
-              <LinearGradient
-                colors={['#3D52C9', '#2E3FA8']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.insightIconWrap}
-              >
-                <AppIcon name="💡" size={22} style={styles.insightIcon} />
-              </LinearGradient>
-              <View style={styles.insightContent}>
-                <Text style={styles.insightTitle}>This Week's Tip</Text>
-                <Text style={styles.insightText}>{tipOfTheWeek()}</Text>
-              </View>
-            </View>
-          </GlassCard>
+          <AITipCard
+            cacheKey="teacher-dev"
+            title="This Week's Tip"
+            context="classroom teaching and instructional strategy for a practising teacher"
+            fallbacks={WEEKLY_TIPS}
+          />
         </View>
       </ScrollView>
     </ScreenBackground>
