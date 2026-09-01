@@ -94,6 +94,7 @@ import KidsAssessmentResultsScreen from '../screens/kids/KidsAssessmentResultsSc
 
 // ── Shared ────────────────────────────────────────────────────────────────────
 import ExpertChatScreen from '../screens/shared/ExpertChatScreen';
+import AskJottiScreen from '../screens/shared/AskJottiScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -303,6 +304,7 @@ export default function AppNavigator() {
 
             {/* Shared */}
             <Stack.Screen name="ExpertChat" component={ExpertChatScreen} options={{ headerShown: true, title: 'Chat with Expert' }} />
+            <Stack.Screen name="AskJotti" component={AskJottiScreen} options={{ headerShown: true, title: 'Ask Jotti' }} />
           </>
         ) : (
           // ── Auth Stack ─────────────────────────────────────────────────────

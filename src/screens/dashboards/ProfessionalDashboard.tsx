@@ -13,6 +13,7 @@ import { getOrganizationMembers, getAllAssessmentResults } from '../../utils/api
 import ScreenBackground from '../../components/ScreenBackground';
 import GlassCard from '../../components/GlassCard';
 import AppIcon from '../../components/AppIcon';
+import AskJottiCard from '../../components/AskJottiCard';
 import { colors, radii, shadow, spacing, Palette } from '../../theme';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 
@@ -97,6 +98,8 @@ export default function ProfessionalDashboard({ navigation }: any) {
             </View>
           </View>
         </LinearGradient>
+
+        <AskJottiCard style={{ marginBottom: spacing.xl }} />
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Quick Actions</Text>
