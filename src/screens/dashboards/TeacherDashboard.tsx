@@ -186,15 +186,15 @@ export default function TeacherDashboard({ navigation }: any) {
           <GlassCard
             padding={16}
             style={styles.spacedCard}
-            onPress={() => navigation.navigate('TeachingStyleAssessment')}
+            onPress={() => navigation.navigate('JTIAAssessment')}
           >
             <View style={styles.row}>
               <LinearGradient colors={['#EC4899', '#DB2777']} style={styles.iconWrap} start={{x:0,y:0}} end={{x:1,y:1}}>
                 <AppIcon name="🎯" size={22} color="#FFFFFF" />
               </LinearGradient>
               <View style={{ flex: 1, marginLeft: spacing.md }}>
-                <Text style={styles.cardTitle}>Teaching Style Assessment</Text>
-                <Text style={styles.cardSubtle}>Discover your teaching strengths</Text>
+                <Text style={styles.cardTitle}>Teacher Intelligence Assessment</Text>
+                <Text style={styles.cardSubtle}>Map your strengths across 5 domains (JTIA)</Text>
               </View>
               <Text style={styles.arrow}>→</Text>
             </View>
