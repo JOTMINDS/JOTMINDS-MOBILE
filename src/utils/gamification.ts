@@ -151,16 +151,16 @@ export function addXP(profile: GamificationProfile, amount: number): { leveledUp
     profile.streakInsurance.total += 1;
   }
 
+  const hour = new Date().getHours();
+  if (hour < 7) profile.earlyBird = true;
+  if (hour >= 22) profile.nightOwl = true;
+
   const newBadges = checkForNewBadges(profile);
   if (newBadges.length > 0) {
     profile.badges.push(...newBadges);
     profile.xp += newBadges.length * XP_RATES.badgeEarned;
     profile.level = getLevelForXP(profile.xp).level;
   }
-
-  const hour = new Date().getHours();
-  if (hour < 7) profile.earlyBird = true;
-  if (hour >= 22) profile.nightOwl = true;
 
   return { leveledUp, newBadges };
 }
