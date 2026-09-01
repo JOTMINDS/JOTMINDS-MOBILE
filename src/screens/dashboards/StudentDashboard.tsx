@@ -15,6 +15,7 @@ import ScreenBackground from '../../components/ScreenBackground';
 import GlassCard from '../../components/GlassCard';
 import AppIcon from '../../components/AppIcon';
 import AskJottiCard from '../../components/AskJottiCard';
+import AITipCard from '../../components/AITipCard';
 import { Skeleton, SkeletonCard } from '../../components/Skeleton';
 import { colors, radii, shadow, spacing, Palette } from '../../theme';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
@@ -167,6 +168,17 @@ export default function StudentDashboard({ navigation }: any) {
             <Text style={styles.challengeArrow}>→</Text>
           </View>
         </GlassCard>
+
+        <AITipCard
+          cacheKey="student-home"
+          context="learning strategy, study habits, or metacognition for a student"
+          fallbacks={[
+            'Space your revision: three 20-minute sessions across a week beat one 60-minute cram.',
+            'Explain a concept out loud as if teaching it — the gaps you stumble on are what to study next.',
+            'Before re-reading notes, close them and write what you remember. Retrieval builds memory; re-reading mostly builds familiarity.',
+            'Match the task to your energy: hard analytical work early, review and organising later.',
+          ]}
+        />
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Your Assessments</Text>
