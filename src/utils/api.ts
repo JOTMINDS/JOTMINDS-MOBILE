@@ -95,3 +95,28 @@ export const getStudentsForTeacher = () =>
 
 export const getOrganizationMembers = () =>
   callEdgeFn('/organization/members');
+
+// ── Institutional student-code sign-in ─────────────────────────────────────
+// Both routes are unauthenticated (the whole point is to sign in without an
+// email/password). The server owns the student_codes table and exchanges a
+// valid code for a real Supabase session.
+
+export interface StudentCodeValidation {
+  valid: boolean;
+  studentName?: string;
+  schoolName?: string | null;
+}
+
+export const validateStudentCode = (code: string): Promise<StudentCodeValidation> =>
+  callEdgeFn('/student-code/validate', {
+    method: 'POST',
+    body: JSON.stringify({ code: code.trim().toUpperCase() }),
+  });
+
+export const signInWithStudentCode = (
+  code: string,
+): Promise<{ success?: boolean; session: any; user?: any }> =>
+  callEdgeFn('/student-code/signin', {
+    method: 'POST',
+    body: JSON.stringify({ code: code.trim().toUpperCase() }),
+  });

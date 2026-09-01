@@ -13,7 +13,7 @@ export type RootStackParamList = {
   // Auth / onboarding
   Splash: undefined;
   Welcome: undefined;
-  Login: undefined;
+  Login: { email?: string } | undefined;
   Signup: undefined;
   OtpVerification: { mode: 'signup' | 'login'; email: string; signupData?: any };
   FirstWin: undefined;

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase, callEdgeFn } from '../utils/supabase';
+import { signInWithStudentCode as signInWithStudentCodeApi } from '../utils/api';
 import type { Session, User as SupabaseUser } from '@supabase/supabase-js';
 
 export interface AppUser {
@@ -15,6 +16,7 @@ export interface AppUser {
   dateOfBirth?: string;
   age?: number;
   assessmentsCompleted?: string[];
+  studentCode?: string;
   subscriptionStatus?: 'free' | 'premium' | 'organization';
   firstWinCompleted?: boolean;
 }
@@ -24,11 +26,13 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (data: SignUpData) => Promise<void>;
+  /** Resolves to the /signup response — includes `studentCode` for institutional students. */
+  signUp: (data: SignUpData) => Promise<{ studentCode?: string } & Record<string, any>>;
   signOut: () => Promise<void>;
   refreshUser: () => Promise<void>;
   requestLoginOtp: (email: string) => Promise<void>;
   verifyLoginOtp: (email: string, token: string) => Promise<void>;
+  signInWithStudentCode: (code: string) => Promise<void>;
 }
 
 export interface SignUpData {
@@ -77,6 +81,7 @@ async function fetchProfile(supabaseUser: SupabaseUser): Promise<AppUser> {
       dateOfBirth: profile.dateOfBirth ?? profile.date_of_birth,
       age: profile.dateOfBirth ? calculateAge(profile.dateOfBirth) : profile.age,
       assessmentsCompleted: profile.assessmentsCompleted ?? [],
+      studentCode: profile.studentCode ?? profile.student_code,
       subscriptionStatus: profile.subscriptionStatus ?? profile.subscription_status ?? 'free',
       // Backend-persisted onboarding flag (survives reinstall / new device).
       firstWinCompleted: profile.firstWinCompleted ?? !!profile.cognitiveProfile,
@@ -151,7 +156,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         ? new Date().getFullYear() - new Date(data.dateOfBirth).getFullYear() < 18
         : false;
 
-    await callEdgeFn('/signup', {
+    return callEdgeFn('/signup', {
       method: 'POST',
       body: JSON.stringify({
         email: data.email,
@@ -196,6 +201,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (error) throw new Error(error.message);
   };
 
+  // Institutional sign-in: exchange a school-issued student code for a session.
+  // The server verifies the code and returns a Supabase session; setSession then
+  // triggers onAuthStateChange, which loads the profile like any other sign-in.
+  const signInWithStudentCode = async (code: string) => {
+    const res = await signInWithStudentCodeApi(code);
+    const session = res?.session;
+    if (!session?.access_token) {
+      throw new Error('Could not sign in with that student code.');
+    }
+    const { error } = await supabase.auth.setSession({
+      access_token: session.access_token,
+      refresh_token: session.refresh_token ?? session.access_token,
+    });
+    if (error) throw new Error(error.message);
+  };
+
   const signOut = async () => {
     await supabase.auth.signOut();
     setUser(null);
@@ -211,7 +232,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, signIn, signUp, signOut, refreshUser, requestLoginOtp, verifyLoginOtp }}>
+    <AuthContext.Provider value={{ user, session, loading, signIn, signUp, signOut, refreshUser, requestLoginOtp, verifyLoginOtp, signInWithStudentCode }}>
       {children}
     </AuthContext.Provider>
   );
