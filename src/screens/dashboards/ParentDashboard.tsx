@@ -21,6 +21,7 @@ import {
 import { getLinkedChildrenWithAssessments } from '../../utils/parentApi';
 import ScreenBackground from '../../components/ScreenBackground';
 import GlassCard from '../../components/GlassCard';
+import AskJottiCard from '../../components/AskJottiCard';
 import GradientButton from '../../components/GradientButton';
 import AppIcon from '../../components/AppIcon';
 import { colors, radii, shadow, spacing, Palette } from '../../theme';
@@ -139,6 +140,8 @@ export default function ParentDashboard({ navigation }: any) {
             </View>
           </View>
         </LinearGradient>
+
+        <AskJottiCard style={{ marginBottom: spacing.xl }} />
 
         {requests.length > 0 && (
           <View style={styles.section}>

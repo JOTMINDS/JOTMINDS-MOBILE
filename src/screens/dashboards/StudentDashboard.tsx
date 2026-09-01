@@ -14,6 +14,7 @@ import { getAllAssessmentResults } from '../../utils/api';
 import ScreenBackground from '../../components/ScreenBackground';
 import GlassCard from '../../components/GlassCard';
 import AppIcon from '../../components/AppIcon';
+import AskJottiCard from '../../components/AskJottiCard';
 import { Skeleton, SkeletonCard } from '../../components/Skeleton';
 import { colors, radii, shadow, spacing, Palette } from '../../theme';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
@@ -143,6 +144,8 @@ export default function StudentDashboard({ navigation }: any) {
             <View style={[styles.progressFill, { width: `${progressPct}%` }]} />
           </View>
         </LinearGradient>
+
+        <AskJottiCard style={styles.jottiCard} />
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Your Assessments</Text>
@@ -319,6 +322,7 @@ const makeStyles = (colors: Palette) => StyleSheet.create({
     backgroundColor: colors.cyan,
     borderRadius: 4,
   },
+  jottiCard: { marginBottom: spacing.xl },
   section: {
     marginBottom: spacing.xxl,
   },
