@@ -16,6 +16,7 @@ import GlassCard from '../../components/GlassCard';
 import AppIcon from '../../components/AppIcon';
 import AskJottiCard from '../../components/AskJottiCard';
 import AITipCard from '../../components/AITipCard';
+import NudgeFeed from '../../components/NudgeFeed';
 import { Skeleton, SkeletonCard } from '../../components/Skeleton';
 import { colors, radii, shadow, spacing, Palette } from '../../theme';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
@@ -147,6 +148,8 @@ export default function StudentDashboard({ navigation }: any) {
         </LinearGradient>
 
         <AskJottiCard style={styles.jottiCard} />
+        <NudgeFeed />
+
         <GlassCard
           padding={16}
           style={styles.challengeCard}
