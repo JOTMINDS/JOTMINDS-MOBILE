@@ -7,6 +7,7 @@ import GlassCard from '../../components/GlassCard';
 import GradientButton from '../../components/GradientButton';
 import { getAssessmentResults } from '../../utils/api';
 import { getConsent, getObservationsForParent } from '../../utils/parentApi';
+import { getObservationsForChild, TeacherObservation } from '../../utils/observationApi';
 import { completedDomains, REQUIRED_DOMAINS, domainLabel } from '../../utils/profileCompleteness';
 import { AdultResults } from '../../utils/adultScoring';
 import { useAuth } from '../../context/AuthContext';
@@ -23,6 +24,7 @@ export default function ParentChildDetailScreen({ route, navigation }: any) {
 
   const [loading, setLoading] = useState(true);
   const [observations, setObservations] = useState<any[]>([]);
+  const [teacherObs, setTeacherObs] = useState<TeacherObservation[]>([]);
   const [parentAdult, setParentAdult] = useState<AdultResults | null>(null);
   const [consentGranted, setConsentGranted] = useState(false);
 
@@ -37,10 +39,12 @@ export default function ParentChildDetailScreen({ route, navigation }: any) {
       getObservationsForParent(user.id, child.id).catch(() => ({ observations: [] })),
       getAssessmentResults('adult-thinking').catch(() => null),
       getConsent(child.id, user.id).catch(() => null),
-    ]).then(([obsRes, adultRes, consentRes]) => {
+      getObservationsForChild(child.id).catch(() => []),
+    ]).then(([obsRes, adultRes, consentRes, tObs]) => {
       setObservations(obsRes?.observations ?? []);
       setParentAdult((adultRes?.results ?? adultRes?.result) ?? null);
       setConsentGranted(consentRes?.consent?.consentGiven === true);
+      setTeacherObs(tObs ?? []);
     }).finally(() => setLoading(false));
   }, [user?.id, child?.id]);
 
@@ -117,6 +121,32 @@ export default function ParentChildDetailScreen({ route, navigation }: any) {
         </View>
 
         <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Teacher's Observations</Text>
+          {loading ? (
+            <ActivityIndicator style={{ marginTop: spacing.lg }} color={colors.purple} />
+          ) : teacherObs.length > 0 ? (
+            teacherObs.map((o) => (
+              <GlassCard key={o.id} padding={16} style={styles.spacedCard}>
+                <Text style={styles.cardTitle}>
+                  {o.concernType}
+                  <Text style={styles.cardSubtle}>  ·  {o.severity} · {new Date(o.createdAt).toLocaleDateString()}</Text>
+                </Text>
+                <Text style={styles.cardSubtle} numberOfLines={4}>{o.observationText}</Text>
+                {o.recommendedAction ? (
+                  <Text style={styles.teacherAction}>Suggested: {o.recommendedAction}</Text>
+                ) : null}
+                <Text style={styles.teacherBy}>— {o.teacherName}</Text>
+              </GlassCard>
+            ))
+          ) : (
+            <Text style={styles.emptyHint}>
+              No shared observations from {child.name}'s teacher yet. When a teacher shares one,
+              it appears here alongside your own observations for a fuller picture.
+            </Text>
+          )}
+        </View>
+
+        <View style={styles.section}>
           <Text style={styles.sectionTitle}>Coaching Pathways</Text>
           <GlassCard
             padding={16}
@@ -185,7 +215,9 @@ const makeStyles = (colors: Palette) => StyleSheet.create({
   spacedCard: { marginTop: spacing.md },
   cardTitle: { fontSize: 16, fontWeight: '600', color: colors.text },
   cardSubtle: { fontSize: 13, color: colors.textMuted, marginTop: 2 },
-  emptyHint: { fontSize: 13, color: colors.textSubtle, marginTop: spacing.md, textAlign: 'center' },
+  emptyHint: { fontSize: 13, color: colors.textSubtle, marginTop: spacing.md, textAlign: 'center', lineHeight: 19 },
+  teacherAction: { fontSize: 12, color: colors.cyan, marginTop: 8, lineHeight: 18 },
+  teacherBy: { fontSize: 11, color: colors.textSubtle, marginTop: 8, fontWeight: '600' },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   lockedCard: { opacity: 0.75 },
   lockedText: { flex: 1, fontSize: 13, color: colors.textMuted, lineHeight: 19 },
