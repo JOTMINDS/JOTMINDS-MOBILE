@@ -71,6 +71,7 @@ export type RootStackParamList = {
   AskJotti: { prompt?: string } | undefined;
   DailyChallenge: undefined;
   ClassManagement: undefined;
+  LessonPlanner: undefined;
 };
 
 export type AppNavigation = NativeStackNavigationProp<RootStackParamList>;

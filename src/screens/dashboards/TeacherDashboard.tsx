@@ -146,6 +146,7 @@ export default function TeacherDashboard({ navigation }: any) {
           {[
             { icon: '📊', title: 'View Class Analytics', desc: 'See overall class performance', g: ['#3B82F6', '#2563EB'] as [string, string], nav: 'GrowthTracker' as const },
             { icon: '👥', title: 'My Classes', desc: 'Manage classes, enrol students, import a roster', g: ['#10B981', '#059669'] as [string, string], nav: 'ClassManagement' as const },
+            { icon: '🗂️', title: 'Lesson Planner', desc: 'AI lesson plans with differentiation', g: ['#10B981', '#059669'] as [string, string], nav: 'LessonPlanner' as const },
             { icon: '📝', title: 'Create Assignment', desc: 'Assign assessments to students', g: ['#6E4D9C', '#5A3E82'] as [string, string], nav: null },
           ].map((a) => (
             <GlassCard
