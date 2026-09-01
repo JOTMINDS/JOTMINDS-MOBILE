@@ -13,6 +13,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
+import { validateStudentCode } from '../../utils/api';
 import ScreenBackground from '../../components/ScreenBackground';
 import GlassCard from '../../components/GlassCard';
 import GradientButton from '../../components/GradientButton';
@@ -24,14 +25,21 @@ import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 export default function LoginScreen({ navigation, route }: any) {
   const colors = useTheme();
   const styles = useThemedStyles(makeStyles);
-  const { signIn, requestLoginOtp } = useAuth();
+  const { signIn, requestLoginOtp, signInWithStudentCode } = useAuth();
   const toast = useToast();
+  const [mode, setMode] = useState<'email' | 'code'>('email');
   const [email, setEmail] = useState(route?.params?.email ?? '');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [focusedField, setFocusedField] = useState<string | null>(null);
   const [emailError, setEmailError] = useState('');
+
+  // Student-code sign-in (institutional / school-issued codes)
+  const [code, setCode] = useState('');
+  const [codeValidated, setCodeValidated] = useState(false);
+  const [codeStudentName, setCodeStudentName] = useState('');
+  const [codeSchoolName, setCodeSchoolName] = useState('');
 
   const validateEmail = (text: string) => {
     setEmail(text);
@@ -54,6 +62,42 @@ export default function LoginScreen({ navigation, route }: any) {
     } catch (error: any) {
       console.error('[Login] Error:', error);
       toast.error(error.message || 'Invalid email or password');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const resetCodeFlow = () => {
+    setCodeValidated(false);
+    setCodeStudentName('');
+    setCodeSchoolName('');
+  };
+
+  const handleCodeSubmit = async () => {
+    const entered = code.trim().toUpperCase();
+    if (!entered) {
+      toast.error('Enter your student code.');
+      return;
+    }
+    setLoading(true);
+    try {
+      if (!codeValidated) {
+        const result = await validateStudentCode(entered);
+        if (!result.valid) {
+          toast.error('Invalid student code. Please check and try again.');
+          return;
+        }
+        setCodeStudentName(result.studentName ?? '');
+        setCodeSchoolName(result.schoolName ?? '');
+        setCodeValidated(true);
+        return;
+      }
+      await signInWithStudentCode(entered);
+      // onAuthStateChange in AuthContext takes it from here.
+    } catch (error: any) {
+      console.error('[Login] Student code error:', error);
+      toast.error(error.message || 'Could not sign in with that student code.');
+      resetCodeFlow();
     } finally {
       setLoading(false);
     }
@@ -96,6 +140,74 @@ export default function LoginScreen({ navigation, route }: any) {
             <Text style={styles.title}>Welcome Back</Text>
             <Text style={styles.subtitle}>Sign in to your account</Text>
 
+            <View style={styles.modeToggle}>
+              <TouchableOpacity
+                style={[styles.modeOption, mode === 'email' && styles.modeOptionActive]}
+                onPress={() => setMode('email')}
+                accessibilityRole="button"
+                accessibilityState={{ selected: mode === 'email' }}
+              >
+                <Text style={[styles.modeOptionText, mode === 'email' && styles.modeOptionTextActive]}>Email</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modeOption, mode === 'code' && styles.modeOptionActive]}
+                onPress={() => { setMode('code'); resetCodeFlow(); }}
+                accessibilityRole="button"
+                accessibilityState={{ selected: mode === 'code' }}
+              >
+                <Text style={[styles.modeOptionText, mode === 'code' && styles.modeOptionTextActive]}>Student code</Text>
+              </TouchableOpacity>
+            </View>
+
+            {mode === 'code' ? (
+              <>
+                <View style={styles.inputContainer}>
+                  <Text style={styles.label}>STUDENT CODE</Text>
+                  <View style={[
+                    styles.inputWrapper,
+                    focusedField === 'code' && styles.inputWrapperFocused,
+                  ]}>
+                    <AppIcon name="🎟️" size={18} color={colors.textMuted} style={styles.inputIcon} />
+                    <TextInput
+                      style={styles.input}
+                      placeholder="e.g. JOTM-AB12CD"
+                      placeholderTextColor={colors.textSubtle}
+                      value={code}
+                      onChangeText={(t) => { setCode(t); if (codeValidated) resetCodeFlow(); }}
+                      onFocus={() => setFocusedField('code')}
+                      onBlur={() => setFocusedField(null)}
+                      autoCapitalize="characters"
+                      autoCorrect={false}
+                      editable={!loading}
+                    />
+                  </View>
+                  <Text style={styles.helperText}>
+                    Your school gives you this code. No email or password needed.
+                  </Text>
+                </View>
+
+                {codeValidated ? (
+                  <View style={styles.codeConfirmBox}>
+                    <Text style={styles.codeConfirmName}>
+                      {codeStudentName ? `Welcome, ${codeStudentName}` : 'Code verified'}
+                    </Text>
+                    {codeSchoolName ? (
+                      <Text style={styles.codeConfirmSchool}>{codeSchoolName}</Text>
+                    ) : null}
+                  </View>
+                ) : null}
+
+                <GradientButton
+                  label={codeValidated ? 'Sign In' : 'Continue'}
+                  onPress={handleCodeSubmit}
+                  loading={loading}
+                  variant="primary"
+                  icon="→"
+                  style={styles.button}
+                />
+              </>
+            ) : (
+            <>
             <View style={styles.inputContainer}>
               <Text style={styles.label}>EMAIL ADDRESS</Text>
               <View style={[
@@ -170,6 +282,8 @@ export default function LoginScreen({ navigation, route }: any) {
               <AppIcon name="✉️" size={18} color={colors.cyan} />
               <Text style={styles.otpBtnText}>Email me a sign-in code</Text>
             </TouchableOpacity>
+            </>
+            )}
 
             <View style={styles.signupContainer}>
               <Text style={styles.signupText}>Don't have an account? </Text>
@@ -220,6 +334,58 @@ const makeStyles = (colors: Palette) => StyleSheet.create({
     fontSize: 15,
     color: colors.textMuted,
     marginBottom: 32,
+  },
+  modeToggle: {
+    flexDirection: 'row',
+    backgroundColor: colors.glassMedium,
+    borderRadius: radii.md,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    padding: 4,
+    marginBottom: 24,
+  },
+  modeOption: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: radii.sm,
+    alignItems: 'center',
+  },
+  modeOptionActive: {
+    backgroundColor: colors.purple,
+  },
+  modeOptionText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.textMuted,
+    letterSpacing: 0.3,
+  },
+  modeOptionTextActive: {
+    color: '#fff',
+  },
+  helperText: {
+    fontSize: 12,
+    color: colors.textMuted,
+    marginTop: 8,
+    marginLeft: 4,
+    lineHeight: 17,
+  },
+  codeConfirmBox: {
+    backgroundColor: colors.glassMedium,
+    borderRadius: radii.md,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    padding: 14,
+    marginBottom: 4,
+  },
+  codeConfirmName: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: colors.textPrimary,
+  },
+  codeConfirmSchool: {
+    fontSize: 13,
+    color: colors.textMuted,
+    marginTop: 2,
   },
   inputContainer: {
     marginBottom: 20,
