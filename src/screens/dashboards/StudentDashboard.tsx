@@ -14,6 +14,7 @@ import { getAllAssessmentResults } from '../../utils/api';
 import ScreenBackground from '../../components/ScreenBackground';
 import GlassCard from '../../components/GlassCard';
 import AppIcon from '../../components/AppIcon';
+import NudgeFeed from '../../components/NudgeFeed';
 import { Skeleton, SkeletonCard } from '../../components/Skeleton';
 import { colors, radii, shadow, spacing, Palette } from '../../theme';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
@@ -143,6 +144,8 @@ export default function StudentDashboard({ navigation }: any) {
             <View style={[styles.progressFill, { width: `${progressPct}%` }]} />
           </View>
         </LinearGradient>
+
+        <NudgeFeed />
 
         <GlassCard
           padding={16}

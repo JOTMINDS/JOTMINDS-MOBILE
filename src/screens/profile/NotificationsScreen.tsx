@@ -10,6 +10,7 @@ import {
 import ScreenBackground from '../../components/ScreenBackground';
 import GlassCard from '../../components/GlassCard';
 import AppIcon from '../../components/AppIcon';
+import NudgeFeed from '../../components/NudgeFeed';
 import { colors, radii, spacing, Palette } from '../../theme';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 
@@ -59,6 +60,8 @@ export default function NotificationsScreen({ navigation }: any) {
           <Text style={styles.title}>Notifications</Text>
           <Text style={styles.subtitle}>Gentle nudges to keep you growing</Text>
         </View>
+
+        <NudgeFeed limit={6} />
 
         <GlassCard style={styles.row}>
           <View style={styles.rowInner}>
