@@ -2,6 +2,17 @@ import {
   getLevelForXP, getXPProgress, addXP, updateStreak, checkForNewBadges, emptyProfile,
 } from '../gamification';
 
+// Pin the wall-clock hour used by addXP's earlyBird/nightOwl checks to a
+// neutral daytime value so those checks can't spuriously award a badge
+// (and mess with exact-xp assertions) depending on what time tests run.
+let getHoursSpy: jest.SpyInstance;
+beforeAll(() => {
+  getHoursSpy = jest.spyOn(Date.prototype, 'getHours').mockReturnValue(12);
+});
+afterAll(() => {
+  getHoursSpy.mockRestore();
+});
+
 describe('getLevelForXP', () => {
   it('bands XP into the right level', () => {
     expect(getLevelForXP(0).level).toBe(1);
