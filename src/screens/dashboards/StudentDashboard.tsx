@@ -146,6 +146,27 @@ export default function StudentDashboard({ navigation }: any) {
         </LinearGradient>
 
         <AskJottiCard style={styles.jottiCard} />
+        <GlassCard
+          padding={16}
+          style={styles.challengeCard}
+          onPress={() => navigation.navigate('DailyChallenge')}
+        >
+          <View style={styles.challengeRow}>
+            <LinearGradient
+              colors={['#F59E0B', '#DB2777']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.challengeIcon}
+            >
+              <Text style={styles.challengeIconText}>🔥</Text>
+            </LinearGradient>
+            <View style={{ flex: 1, marginLeft: spacing.md }}>
+              <Text style={styles.challengeTitle}>Daily Challenge</Text>
+              <Text style={styles.challengeSub}>A quick brain workout — keep your streak going</Text>
+            </View>
+            <Text style={styles.challengeArrow}>→</Text>
+          </View>
+        </GlassCard>
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Your Assessments</Text>
@@ -323,6 +344,13 @@ const makeStyles = (colors: Palette) => StyleSheet.create({
     borderRadius: 4,
   },
   jottiCard: { marginBottom: spacing.xl },
+  challengeCard: { marginBottom: spacing.xl },
+  challengeRow: { flexDirection: 'row', alignItems: 'center' },
+  challengeIcon: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
+  challengeIconText: { fontSize: 20 },
+  challengeTitle: { fontSize: 16, fontWeight: '800', color: colors.textPrimary },
+  challengeSub: { fontSize: 12, color: colors.textMuted, marginTop: 2 },
+  challengeArrow: { fontSize: 18, color: colors.textMuted, fontWeight: '700' },
   section: {
     marginBottom: spacing.xxl,
   },
