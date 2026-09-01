@@ -72,6 +72,7 @@ export type RootStackParamList = {
   DailyChallenge: undefined;
   ClassManagement: undefined;
   LessonPlanner: undefined;
+  ObservationLog: undefined;
 };
 
 export type AppNavigation = NativeStackNavigationProp<RootStackParamList>;

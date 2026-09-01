@@ -100,6 +100,7 @@ import LessonPlannerScreen from '../screens/teacher/LessonPlannerScreen';
 import AskJottiScreen from '../screens/shared/AskJottiScreen';
 import DailyChallengeScreen from '../screens/challenge/DailyChallengeScreen';
 import ClassManagementScreen from '../screens/teacher/ClassManagementScreen';
+import ObservationLogScreen from '../screens/teacher/ObservationLogScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -315,6 +316,7 @@ export default function AppNavigator() {
             <Stack.Screen name="AskJotti" component={AskJottiScreen} options={{ headerShown: true, title: 'Ask Jotti' }} />
             <Stack.Screen name="DailyChallenge" component={DailyChallengeScreen} options={{ headerShown: true, title: 'Daily Challenge' }} />
             <Stack.Screen name="ClassManagement" component={ClassManagementScreen} options={{ headerShown: true, title: 'My Classes' }} />
+            <Stack.Screen name="ObservationLog" component={ObservationLogScreen} options={{ headerShown: true, title: 'Observation Log' }} />
           </>
         ) : (
           // ── Auth Stack ─────────────────────────────────────────────────────
