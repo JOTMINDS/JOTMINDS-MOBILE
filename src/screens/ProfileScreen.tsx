@@ -40,7 +40,13 @@ export default function ProfileScreen({ navigation }: any) {
   ];
 
   if (user?.role === 'student' || user?.role === 'teacher') {
-    sections.push({ title: 'School Information', items: [{ label: 'School', value: user?.school || 'Not set' }] });
+    sections.push({
+      title: 'School Information',
+      items: [
+        { label: 'School', value: user?.school || 'Not set' },
+        ...(user?.studentCode ? [{ label: 'Student code', value: user.studentCode }] : []),
+      ],
+    });
   }
   if (user?.role === 'professional') {
     sections.push({

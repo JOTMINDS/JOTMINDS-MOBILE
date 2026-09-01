@@ -16,6 +16,7 @@ export interface AppUser {
   dateOfBirth?: string;
   age?: number;
   assessmentsCompleted?: string[];
+  studentCode?: string;
   subscriptionStatus?: 'free' | 'premium' | 'organization';
   firstWinCompleted?: boolean;
 }
@@ -25,7 +26,8 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (data: SignUpData) => Promise<void>;
+  /** Resolves to the /signup response — includes `studentCode` for institutional students. */
+  signUp: (data: SignUpData) => Promise<{ studentCode?: string } & Record<string, any>>;
   signOut: () => Promise<void>;
   refreshUser: () => Promise<void>;
   requestLoginOtp: (email: string) => Promise<void>;
@@ -79,6 +81,7 @@ async function fetchProfile(supabaseUser: SupabaseUser): Promise<AppUser> {
       dateOfBirth: profile.dateOfBirth ?? profile.date_of_birth,
       age: profile.dateOfBirth ? calculateAge(profile.dateOfBirth) : profile.age,
       assessmentsCompleted: profile.assessmentsCompleted ?? [],
+      studentCode: profile.studentCode ?? profile.student_code,
       subscriptionStatus: profile.subscriptionStatus ?? profile.subscription_status ?? 'free',
       // Backend-persisted onboarding flag (survives reinstall / new device).
       firstWinCompleted: profile.firstWinCompleted ?? !!profile.cognitiveProfile,
@@ -153,7 +156,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         ? new Date().getFullYear() - new Date(data.dateOfBirth).getFullYear() < 18
         : false;
 
-    await callEdgeFn('/signup', {
+    return callEdgeFn('/signup', {
       method: 'POST',
       body: JSON.stringify({
         email: data.email,

@@ -7,6 +7,23 @@
 
 ---
 
+## Implementation status (2026-09-01)
+
+| Step | Status | Branch |
+|---|---|---|
+| A1 — pro match-score formula sync | ✅ done | `webapp-parity-sync` |
+| A2 — re-diff other shared scorers | ✅ done (no drift) | — |
+| B — JTIA (data + scoring + screens + teacher wiring) | ✅ done | `jtia-teacher-assessment` |
+| C1 — `aiService` shim over `/ai/*` | ✅ done | `ai-layer-ask-jotti` |
+| C2 — Ask Jotti chat + dashboard entry points | ✅ done | `ai-layer-ask-jotti` |
+| C3 — nudges | ⏸ deferred — needs the webapp's `engagementTracking` layer, which mobile lacks | — |
+| C4 — replace static tips/strategies with AI | ⏸ incremental, per-surface follow-up | — |
+| D1 — student-code sign-in | ✅ done | `webapp-parity-sync` |
+| D2 — surface generated student code after signup + on profile | ✅ done | `webapp-parity-sync` |
+| D3 — CSV upload / class mgmt / super admin | ❌ web-only, out of scope | — |
+
+---
+
 ## 0. Key finding: the backend is shared
 
 Both apps point at the **same Supabase project** (`femvnconxoefpctiptkj`) and the **same edge function** (`make-server-fc8eb847`).

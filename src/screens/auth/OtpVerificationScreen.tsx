@@ -86,8 +86,10 @@ export default function OtpVerificationScreen({ route, navigation }: ScreenProps
         // point never send the user back to re-enter it. Create the account,
         // then sign in; if either half fails, fall back to Login (the account
         // may already exist) rather than stranding them on a dead code.
+        let studentCode: string | undefined;
         try {
-          await signUp(signupData);
+          const res = await signUp(signupData);
+          studentCode = res?.studentCode;
         } catch (e: any) {
           const msg = String(e?.message || '');
           if (!/already|registered|exists/i.test(msg)) {
@@ -97,6 +99,18 @@ export default function OtpVerificationScreen({ route, navigation }: ScreenProps
             return;
           }
           // else: account already exists → proceed to sign in below
+        }
+        if (studentCode) {
+          // School-issued sign-in code. Surface it once, prominently, before the
+          // navigator swaps to the app — the student needs it to sign in later.
+          await new Promise<void>((resolve) => {
+            Alert.alert(
+              'Your student code',
+              `Save this code. You can sign in with it instead of an email and password:\n\n${studentCode}`,
+              [{ text: 'Got it', onPress: () => resolve() }],
+              { cancelable: false },
+            );
+          });
         }
         try {
           await signIn(signupData.email, signupData.password);
