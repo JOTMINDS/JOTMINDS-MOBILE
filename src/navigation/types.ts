@@ -69,6 +69,7 @@ export type RootStackParamList = {
   KidsAssessmentResults: undefined;
   ExpertChat: undefined;
   AskJotti: { prompt?: string } | undefined;
+  DailyChallenge: undefined;
 };
 
 export type AppNavigation = NativeStackNavigationProp<RootStackParamList>;
