@@ -56,6 +56,8 @@ export type RootStackParamList = {
   TeacherDevelopment: undefined;
   TeachingStyleAssessment: undefined;
   TeachingStyleResults: undefined;
+  JTIAAssessment: undefined;
+  JTIAResults: { report?: import('../utils/jtiaScoring').JTIAReportData };
   GrowthTracker: undefined;
   CoachingPathways: { childId: string; childName: string };
   PathwayDetail: { childId: string; childName: string; pathway: any };

@@ -72,6 +72,8 @@ import ThinkingStylesResultsScreen from '../screens/assessments/ThinkingStylesRe
 import TeacherDevelopmentScreen from '../screens/teacher/TeacherDevelopmentScreen';
 import TeachingStyleAssessmentScreen from '../screens/teacher/TeachingStyleAssessmentScreen';
 import TeachingStyleResultsScreen from '../screens/teacher/TeachingStyleResultsScreen';
+import JTIAAssessmentScreen from '../screens/teacher/JTIAAssessmentScreen';
+import JTIAResultsScreen from '../screens/teacher/JTIAResultsScreen';
 import GrowthTrackerScreen from '../screens/teacher/GrowthTrackerScreen';
 
 // ── Parent ────────────────────────────────────────────────────────────────────
@@ -280,6 +282,8 @@ export default function AppNavigator() {
             <Stack.Screen name="TeacherDevelopment" component={TeacherDevelopmentScreen} options={{ headerShown: true, title: 'Professional Development' }} />
             <Stack.Screen name="TeachingStyleAssessment" component={TeachingStyleAssessmentScreen} options={{ headerShown: true, title: 'Teaching Style' }} />
             <Stack.Screen name="TeachingStyleResults" component={TeachingStyleResultsScreen} options={{ headerShown: true, title: 'Your Teaching Style' }} />
+            <Stack.Screen name="JTIAAssessment" component={JTIAAssessmentScreen} options={{ headerShown: false }} />
+            <Stack.Screen name="JTIAResults" component={JTIAResultsScreen} options={{ headerShown: true, title: 'Your JTIA Profile' }} />
             <Stack.Screen name="GrowthTracker" component={GrowthTrackerScreen} options={{ headerShown: true, title: 'Growth Tracker' }} />
 
             {/* Parent */}

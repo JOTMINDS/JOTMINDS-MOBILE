@@ -11,7 +11,7 @@ import ScreenBackground from '../../components/ScreenBackground';
 import AppIcon from '../../components/AppIcon';
 import GlassCard from '../../components/GlassCard';
 import { getGamificationProfile } from '../../utils/gamificationApi';
-import { isTeachingStyleDone } from '../../utils/teachingStyleStatus';
+import { isJTIADone } from '../../utils/jtiaStatus';
 import { useAuth } from '../../context/AuthContext';
 import { colors, radii, shadow, spacing, Palette } from '../../theme';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
@@ -52,11 +52,11 @@ export default function TeacherDevelopmentScreen({ navigation }: any) {
   const toast = useToast();
   const { user } = useAuth();
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [teachingStyleDone, setTeachingStyleDone] = useState(false);
+  const [jtiaDone, setJtiaDone] = useState(false);
   const [streak, setStreak] = useState(0);
 
   useEffect(() => {
-    isTeachingStyleDone().then(setTeachingStyleDone);
+    isJTIADone().then(setJtiaDone);
     if (user?.id) {
       getGamificationProfile(user.id).then((p) => setStreak(p.currentStreak)).catch(() => {});
     }
@@ -64,14 +64,14 @@ export default function TeacherDevelopmentScreen({ navigation }: any) {
 
   const modules: DevelopmentModule[] = [
     {
-      id: 'teaching-style',
-      title: 'Teaching Style Assessment',
-      description: 'Discover your unique teaching strengths and blind spots',
+      id: 'jtia',
+      title: 'Teacher Intelligence Assessment',
+      description: 'JTIA — cognitive, instructional, leadership, relationship & professional intelligence',
       category: 'assessment',
-      duration: '10 min',
+      duration: '3–25 min',
       icon: '🎓',
       gradient: ['#F59E0B', '#D97706'],
-      progress: teachingStyleDone ? 100 : 0,
+      progress: jtiaDone ? 100 : 0,
       inDevelopment: false,
       difficulty: 'beginner',
     },
@@ -198,7 +198,7 @@ export default function TeacherDevelopmentScreen({ navigation }: any) {
           <Text style={styles.progressLabel}>YOUR GROWTH JOURNEY</Text>
           <View style={styles.progressStatsRow}>
             <View style={styles.progressStat}>
-              <Text style={styles.progressStatValue}>{teachingStyleDone ? 1 : 0}</Text>
+              <Text style={styles.progressStatValue}>{jtiaDone ? 1 : 0}</Text>
               <Text style={styles.progressStatLabel}>Completed</Text>
             </View>
             <View style={styles.progressDivider} />
@@ -250,8 +250,8 @@ export default function TeacherDevelopmentScreen({ navigation }: any) {
             <GlassCard
               key={module.id}
               onPress={() =>
-                module.id === 'teaching-style'
-                  ? navigation.navigate('TeachingStyleAssessment')
+                module.id === 'jtia'
+                  ? navigation.navigate('JTIAAssessment')
                   : toast.info(`"${module.title}" content is coming soon.`)
               }
               style={styles.moduleCard}
@@ -320,7 +320,7 @@ export default function TeacherDevelopmentScreen({ navigation }: any) {
           <GlassCard
             padding={16}
             style={styles.actionCard}
-            onPress={() => navigation.navigate('TeachingStyleAssessment')}
+            onPress={() => navigation.navigate('JTIAAssessment')}
           >
             <View style={styles.actionRow}>
               <LinearGradient
@@ -333,10 +333,10 @@ export default function TeacherDevelopmentScreen({ navigation }: any) {
               </LinearGradient>
               <View style={styles.actionContent}>
                 <Text style={styles.actionTitle}>
-                  Take Teaching Style Assessment
+                  Take the JTIA
                 </Text>
                 <Text style={styles.actionDescription}>
-                  Discover your unique teaching strengths
+                  Map your teacher intelligence across 5 domains
                 </Text>
               </View>
               <AppIcon name="→" size={18} style={styles.actionArrow} />
