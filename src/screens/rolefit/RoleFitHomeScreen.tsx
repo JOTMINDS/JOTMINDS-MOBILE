@@ -117,6 +117,20 @@ export default function RoleFitHomeScreen({ navigation }: any) {
           </View>
         </GlassCard>
 
+        {/* Dream careers */}
+        <GlassCard style={styles.careerCard} onPress={() => navigation.navigate('DreamCareers')}>
+          <View style={styles.careerRow}>
+            <View style={styles.careerIconWrap}>
+              <AppIcon name="⭐" size={22} color={colors.cyan} />
+            </View>
+            <View style={styles.careerText}>
+              <Text style={styles.careerTitle}>Dream Careers</Text>
+              <Text style={styles.careerSub}>Shortlist the roles you want — get fit + what to build for each</Text>
+            </View>
+            <AppIcon name="arrow-forward" size={18} color={colors.textSubtle} />
+          </View>
+        </GlassCard>
+
         {/* What we measure */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>What We Measure</Text>
