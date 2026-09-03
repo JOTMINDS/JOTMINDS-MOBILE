@@ -1,23 +1,65 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
+  Image,
   ScrollView,
   StyleSheet,
   TouchableOpacity,
+  ActivityIndicator,
   Alert,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../context/AuthContext';
 import { useThemedStyles } from '../context/ThemeContext';
+import { useToast } from '../context/ToastContext';
+import { pickAndSaveAvatar, removeAvatar } from '../utils/avatar';
 import ScreenBackground from '../components/ScreenBackground';
 import GlassCard from '../components/GlassCard';
 import AppIcon from '../components/AppIcon';
 import { colors, radii, shadow, spacing, Palette } from '../theme';
 
 export default function ProfileScreen({ navigation }: any) {
-  const { user, signOut } = useAuth();
+  const { user, signOut, refreshUser } = useAuth();
   const styles = useThemedStyles(makeStyles);
+  const toast = useToast();
+  const [photoBusy, setPhotoBusy] = useState(false);
+
+  const changePhoto = async () => {
+    if (user?.avatarUrl) {
+      Alert.alert('Profile photo', undefined, [
+        { text: 'Choose new photo', onPress: () => runPick() },
+        { text: 'Remove photo', style: 'destructive', onPress: () => runRemove() },
+        { text: 'Cancel', style: 'cancel' },
+      ]);
+    } else {
+      runPick();
+    }
+  };
+
+  const runPick = async () => {
+    setPhotoBusy(true);
+    try {
+      const uri = await pickAndSaveAvatar();
+      if (uri) { await refreshUser(); toast.success('Photo updated'); }
+    } catch (e: any) {
+      toast.error(e?.message || 'Could not update your photo.');
+    } finally {
+      setPhotoBusy(false);
+    }
+  };
+
+  const runRemove = async () => {
+    setPhotoBusy(true);
+    try {
+      await removeAvatar();
+      await refreshUser();
+    } catch {
+      toast.error('Could not remove your photo.');
+    } finally {
+      setPhotoBusy(false);
+    }
+  };
 
   const handleSignOut = () => {
     Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
@@ -62,9 +104,20 @@ export default function ProfileScreen({ navigation }: any) {
     <ScreenBackground>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <LinearGradient colors={['#6E4D9C', '#B79BDC']} style={styles.avatar} start={{x:0,y:0}} end={{x:1,y:1}}>
-            <Text style={styles.avatarText}>{user?.name?.charAt(0).toUpperCase() || '?'}</Text>
-          </LinearGradient>
+          <TouchableOpacity onPress={changePhoto} disabled={photoBusy} accessibilityRole="button" accessibilityLabel="Change profile photo">
+            {user?.avatarUrl ? (
+              <Image source={{ uri: user.avatarUrl }} style={styles.avatar} />
+            ) : (
+              <LinearGradient colors={['#6E4D9C', '#B79BDC']} style={styles.avatar} start={{x:0,y:0}} end={{x:1,y:1}}>
+                <Text style={styles.avatarText}>{user?.name?.charAt(0).toUpperCase() || '?'}</Text>
+              </LinearGradient>
+            )}
+            <View style={styles.avatarBadge}>
+              {photoBusy
+                ? <ActivityIndicator size="small" color="#fff" />
+                : <AppIcon name="📷" size={14} color="#fff" />}
+            </View>
+          </TouchableOpacity>
           <Text style={styles.name}>{user?.name}</Text>
           <Text style={styles.email}>{user?.email}</Text>
           <View style={styles.rolePill}>
@@ -142,6 +195,11 @@ const makeStyles = (c: Palette) => StyleSheet.create({
   avatar: {
     width: 88, height: 88, borderRadius: 28, alignItems: 'center', justifyContent: 'center',
     marginBottom: spacing.lg, ...shadow.glow,
+  },
+  avatarBadge: {
+    position: 'absolute', right: -2, bottom: spacing.lg - 2,
+    width: 28, height: 28, borderRadius: 14, backgroundColor: c.purple,
+    alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: c.bgPrimary,
   },
   avatarText: { fontSize: 38, fontWeight: '800', color: '#FFF' },
   name: { fontSize: 24, fontWeight: '700', color: c.textPrimary, letterSpacing: -0.4 },

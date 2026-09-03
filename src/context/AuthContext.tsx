@@ -17,6 +17,7 @@ export interface AppUser {
   age?: number;
   assessmentsCompleted?: string[];
   studentCode?: string;
+  avatarUrl?: string;
   subscriptionStatus?: 'free' | 'premium' | 'organization';
   firstWinCompleted?: boolean;
 }
@@ -83,6 +84,7 @@ async function fetchProfile(supabaseUser: SupabaseUser): Promise<AppUser> {
       age: profile.dateOfBirth ? calculateAge(profile.dateOfBirth) : profile.age,
       assessmentsCompleted: profile.assessmentsCompleted ?? [],
       studentCode: profile.studentCode ?? profile.student_code,
+      avatarUrl: profile.avatarUrl ?? profile.avatar_url,
       subscriptionStatus: profile.subscriptionStatus ?? profile.subscription_status ?? 'free',
       // Backend-persisted onboarding flag (survives reinstall / new device).
       firstWinCompleted: profile.firstWinCompleted ?? !!profile.cognitiveProfile,

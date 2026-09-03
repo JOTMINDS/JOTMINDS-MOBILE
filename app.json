@@ -45,7 +45,20 @@
         }
       ],
       "@react-native-community/datetimepicker",
-      "./plugins/withFmtCxx17Fix"
+      "./plugins/withFmtCxx17Fix",
+      "expo-secure-store",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "JotMinds uses your photos so you can set a profile picture."
+        }
+      ],
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "JotMinds uses Face ID to unlock your account quickly and securely."
+        }
+      ]
     ],
     "extra": {
       "eas": {
