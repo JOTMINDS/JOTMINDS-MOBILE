@@ -22,6 +22,7 @@ import BrainGymScreen from '../screens/braingym/BrainGymScreen';
 import MemoryMatchScreen from '../screens/braingym/MemoryMatchScreen';
 import NBackScreen from '../screens/braingym/NBackScreen';
 import StroopScreen from '../screens/braingym/StroopScreen';
+import LeaderboardScreen from '../screens/braingym/LeaderboardScreen';
 
 // ── Role-Based Home Dashboards ────────────────────────────────────────────────
 import StudentDashboard from '../screens/dashboards/StudentDashboard';
@@ -239,6 +240,7 @@ export default function AppNavigator() {
             <Stack.Screen name="MemoryMatch" component={MemoryMatchScreen} />
             <Stack.Screen name="NBack" component={NBackScreen} />
             <Stack.Screen name="Stroop" component={StroopScreen} />
+            <Stack.Screen name="Leaderboard" component={LeaderboardScreen} />
 
             {/* Role Fit */}
             <Stack.Screen name="RoleDemandBuilder" component={RoleDemandBuilderScreen} />

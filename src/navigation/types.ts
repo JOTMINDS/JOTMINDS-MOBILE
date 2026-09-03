@@ -33,6 +33,7 @@ export type RootStackParamList = {
   MemoryMatch: undefined;
   NBack: undefined;
   Stroop: undefined;
+  Leaderboard: undefined;
 
   // Role Fit
   RoleDemandBuilder: undefined;

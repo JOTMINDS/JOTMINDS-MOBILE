@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { getBrainGymStats } from '../../utils/brainGym';
+import { submitLeaderboardScore } from '../../utils/leaderboardApi';
 import {
   DIFFICULTIES, Difficulty, DIFFICULTY_UNLOCK_LEVEL, isDifficultyUnlocked, getDifficultyBests,
 } from '../../utils/brainGymDifficulty';
@@ -47,6 +48,8 @@ export default function BrainGymScreen({ navigation }: any) {
     getBrainGymStats().then((s) => { setBests(s.bests); setPlays(s.plays); });
     getDifficultyBests().then(setDifficultyBests);
     if (user?.id) getGamificationProfile(user.id).then((p) => setLevel(p.level));
+    // Keep our leaderboard entry in sync on every visit (covers "just finished a game").
+    submitLeaderboardScore(user?.name, user?.className);
   };
   useEffect(() => {
     const unsub = navigation.addListener('focus', load);
@@ -79,6 +82,19 @@ export default function BrainGymScreen({ navigation }: any) {
           <Text style={styles.statValue}>{plays}</Text>
           <Text style={styles.statLabel}>games played</Text>
         </LinearGradient>
+
+        <GlassCard style={styles.gameCard} onPress={() => navigation.navigate('Leaderboard')}>
+          <View style={styles.gameRow}>
+            <LinearGradient colors={['#F59E0B', '#DB2777']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.gameIcon}>
+              <AppIcon name="🏆" size={22} color="#FFFFFF" />
+            </LinearGradient>
+            <View style={styles.gameText}>
+              <Text style={styles.gameTitle}>Leaderboard</Text>
+              <Text style={styles.gameDesc}>Your combined score vs. everyone — and your class</Text>
+            </View>
+            <AppIcon name="→" size={18} color={colors.textMuted} />
+          </View>
+        </GlassCard>
 
         {GAMES.map((g) => {
           const difficulty = selected[g.key];
