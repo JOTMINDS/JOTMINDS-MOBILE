@@ -222,6 +222,7 @@ export default function ThinkingStylesResultsScreen({ route, navigation }: any) 
         icon="🎨"
         headline={String(headline)}
         subtitle={`Thinking Styles · ${track.toUpperCase()} Track · JotMinds`}
+        highlights={(insights?.strengths ?? []).slice(0, 3)}
         name={user?.name ?? 'JotMinds User'}
         date={new Date().toLocaleDateString()}
       />
