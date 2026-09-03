@@ -58,6 +58,11 @@ export default function EditProfileScreen({ navigation }: any) {
   const [values, setValues] = useState<Record<string, string>>(initial);
   const [saving, setSaving] = useState(false);
 
+  // A student under 18 can't self-edit their education level — it's tied to
+  // their school year, not a free choice. (Yearly auto-promotion is a
+  // server-side follow-up.)
+  const isMinorStudent = user?.role === 'student' && typeof user?.age === 'number' && user.age < 18;
+
   const dirty = fields.some((f) => (values[f.key] ?? '') !== (initial[f.key] ?? ''));
 
   const handleSave = async () => {
@@ -108,7 +113,19 @@ export default function EditProfileScreen({ navigation }: any) {
           {fields.map((f) => (
             <View key={f.key}>
               <Text style={styles.fieldLabel}>{f.label.toUpperCase()}</Text>
-              {f.type === 'level' ? (
+              {f.type === 'level' && isMinorStudent ? (
+                <>
+                  <View style={[styles.input, styles.inputDisabled]}>
+                    <Text style={styles.inputDisabledText}>
+                      {EDUCATION_LEVELS.find((l) => l.value === values[f.key])?.label || values[f.key] || 'Not set'}
+                    </Text>
+                    <AppIcon name="🔒" size={16} color={colors.textSubtle} />
+                  </View>
+                  <Text style={styles.lockNote}>
+                    Set by your school year. Ask a parent or your school to update it.
+                  </Text>
+                </>
+              ) : f.type === 'level' ? (
                 <View style={styles.levelRow}>
                   {EDUCATION_LEVELS.map((lvl) => {
                     const active = values[f.key] === lvl.value;
@@ -180,6 +197,7 @@ const makeStyles = (colors: Palette) => StyleSheet.create({
   },
   inputDisabled: { opacity: 0.6 },
   inputDisabledText: { fontSize: 16, color: colors.textMuted },
+  lockNote: { fontSize: 12, color: colors.textSubtle, marginTop: 6, marginBottom: 4, lineHeight: 17 },
   levelRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   levelPill: {
     paddingHorizontal: 16, paddingVertical: 12, borderRadius: radii.md,
