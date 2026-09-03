@@ -4,6 +4,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { getTodayCheckin, getStreak } from '../../utils/mindCheckins';
+import { shareStreak } from '../../utils/streakShare';
 import ScreenBackground from '../../components/ScreenBackground';
 import GlassCard from '../../components/GlassCard';
 import AppIcon from '../../components/AppIcon';
@@ -67,9 +68,21 @@ export default function MindHomeScreen({ navigation }: any) {
               </View>
               <Text style={styles.streakSub}>Keep checking in daily!</Text>
             </View>
-            <View style={styles.streakIcon}>
-              <AppIcon name="🧠" size={28} color="#FFFFFF" />
-            </View>
+            {streak > 0 ? (
+              <TouchableOpacity
+                style={styles.streakShareBtn}
+                onPress={() => shareStreak(streak, 'check-in')}
+                accessibilityRole="button"
+                accessibilityLabel="Share streak"
+              >
+                <AppIcon name="↗" size={16} color="#FFFFFF" />
+                <Text style={styles.streakShareText}>Share</Text>
+              </TouchableOpacity>
+            ) : (
+              <View style={styles.streakIcon}>
+                <AppIcon name="🧠" size={28} color="#FFFFFF" />
+              </View>
+            )}
           </View>
         </LinearGradient>
 
@@ -207,6 +220,12 @@ const makeStyles = (colors: Palette) => StyleSheet.create({
   streakValue: { fontSize: 28, fontWeight: '800', color: '#FFFFFF', letterSpacing: -0.5 },
   streakSub: { fontSize: 13, color: 'rgba(255,255,255,0.55)', marginTop: 4 },
   streakIcon: { width: 56, height: 56, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.12)', justifyContent: 'center', alignItems: 'center' },
+  streakShareBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    paddingVertical: 9, paddingHorizontal: 14, borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+  },
+  streakShareText: { color: '#FFFFFF', fontSize: 13, fontWeight: '700' },
   streakEmoji: { fontSize: 28 },
   checkinCard: { marginBottom: 16 },
   checkinHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
