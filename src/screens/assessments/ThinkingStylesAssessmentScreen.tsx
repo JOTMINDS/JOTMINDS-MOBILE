@@ -3,7 +3,7 @@ import {
   View, Text, StyleSheet, TouchableOpacity, Animated, ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { submitAssessment } from '../../utils/api';
+import { submitWithOutbox } from '../../utils/outbox';
 import { recordAssessmentCompletion } from '../../utils/gamificationApi';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
@@ -83,16 +83,26 @@ export default function ThinkingStylesAssessmentScreen({ navigation, route }: an
     setSubmitting(true);
     const result = computeResult(finalAnswers);
     const answerList = Object.entries(finalAnswers).map(([qid, value]) => ({ questionId: Number(qid), value }));
+
+    // Flat payload — confirmed against a live production row (unlike the
+    // core 3's nested {kolb: {...}} shape). Queues on a network error rather
+    // than failing, and the result is passed to the results screen directly
+    // so a slow/failed save never blocks the user from seeing it.
     try {
-      // Flat payload — confirmed against a live production row (unlike the
-      // core 3's nested {kolb: {...}} shape).
-      await submitAssessment(WIRE_TYPE[track], answerList, result, [], [], []);
-      if (user?.id) recordAssessmentCompletion(user.id, 'thinking-styles').catch(() => {});
-      navigation.replace('ThinkingStylesResults', { track });
-    } catch {
-      toast.error('Could not save your results. Please check your connection.');
-      setSubmitting(false);
+      const res = await submitWithOutbox(
+        '/assessment/submit',
+        { assessmentType: WIRE_TYPE[track], answers: answerList, results: result, strengths: [], weaknesses: [], recommendations: [] },
+        'assessment',
+      );
+      if (res.queued) {
+        toast.info("You're offline — your results will sync automatically.");
+      }
+    } catch (e) {
+      console.error('[ThinkingStyles] submit failed:', e);
+      toast.error("Couldn't save to your account, but here are your results.");
     }
+    if (user?.id) recordAssessmentCompletion(user.id, 'thinking-styles').catch(() => {});
+    navigation.replace('ThinkingStylesResults', { track, result });
   };
 
   const choose = (value: number) => {

@@ -14,6 +14,7 @@ import {
   calculateKolbScore, calculateSternbergScore, calculateDualProcessScore, WIRE_RESULT_KEY,
 } from '../../utils/scoring';
 import { QUESTION_BANK, AssessmentType } from '../../data/questionBank';
+import { bankForAge } from '../../data/questionBankByAge';
 import ScreenBackground from '../../components/ScreenBackground';
 import AppIcon from '../../components/AppIcon';
 import { colors, radii, spacing, Palette } from '../../theme';
@@ -36,8 +37,12 @@ export default function AssessmentTakingScreen({ navigation, route }: any) {
   const colors = useTheme();
   const styles = useThemedStyles(makeStyles);
   const assessmentType: AssessmentType = route.params?.assessmentType ?? 'learning';
-  const bank = QUESTION_BANK[assessmentType] ?? QUESTION_BANK.learning;
   const { user } = useAuth();
+  // Age-appropriate question wording: 15-18 → teen bank, 19-25 → tertiary,
+  // otherwise the default (adult) bank. Scoring is unchanged — same
+  // dimensions and per-dimension counts.
+  const ageBank = bankForAge(user?.age);
+  const bank = (ageBank ?? QUESTION_BANK)[assessmentType] ?? QUESTION_BANK.learning;
   const toast = useToast();
   const { reduceMotion } = useAccessibility();
 

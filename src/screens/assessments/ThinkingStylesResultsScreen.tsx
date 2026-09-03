@@ -32,11 +32,15 @@ export default function ThinkingStylesResultsScreen({ route, navigation }: any) 
   const styles = useThemedStyles(makeStyles);
   const { user } = useAuth();
   const track: ThinkingStylesTrack = route.params?.track ?? 'adult';
-  const [results, setResults] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  // When we arrive straight from finishing the assessment, the freshly
+  // computed result comes in via params — show it immediately, don't wait
+  // on (or depend on) the server read.
+  const [results, setResults] = useState<any>(route.params?.result ?? null);
+  const [loading, setLoading] = useState(!route.params?.result);
   const [showCertificate, setShowCertificate] = useState(false);
 
   useEffect(() => {
+    if (route.params?.result) return; // already have it
     (async () => {
       try {
         const data = await getAssessmentResults(WIRE_TYPE[track]);
@@ -47,7 +51,7 @@ export default function ThinkingStylesResultsScreen({ route, navigation }: any) 
         setLoading(false);
       }
     })();
-  }, [track]);
+  }, [track, route.params?.result]);
 
   if (loading) {
     return (
