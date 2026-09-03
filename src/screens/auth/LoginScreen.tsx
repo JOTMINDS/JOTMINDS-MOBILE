@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -14,6 +14,10 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { validateStudentCode } from '../../utils/api';
+import {
+  getBiometricSupport, isBiometricLoginEnabled, biometricSignIn,
+  enableBiometricLogin, biometricLabel,
+} from '../../utils/biometricAuth';
 import ScreenBackground from '../../components/ScreenBackground';
 import GlassCard from '../../components/GlassCard';
 import GradientButton from '../../components/GradientButton';
@@ -41,6 +45,44 @@ export default function LoginScreen({ navigation, route }: any) {
   const [codeStudentName, setCodeStudentName] = useState('');
   const [codeSchoolName, setCodeSchoolName] = useState('');
 
+  // Biometric quick sign-in
+  const [bio, setBio] = useState<{ available: boolean; enabled: boolean; label: string }>({
+    available: false, enabled: false, label: 'Face ID',
+  });
+  useEffect(() => {
+    (async () => {
+      const support = await getBiometricSupport();
+      const enabled = await isBiometricLoginEnabled();
+      setBio({ available: support.available, enabled, label: biometricLabel(support.kind) });
+    })();
+  }, []);
+
+  const handleBiometricUnlock = async () => {
+    setLoading(true);
+    try {
+      const creds = await biometricSignIn();
+      if (creds) await signIn(creds.email, creds.password);
+    } catch (e: any) {
+      toast.error(e?.message || 'Could not unlock. Sign in with your password.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const offerBiometric = async (em: string, pw: string) => {
+    const support = await getBiometricSupport();
+    if (!support.available || (await isBiometricLoginEnabled())) return;
+    const label = biometricLabel(support.kind);
+    Alert.alert(
+      `Sign in with ${label}?`,
+      `Next time, unlock JotMinds with ${label} instead of typing your password.`,
+      [
+        { text: 'Not now', style: 'cancel' },
+        { text: `Use ${label}`, onPress: () => enableBiometricLogin(em, pw).catch(() => {}) },
+      ],
+    );
+  };
+
   const validateEmail = (text: string) => {
     setEmail(text);
     if (text && !text.includes('@')) {
@@ -59,6 +101,7 @@ export default function LoginScreen({ navigation, route }: any) {
     setLoading(true);
     try {
       await signIn(email, password);
+      offerBiometric(email, password); // fire-and-forget; Alert survives the nav swap
     } catch (error: any) {
       console.error('[Login] Error:', error);
       toast.error(error.message || 'Invalid email or password');
@@ -302,6 +345,13 @@ export default function LoginScreen({ navigation, route }: any) {
               <AppIcon name="✉️" size={18} color={colors.cyan} />
               <Text style={styles.otpBtnText}>Email me a sign-in code</Text>
             </TouchableOpacity>
+
+            {bio.available && bio.enabled && (
+              <TouchableOpacity style={styles.bioBtn} onPress={handleBiometricUnlock} disabled={loading}>
+                <AppIcon name={bio.label === 'Face ID' ? '🙂' : '👆'} size={18} color={colors.purple} />
+                <Text style={styles.bioBtnText}>Unlock with {bio.label}</Text>
+              </TouchableOpacity>
+            )}
             </>
             )}
 
@@ -493,6 +543,12 @@ const makeStyles = (colors: Palette) => StyleSheet.create({
     color: colors.textSecondary,
     fontWeight: '600',
   },
+  bioBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+    marginTop: 12, paddingVertical: 15, borderRadius: radii.md,
+    borderWidth: 1.5, borderColor: colors.purple, backgroundColor: `${colors.purple}18`,
+  },
+  bioBtnText: { fontSize: 15, color: colors.purple, fontWeight: '700' },
   signupContainer: {
     flexDirection: 'row',
     justifyContent: 'center',

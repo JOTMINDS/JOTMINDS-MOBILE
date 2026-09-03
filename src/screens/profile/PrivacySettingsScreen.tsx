@@ -1,9 +1,12 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Linking, Alert, ActivityIndicator } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Linking, Alert, ActivityIndicator, Switch } from 'react-native';
 import ScreenBackground from '../../components/ScreenBackground';
 import GlassCard from '../../components/GlassCard';
 import AppIcon from '../../components/AppIcon';
 import { deleteAccount } from '../../utils/api';
+import {
+  getBiometricSupport, isBiometricLoginEnabled, disableBiometricLogin, biometricLabel,
+} from '../../utils/biometricAuth';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { radii, spacing, Palette } from '../../theme';
@@ -21,6 +24,29 @@ export default function PrivacySettingsScreen({ navigation }: any) {
   const { signOut } = useAuth();
   const toast = useToast();
   const [deleting, setDeleting] = useState(false);
+
+  const [bioSupported, setBioSupported] = useState(false);
+  const [bioEnabled, setBioEnabled] = useState(false);
+  const [bioLabel, setBioLabel] = useState('Face ID');
+  useEffect(() => {
+    (async () => {
+      const s = await getBiometricSupport();
+      setBioSupported(s.available);
+      setBioLabel(biometricLabel(s.kind));
+      setBioEnabled(await isBiometricLoginEnabled());
+    })();
+  }, []);
+
+  const toggleBiometric = async (next: boolean) => {
+    if (next) {
+      // Enabling happens on the login screen (needs the password). Point there.
+      toast.info(`Turn on "${bioLabel}" the next time you sign in with your password.`);
+      return;
+    }
+    await disableBiometricLogin();
+    setBioEnabled(false);
+    toast.success(`${bioLabel} sign-in turned off`);
+  };
 
   const runDelete = async () => {
     setDeleting(true);
@@ -79,6 +105,26 @@ export default function PrivacySettingsScreen({ navigation }: any) {
             </View>
           </GlassCard>
         ))}
+
+        {bioSupported && (
+          <GlassCard style={styles.card}>
+            <View style={styles.row}>
+              <View style={styles.iconWrap}>
+                <AppIcon name="🔐" size={20} color={colors.purpleSoft} />
+              </View>
+              <View style={styles.rowText}>
+                <Text style={styles.rowTitle}>Unlock with {bioLabel}</Text>
+                <Text style={styles.rowDesc}>Sign in with {bioLabel} instead of your password.</Text>
+              </View>
+              <Switch
+                value={bioEnabled}
+                onValueChange={toggleBiometric}
+                trackColor={{ false: colors.bgTertiary, true: colors.purple }}
+                thumbColor="#FFFFFF"
+              />
+            </View>
+          </GlassCard>
+        )}
 
         <TouchableOpacity
           style={styles.linkBtn}
