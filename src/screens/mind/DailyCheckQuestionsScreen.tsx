@@ -29,7 +29,11 @@ export default function DailyCheckQuestionsScreen({ navigation }: any) {
   const [emotionalState, setEmotionalState] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  const progress = step / 3;
+  const TOTAL_STEPS = 4;
+  const progress = step / TOTAL_STEPS;
+
+  const focusLabels = ['', 'Very scattered', 'Scattered', 'OK', 'Focused', 'Laser-focused'];
+  const emotionLabel = EMOTIONS.find((e) => e.key === emotionalState)?.label ?? '—';
 
   const handleSubmit = async () => {
     if (!focusScore || decisionDelay === null || !emotionalState) return;
@@ -63,7 +67,7 @@ export default function DailyCheckQuestionsScreen({ navigation }: any) {
               style={[styles.progressFill, { width: `${progress * 100}%` }]}
             />
           </View>
-          <Text style={styles.progressLabel}>{step} / 3</Text>
+          <Text style={styles.progressLabel}>{step} / {TOTAL_STEPS}</Text>
         </View>
 
         {/* Q1: Focus score */}
@@ -157,6 +161,31 @@ export default function DailyCheckQuestionsScreen({ navigation }: any) {
           </GlassCard>
         )}
 
+        {/* Step 4: Review */}
+        {step === 4 && (
+          <GlassCard style={styles.questionCard}>
+            <Text style={styles.qLabel}>REVIEW</Text>
+            <Text style={styles.qTitle}>Look good?</Text>
+            <Text style={styles.qSub}>Tap any answer to change it before submitting.</Text>
+
+            <TouchableOpacity style={styles.reviewRow} onPress={() => setStep(1)}>
+              <Text style={styles.reviewLabel}>Focus</Text>
+              <Text style={styles.reviewValue}>{focusScore ? `${focusScore} · ${focusLabels[focusScore]}` : '—'}</Text>
+              <Text style={styles.reviewEdit}>Edit</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.reviewRow} onPress={() => setStep(2)}>
+              <Text style={styles.reviewLabel}>Decisions</Text>
+              <Text style={styles.reviewValue}>{decisionDelay === null ? '—' : decisionDelay ? 'Putting some off' : 'On top of them'}</Text>
+              <Text style={styles.reviewEdit}>Edit</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.reviewRow, { borderBottomWidth: 0 }]} onPress={() => setStep(3)}>
+              <Text style={styles.reviewLabel}>Mood</Text>
+              <Text style={styles.reviewValue}>{emotionLabel}</Text>
+              <Text style={styles.reviewEdit}>Edit</Text>
+            </TouchableOpacity>
+          </GlassCard>
+        )}
+
         {/* Navigation buttons */}
         <View style={styles.navRow}>
           {step > 1 && (
@@ -165,13 +194,14 @@ export default function DailyCheckQuestionsScreen({ navigation }: any) {
             </TouchableOpacity>
           )}
 
-          {step < 3 ? (
+          {step < 4 ? (
             <TouchableOpacity
               style={[
                 styles.nextBtn,
-                (step === 1 && !focusScore) || (step === 2 && decisionDelay === null) ? styles.nextBtnDisabled : null,
+                (step === 1 && !focusScore) || (step === 2 && decisionDelay === null) || (step === 3 && !emotionalState)
+                  ? styles.nextBtnDisabled : null,
               ]}
-              disabled={(step === 1 && !focusScore) || (step === 2 && decisionDelay === null)}
+              disabled={(step === 1 && !focusScore) || (step === 2 && decisionDelay === null) || (step === 3 && !emotionalState)}
               onPress={() => setStep(step + 1)}
             >
               <LinearGradient
@@ -180,13 +210,13 @@ export default function DailyCheckQuestionsScreen({ navigation }: any) {
                 end={{ x: 1, y: 0 }}
                 style={styles.nextBtnGradient}
               >
-                <Text style={styles.nextBtnText}>Next →</Text>
+                <Text style={styles.nextBtnText}>{step === 3 ? 'Review →' : 'Next →'}</Text>
               </LinearGradient>
             </TouchableOpacity>
           ) : (
             <TouchableOpacity
-              style={[styles.nextBtn, !emotionalState && styles.nextBtnDisabled]}
-              disabled={!emotionalState || submitting}
+              style={[styles.nextBtn, submitting && styles.nextBtnDisabled]}
+              disabled={submitting}
               onPress={handleSubmit}
             >
               <LinearGradient
@@ -198,7 +228,7 @@ export default function DailyCheckQuestionsScreen({ navigation }: any) {
                 {submitting ? (
                   <ActivityIndicator color="#FFFFFF" />
                 ) : (
-                  <Text style={styles.nextBtnText}>Submit</Text>
+                  <Text style={styles.nextBtnText}>Submit check-in</Text>
                 )}
               </LinearGradient>
             </TouchableOpacity>
@@ -215,6 +245,13 @@ const makeStyles = (colors: Palette) => StyleSheet.create({
   progressTrack: { flex: 1, height: 6, backgroundColor: colors.bgTertiary, borderRadius: 3, overflow: 'hidden' },
   progressFill: { height: '100%', borderRadius: 3 },
   progressLabel: { fontSize: 12, color: colors.textSubtle, fontWeight: '600' },
+  reviewRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 14,
+    borderBottomWidth: 1, borderBottomColor: colors.borderLight,
+  },
+  reviewLabel: { fontSize: 13, color: colors.textMuted, width: 78 },
+  reviewValue: { flex: 1, fontSize: 14, color: colors.text, fontWeight: '600' },
+  reviewEdit: { fontSize: 13, color: colors.cyan, fontWeight: '700' },
   questionCard: { flex: 1, marginBottom: 24 },
   qLabel: { fontSize: 11, fontWeight: '700', color: colors.cyan, letterSpacing: 1.5, marginBottom: 12 },
   qTitle: { fontSize: 22, fontWeight: '800', color: colors.text, letterSpacing: -0.5, lineHeight: 28, marginBottom: 8 },
