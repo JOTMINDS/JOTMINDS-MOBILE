@@ -86,6 +86,16 @@ export function recordBrainGymCompletion(userId: string): Promise<AwardResult> {
   return award(userId, XP_RATES.brainGymSession, (p) => { p.totalBrainGymSessions += 1; });
 }
 
+/**
+ * Call once when a user completes a Discover article's comprehension quiz.
+ * Small XP toward Cognitive Growth — it deliberately does NOT touch any
+ * cognitive-assessment score (that data must stay a clean psychometric
+ * record).
+ */
+export function recordReadingQuiz(userId: string): Promise<AwardResult> {
+  return award(userId, XP_RATES.readingQuiz);
+}
+
 function applyExplorationBonus(p: GamificationProfile, exploration?: 'thinking-styles' | 'role-fit') {
   if (exploration === 'thinking-styles' && !p.thinkingStylesExplored) {
     p.thinkingStylesExplored = true; p.xp += XP_RATES.exploration;

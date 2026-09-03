@@ -52,6 +52,7 @@ export const XP_RATES = {
   brainGymSession: 50,
   badgeEarned: 25,
   exploration: 25, // one-time bonus for trying Role Fit / Thinking Styles for the first time
+  readingQuiz: 15, // completing a Discover article's comprehension quiz
 };
 
 // ── Badges — pruned from webapp's 60-badge BADGE_LIBRARY to only what
