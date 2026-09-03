@@ -4,6 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import ScreenBackground from '../../components/ScreenBackground';
 import GlassCard from '../../components/GlassCard';
 import AppIcon from '../../components/AppIcon';
+import ReadingQuiz from '../../components/ReadingQuiz';
 import { colors, radii, spacing, Palette } from '../../theme';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 
@@ -61,26 +62,12 @@ export default function InsightDetailScreen({ route, navigation }: any) {
           ))}
         </View>
 
-        {/* CTA */}
-        <GlassCard style={styles.cta}>
-          <Text style={styles.ctaTitle}>Apply This Insight</Text>
-          <Text style={styles.ctaBody}>
-            Complete your cognitive assessment to see how this pattern shows up in your personal profile.
-          </Text>
-          <TouchableOpacity
-            style={styles.ctaBtn}
-            onPress={() => navigation.navigate('Main', { screen: 'Home' })}
-          >
-            <LinearGradient
-              colors={['#6E4D9C', '#3D52C9']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.ctaBtnGradient}
-            >
-              <Text style={styles.ctaBtnText}>Go to Assessments →</Text>
-            </LinearGradient>
-          </TouchableOpacity>
-        </GlassCard>
+        {/* Comprehension quiz — earns Cognitive Growth XP, keeps you in the app */}
+        <ReadingQuiz
+          articleId={String(insight.id)}
+          title={insight.title}
+          body={sections.map((s) => `${s.heading}. ${s.body}`).join('\n\n')}
+        />
       </ScrollView>
     </ScreenBackground>
   );

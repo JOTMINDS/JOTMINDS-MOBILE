@@ -7,6 +7,7 @@ import { getAllAssessmentResults } from '../../utils/api';
 import { calculateRoleFitScore, mapMobileProfileToDimensions, RoleCognitiveDemand } from '../../utils/roleFitEngine';
 import { missingCognitiveDomains } from '../../utils/profileCompleteness';
 import { recordExploration } from '../../utils/gamificationApi';
+import { askJotti } from '../../utils/aiService';
 import { useAuth } from '../../context/AuthContext';
 import ScreenBackground from '../../components/ScreenBackground';
 import GlassCard from '../../components/GlassCard';
@@ -36,9 +37,43 @@ export default function RoleDemandBuilderScreen({ navigation }: any) {
   const [roleName, setRoleName] = useState('');
   const [scores, setScores] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(false);
+  const [aiFilling, setAiFilling] = useState(false);
+  const [aiFilled, setAiFilled] = useState(false);
 
   const setScore = (key: string, val: number) => {
     setScores((prev) => ({ ...prev, [key]: val }));
+    setAiFilled(false);
+  };
+
+  // Infer the role's demands via AI so the user doesn't have to rate a role
+  // they may not know well. They can still adjust any slider afterwards.
+  const handleAiFill = async () => {
+    if (!roleName.trim()) {
+      Alert.alert('Name the role first', 'Type the role you want to match against, then tap Auto-fill.');
+      return;
+    }
+    setAiFilling(true);
+    try {
+      const dims = DIMENSIONS.map((d) => `${d.key}: ${d.label} — ${d.desc}`).join('\n');
+      const reply = await askJotti(
+        `Rate how demanding a "${roleName.trim()}" role is on each dimension below, from 1 (low) to 5 (high). ` +
+          `Return ONLY JSON like {"analyticalDepth":4,...} with a key for each.\n\n${dims}`,
+        { role: user?.role },
+      );
+      const json = reply ? JSON.parse(reply.slice(reply.indexOf('{'), reply.lastIndexOf('}') + 1)) : null;
+      if (!json) throw new Error('no data');
+      const next: Record<string, number> = {};
+      DIMENSIONS.forEach((d) => {
+        const v = Math.round(Number(json[d.key]));
+        next[d.key] = Number.isFinite(v) ? Math.min(5, Math.max(1, v)) : 3;
+      });
+      setScores(next);
+      setAiFilled(true);
+    } catch {
+      Alert.alert('Could not auto-fill', 'The AI is unavailable right now — rate the dimensions yourself, or try again.');
+    } finally {
+      setAiFilling(false);
+    }
   };
 
   const allSet = roleName.trim() && DIMENSIONS.every((d) => scores[d.key]);
@@ -79,7 +114,9 @@ export default function RoleDemandBuilderScreen({ navigation }: any) {
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <Text style={styles.title}>Role Demand Builder</Text>
-          <Text style={styles.subtitle}>Rate the demands of the role you want to match against</Text>
+          <Text style={styles.subtitle}>
+            Name a role and let AI estimate its demands — or rate them yourself.
+          </Text>
         </View>
 
         <GlassCard style={styles.nameCard}>
@@ -89,9 +126,19 @@ export default function RoleDemandBuilderScreen({ navigation }: any) {
             placeholder="e.g. Senior Product Manager"
             placeholderTextColor={colors.textSubtle}
             value={roleName}
-            onChangeText={setRoleName}
+            onChangeText={(t) => { setRoleName(t); setAiFilled(false); }}
             autoCapitalize="words"
           />
+          <TouchableOpacity
+            style={[styles.aiFillBtn, aiFilling && { opacity: 0.6 }]}
+            onPress={handleAiFill}
+            disabled={aiFilling}
+            accessibilityRole="button"
+          >
+            {aiFilling
+              ? <ActivityIndicator size="small" color={colors.purple} />
+              : <Text style={styles.aiFillText}>{aiFilled ? '✓ Filled by AI — adjust below' : '✦ Auto-fill demands with AI'}</Text>}
+          </TouchableOpacity>
         </GlassCard>
 
         {DIMENSIONS.map((dim) => (
@@ -167,6 +214,11 @@ const makeStyles = (colors: Palette) => StyleSheet.create({
     borderBottomWidth: 1, borderBottomColor: colors.borderLight,
     paddingBottom: 10,
   },
+  aiFillBtn: {
+    marginTop: 14, paddingVertical: 12, borderRadius: radii.md, alignItems: 'center',
+    borderWidth: 1.5, borderColor: colors.purple, backgroundColor: `${colors.purple}14`,
+  },
+  aiFillText: { fontSize: 14, fontWeight: '800', color: colors.purple },
   dimCard: { marginBottom: 14 },
   dimHeader: { flexDirection: 'row', gap: 12, marginBottom: 16 },
   dimIcon: { fontSize: 22 },
