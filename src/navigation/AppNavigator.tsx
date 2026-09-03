@@ -49,6 +49,7 @@ import RoleFitResultScreen from '../screens/rolefit/RoleFitResultScreen';
 import AdaptationScreen from '../screens/rolefit/AdaptationScreen';
 import CandidateComparisonScreen from '../screens/rolefit/CandidateComparisonScreen';
 import CareerMatchesScreen from '../screens/rolefit/CareerMatchesScreen';
+import DreamCareersScreen from '../screens/rolefit/DreamCareersScreen';
 
 // ── Profile ───────────────────────────────────────────────────────────────────
 import ProfileScreen from '../screens/ProfileScreen';
@@ -245,6 +246,7 @@ export default function AppNavigator() {
             <Stack.Screen name="AdaptationRecommendations" component={AdaptationScreen} />
             <Stack.Screen name="CandidateComparison" component={CandidateComparisonScreen} />
             <Stack.Screen name="CareerMatches" component={CareerMatchesScreen} />
+            <Stack.Screen name="DreamCareers" component={DreamCareersScreen} />
 
             {/* Profile */}
             <Stack.Screen name="Accessibility" component={AccessibilityScreen} />

@@ -40,6 +40,7 @@ export type RootStackParamList = {
   AdaptationRecommendations: { result: any; roleName: string };
   CandidateComparison: undefined;
   CareerMatches: undefined;
+  DreamCareers: undefined;
 
   // Profile
   Accessibility: undefined;
