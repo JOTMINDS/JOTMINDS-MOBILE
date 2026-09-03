@@ -19,6 +19,9 @@ export const DEFAULT_REMINDER: ReminderPref = { enabled: false, hour: 19, minute
 // Foreground display behaviour
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
+    // shouldShowAlert is deprecated in favour of banner/list but still
+    // required by the type; keep it in sync with shouldShowBanner.
+    shouldShowAlert: true,
     shouldShowBanner: true,
     shouldShowList: true,
     shouldPlaySound: false,
