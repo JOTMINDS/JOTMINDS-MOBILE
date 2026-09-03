@@ -7,9 +7,9 @@ import { colors, radii, spacing, Palette } from '../../theme';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 
 const STEPS = [
-  { icon: '🎯', label: 'Focus Score', sub: 'Rate your focus from 1–5' },
-  { icon: '⏳', label: 'Decision Delay', sub: 'Any decisions you\'re putting off?' },
-  { icon: '💭', label: 'Emotional State', sub: 'Pick your current emotion' },
+  { icon: '🎯', label: 'Attention', sub: 'How much your mind wandered this past hour' },
+  { icon: '⏳', label: 'Unmade decisions', sub: 'A choice you keep circling back to' },
+  { icon: '💭', label: 'Mood', sub: 'What most of today has felt like' },
 ];
 
 export default function DailyCheckIntroScreen({ navigation }: any) {

@@ -70,8 +70,8 @@ export default function DailyCheckQuestionsScreen({ navigation }: any) {
         {step === 1 && (
           <GlassCard style={styles.questionCard}>
             <Text style={styles.qLabel}>QUESTION 1</Text>
-            <Text style={styles.qTitle}>How is your focus right now?</Text>
-            <Text style={styles.qSub}>Rate from 1 (very scattered) to 5 (laser-focused)</Text>
+            <Text style={styles.qTitle}>Over the last hour, how much did your attention wander from what you meant to be doing?</Text>
+            <Text style={styles.qSub}>1 = drifted constantly · 5 = stayed on task</Text>
             <View style={styles.scaleRow}>
               {[1, 2, 3, 4, 5].map((n) => (
                 <TouchableOpacity
@@ -95,8 +95,8 @@ export default function DailyCheckQuestionsScreen({ navigation }: any) {
               ))}
             </View>
             <View style={styles.scaleLabels}>
-              <Text style={styles.scaleMin}>Scattered</Text>
-              <Text style={styles.scaleMax}>Focused</Text>
+              <Text style={styles.scaleMin}>Drifted a lot</Text>
+              <Text style={styles.scaleMax}>Stayed on task</Text>
             </View>
           </GlassCard>
         )}
@@ -105,8 +105,8 @@ export default function DailyCheckQuestionsScreen({ navigation }: any) {
         {step === 2 && (
           <GlassCard style={styles.questionCard}>
             <Text style={styles.qLabel}>QUESTION 2</Text>
-            <Text style={styles.qTitle}>Are you putting off any important decisions?</Text>
-            <Text style={styles.qSub}>A choice you know you need to make but keep avoiding</Text>
+            <Text style={styles.qTitle}>Is there a choice you keep coming back to without landing on it?</Text>
+            <Text style={styles.qSub}>Something you've thought about more than once today and still haven't settled</Text>
             <View style={styles.yesNoRow}>
               {[
                 { label: 'Yes', value: true, emoji: '😬' },
@@ -135,8 +135,8 @@ export default function DailyCheckQuestionsScreen({ navigation }: any) {
         {step === 3 && (
           <GlassCard style={styles.questionCard}>
             <Text style={styles.qLabel}>QUESTION 3</Text>
-            <Text style={styles.qTitle}>How would you describe your emotional state?</Text>
-            <Text style={styles.qSub}>Pick the one that best fits right now</Text>
+            <Text style={styles.qTitle}>Which of these has been closest to how most of today has felt?</Text>
+            <Text style={styles.qSub}>Go with your first read, not the version you'd like it to be</Text>
             <View style={styles.emotionsGrid}>
               {EMOTIONS.map((em) => (
                 <TouchableOpacity
