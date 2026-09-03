@@ -25,7 +25,7 @@ import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 export default function LoginScreen({ navigation, route }: any) {
   const colors = useTheme();
   const styles = useThemedStyles(makeStyles);
-  const { signIn, requestLoginOtp, signInWithStudentCode } = useAuth();
+  const { signIn, requestLoginOtp, requestPasswordReset, signInWithStudentCode } = useAuth();
   const toast = useToast();
   const [mode, setMode] = useState<'email' | 'code'>('email');
   const [email, setEmail] = useState(route?.params?.email ?? '');
@@ -98,6 +98,22 @@ export default function LoginScreen({ navigation, route }: any) {
       console.error('[Login] Student code error:', error);
       toast.error(error.message || 'Could not sign in with that student code.');
       resetCodeFlow();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!email || !email.includes('@')) {
+      toast.info('Type your account email first, then tap "Forgot password?".');
+      return;
+    }
+    setLoading(true);
+    try {
+      await requestPasswordReset(email);
+      toast.success('Password reset link sent — check your email.');
+    } catch (error: any) {
+      toast.error(error.message || 'Could not send the reset link. Try again.');
     } finally {
       setLoading(false);
     }
@@ -272,6 +288,10 @@ export default function LoginScreen({ navigation, route }: any) {
               style={styles.button}
             />
 
+            <TouchableOpacity onPress={handleForgotPassword} disabled={loading} style={styles.forgotWrap}>
+              <Text style={styles.forgotText}>Forgot password?</Text>
+            </TouchableOpacity>
+
             <View style={styles.dividerRow}>
               <View style={styles.dividerLine} />
               <Text style={styles.dividerText}>OR</Text>
@@ -437,6 +457,8 @@ const makeStyles = (colors: Palette) => StyleSheet.create({
   button: {
     marginTop: 24,
   },
+  forgotWrap: { alignSelf: 'center', paddingVertical: 12, marginTop: 4 },
+  forgotText: { fontSize: 14, color: colors.cyan, fontWeight: '600' },
   dividerRow: {
     flexDirection: 'row',
     alignItems: 'center',

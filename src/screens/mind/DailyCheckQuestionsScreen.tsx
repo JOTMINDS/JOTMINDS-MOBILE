@@ -70,7 +70,7 @@ export default function DailyCheckQuestionsScreen({ navigation }: any) {
         {step === 1 && (
           <GlassCard style={styles.questionCard}>
             <Text style={styles.qLabel}>QUESTION 1</Text>
-            <Text style={styles.qTitle}>How focused were you today?</Text>
+            <Text style={styles.qTitle}>How is your focus right now?</Text>
             <Text style={styles.qSub}>Rate from 1 (very scattered) to 5 (laser-focused)</Text>
             <View style={styles.scaleRow}>
               {[1, 2, 3, 4, 5].map((n) => (
@@ -105,8 +105,8 @@ export default function DailyCheckQuestionsScreen({ navigation }: any) {
         {step === 2 && (
           <GlassCard style={styles.questionCard}>
             <Text style={styles.qLabel}>QUESTION 2</Text>
-            <Text style={styles.qTitle}>Did you delay any important decisions today?</Text>
-            <Text style={styles.qSub}>Putting off a choice you knew you had to make</Text>
+            <Text style={styles.qTitle}>Are you putting off any important decisions?</Text>
+            <Text style={styles.qSub}>A choice you know you need to make but keep avoiding</Text>
             <View style={styles.yesNoRow}>
               {[
                 { label: 'Yes', value: true, emoji: '😬' },

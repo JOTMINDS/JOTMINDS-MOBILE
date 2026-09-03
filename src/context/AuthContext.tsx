@@ -31,6 +31,7 @@ interface AuthContextType {
   signOut: () => Promise<void>;
   refreshUser: () => Promise<void>;
   requestLoginOtp: (email: string) => Promise<void>;
+  requestPasswordReset: (email: string) => Promise<void>;
   verifyLoginOtp: (email: string, token: string) => Promise<void>;
   signInWithStudentCode: (code: string) => Promise<void>;
 }
@@ -192,6 +193,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (error) throw new Error(error.message);
   };
 
+  // Emails a password-reset link. The link opens jotminds.com's reset page
+  // (mobile has no reset deep-link route yet) — good enough as a recovery path.
+  const requestPasswordReset = async (email: string) => {
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
+      redirectTo: 'https://jotminds.com/auth/reset-password',
+    });
+    if (error) throw new Error(error.message);
+  };
+
   const verifyLoginOtp = async (email: string, token: string) => {
     const { error } = await supabase.auth.verifyOtp({
       email: email.trim().toLowerCase(),
@@ -232,7 +242,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, signIn, signUp, signOut, refreshUser, requestLoginOtp, verifyLoginOtp, signInWithStudentCode }}>
+    <AuthContext.Provider value={{ user, session, loading, signIn, signUp, signOut, refreshUser, requestLoginOtp, requestPasswordReset, verifyLoginOtp, signInWithStudentCode }}>
       {children}
     </AuthContext.Provider>
   );

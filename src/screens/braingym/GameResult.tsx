@@ -57,7 +57,7 @@ export default function GameResult({
           </LinearGradient>
         </TouchableOpacity>
         <TouchableOpacity style={styles.secondary} onPress={onDone} accessibilityRole="button" accessibilityLabel="Back to Brain Gym">
-          <Text style={styles.secondaryText}>Back to Brain Gym</Text>
+          <Text style={styles.secondaryText}>← Back to Brain Gym</Text>
         </TouchableOpacity>
       </View>
     </ScreenBackground>
@@ -82,6 +82,10 @@ const makeStyles = (colors: Palette) => StyleSheet.create({
   primary: { borderRadius: radii.md, overflow: 'hidden' },
   primaryGradient: { paddingVertical: 17, alignItems: 'center' },
   primaryText: { fontSize: 16, fontWeight: '700', color: '#FFFFFF' },
-  secondary: { paddingVertical: 16, alignItems: 'center', marginTop: 8 },
-  secondaryText: { fontSize: 15, color: colors.textMuted, fontWeight: '600' },
+  secondary: {
+    paddingVertical: 15, alignItems: 'center', marginTop: 12,
+    borderRadius: radii.md, borderWidth: 1.5, borderColor: colors.borderLight,
+    backgroundColor: colors.glassMedium,
+  },
+  secondaryText: { fontSize: 15, color: colors.textSecondary, fontWeight: '700' },
 });
