@@ -129,6 +129,41 @@ export const WIRE_TYPE: Record<MobileAssessmentType, string> = {
   decision: 'dual-process',
 };
 
+/**
+ * Human-friendly name for an assessment, given either a mobile type
+ * (`learning`) or a wire/webapp type (`kolb`, `dual-process`, `jtia`…).
+ * Used anywhere a result is listed to the user so they never see raw
+ * framework names like "Kolb Assessment".
+ */
+export function assessmentLabel(type: string): string {
+  const key = String(type || '').toLowerCase();
+  const map: Record<string, string> = {
+    learning: 'Learning Style',
+    kolb: 'Learning Style',
+    thinking: 'Thinking Style',
+    sternberg: 'Thinking Style',
+    decision: 'Decision Style',
+    'dual-process': 'Decision Style',
+    dualprocess: 'Decision Style',
+    'teaching-style': 'Teaching Style',
+    jtia: 'Teacher Intelligence',
+    'shs-thinking': 'Thinking Styles',
+    'jhs-thinking': 'Thinking Styles',
+    'adult-thinking': 'Thinking Styles',
+    'thinking-styles': 'Thinking Styles',
+    professional: 'Professional Cognitive',
+    'professional-cognitive': 'Professional Cognitive',
+    kids: 'Cognitive Quiz',
+  };
+  if (map[key]) return map[key];
+  // Fallback: title-case and strip a trailing "assessment"
+  return key
+    .replace(/[-_]+/g, ' ')
+    .replace(/\bassessment\b/gi, '')
+    .trim()
+    .replace(/\b\w/g, (c) => c.toUpperCase()) || 'Assessment';
+}
+
 /** The key `results` is nested under for each wire type, e.g. results.kolb.style. */
 export const WIRE_RESULT_KEY: Record<MobileAssessmentType, 'kolb' | 'sternberg' | 'dualProcess'> = {
   learning: 'kolb',

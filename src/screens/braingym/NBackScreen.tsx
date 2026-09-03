@@ -102,8 +102,28 @@ export default function NBackScreen({ navigation, route }: any) {
           <Text style={styles.introTitle}>N-Back ({n}-back)</Text>
           <Text style={styles.introText}>
             Letters appear one at a time. Tap <Text style={styles.bold}>Match</Text> whenever the current letter is the
-            same as the one from {n} step{n > 1 ? 's' : ''} before. Stay sharp!
+            same as the one from {n} step{n > 1 ? 's' : ''} before.
           </Text>
+
+          <View style={styles.demoBox}>
+            <Text style={styles.demoLabel}>EXAMPLE ({n}-back)</Text>
+            <View style={styles.demoRow}>
+              {['K', 'T', 'K', 'R', 'R'].map((c, i) => {
+                const isMatch = i >= n && ['K', 'T', 'K', 'R', 'R'][i - n] === c;
+                return (
+                  <View key={i} style={[styles.demoCell, isMatch && styles.demoCellMatch]}>
+                    <Text style={styles.demoLetter}>{c}</Text>
+                  </View>
+                );
+              })}
+            </View>
+            <Text style={styles.demoHint}>
+              {n === 1
+                ? 'The 5th "R" matches the 4th "R" one step back → tap Match.'
+                : `The 3rd "K" matches the 1st "K" ${n} steps back → tap Match.`}
+            </Text>
+          </View>
+
           <TouchableOpacity style={styles.startBtn} onPress={start} accessibilityRole="button" accessibilityLabel="Start game">
             <LinearGradient colors={['#3D52C9', '#6E4D9C']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.startGradient}>
               <Text style={styles.startText}>Start</Text>
@@ -166,8 +186,21 @@ const makeStyles = (colors: Palette) => StyleSheet.create({
   helper: { fontSize: 13, color: colors.textMuted, textAlign: 'center', marginBottom: 40 },
   introWrap: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: spacing.xxl },
   introTitle: { fontSize: 26, fontWeight: '800', color: colors.textPrimary, marginTop: 20, marginBottom: 12 },
-  introText: { fontSize: 15, color: colors.textMuted, textAlign: 'center', lineHeight: 23, marginBottom: 32 },
+  introText: { fontSize: 15, color: colors.textMuted, textAlign: 'center', lineHeight: 23, marginBottom: 20 },
   bold: { color: colors.text, fontWeight: '700' },
+  demoBox: {
+    width: '100%', borderRadius: radii.md, padding: 16, marginBottom: 28,
+    backgroundColor: colors.glassMedium, borderWidth: 1, borderColor: colors.borderLight,
+  },
+  demoLabel: { fontSize: 10, fontWeight: '800', color: colors.textSubtle, letterSpacing: 1.2, marginBottom: 10 },
+  demoRow: { flexDirection: 'row', gap: 8, justifyContent: 'center', marginBottom: 10 },
+  demoCell: {
+    width: 40, height: 40, borderRadius: 10, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: colors.bgTertiary, borderWidth: 1.5, borderColor: 'transparent',
+  },
+  demoCellMatch: { borderColor: colors.success, backgroundColor: `${colors.success}22` },
+  demoLetter: { fontSize: 18, fontWeight: '800', color: colors.text },
+  demoHint: { fontSize: 12, color: colors.textMuted, textAlign: 'center', lineHeight: 17 },
   startBtn: { borderRadius: radii.md, overflow: 'hidden', width: '100%' },
   startGradient: { paddingVertical: 18, alignItems: 'center' },
   startText: { fontSize: 17, fontWeight: '700', color: '#FFFFFF' },

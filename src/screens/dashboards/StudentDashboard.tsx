@@ -11,6 +11,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../../context/AuthContext';
 import { getAllAssessmentResults } from '../../utils/api';
+import { assessmentLabel } from '../../utils/scoring';
 import ScreenBackground from '../../components/ScreenBackground';
 import GlassCard from '../../components/GlassCard';
 import AppIcon from '../../components/AppIcon';
@@ -250,9 +251,7 @@ export default function StudentDashboard({ navigation }: any) {
                   <View style={styles.resultDot} />
                   <View style={styles.resultText}>
                     <Text style={styles.resultTitle}>
-                      {result.assessmentType.charAt(0).toUpperCase() +
-                        result.assessmentType.slice(1)}{' '}
-                      Assessment
+                      {assessmentLabel(result.assessmentType)}
                     </Text>
                     <Text style={styles.resultDate}>
                       {new Date(result.completedAt ?? result.createdAt ?? Date.now()).toLocaleDateString()}

@@ -230,8 +230,8 @@ export default function AppNavigator() {
             <Stack.Screen name="DailyCheckIntro" component={DailyCheckIntroScreen} />
             <Stack.Screen name="DailyCheckQuestions" component={DailyCheckQuestionsScreen} />
             <Stack.Screen name="InstantFeedback" component={InstantFeedbackScreen} />
-            <Stack.Screen name="WeeklySnapshot" component={WeeklySnapshotScreen} />
-            <Stack.Screen name="BehavioralDashboard" component={BehavioralDashboardScreen} />
+            <Stack.Screen name="WeeklySnapshot" component={WeeklySnapshotScreen} options={{ headerShown: true, title: 'Weekly Snapshot' }} />
+            <Stack.Screen name="BehavioralDashboard" component={BehavioralDashboardScreen} options={{ headerShown: true, title: 'Behavioral Insights' }} />
 
             {/* Brain Gym */}
             <Stack.Screen name="BrainGym" component={BrainGymScreen} />

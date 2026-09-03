@@ -14,7 +14,7 @@ import GlassCard from '../../components/GlassCard';
 import GradientButton from '../../components/GradientButton';
 import RadarChart from '../../components/RadarChart';
 import { SkeletonCard, Skeleton } from '../../components/Skeleton';
-import { STYLE_DESCRIPTIONS, normalizeAssessmentResult } from '../../utils/scoring';
+import { STYLE_DESCRIPTIONS, normalizeAssessmentResult, assessmentLabel } from '../../utils/scoring';
 import { getGhanaMapping } from '../../utils/ghanaMapping';
 import { getStyleInsights } from '../../utils/styleInsights';
 import { missingCognitiveDomains, domainLabel, findResultForDomain } from '../../utils/profileCompleteness';
@@ -303,7 +303,8 @@ export default function AssessmentResultsScreen({ route, navigation }: any) {
           onClose={() => setShowCertificate(false)}
           icon="🏆"
           headline={normalized.primaryStyle}
-          subtitle={`${assessmentType.charAt(0).toUpperCase() + assessmentType.slice(1)} Style · JotMinds Cognitive Profile`}
+          subtitle={`${assessmentLabel(assessmentType)} · JotMinds Cognitive Profile`}
+          highlights={(insights?.strengths ?? []).slice(0, 3)}
           name={user?.name ?? 'JotMinds User'}
           date={new Date().toLocaleDateString()}
         />

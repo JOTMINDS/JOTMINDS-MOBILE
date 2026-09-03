@@ -1,8 +1,11 @@
-import React from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Linking } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Linking, Alert, ActivityIndicator } from 'react-native';
 import ScreenBackground from '../../components/ScreenBackground';
 import GlassCard from '../../components/GlassCard';
 import AppIcon from '../../components/AppIcon';
+import { deleteAccount } from '../../utils/api';
+import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
 import { radii, spacing, Palette } from '../../theme';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 
@@ -15,6 +18,41 @@ const POINTS = [
 export default function PrivacySettingsScreen({ navigation }: any) {
   const colors = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const { signOut } = useAuth();
+  const toast = useToast();
+  const [deleting, setDeleting] = useState(false);
+
+  const runDelete = async () => {
+    setDeleting(true);
+    try {
+      const res = await deleteAccount();
+      if (res?.error) throw new Error(res.error);
+      toast.success('Your account has been deleted.');
+      await signOut();
+    } catch (e: any) {
+      setDeleting(false);
+      Alert.alert('Could not delete account', e?.message || 'Please try again, or contact support@jotminds.com.');
+    }
+  };
+
+  const confirmDelete = () => {
+    Alert.alert(
+      'Delete account?',
+      'This permanently removes your profile, assessment results, check-ins and all other data. It cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () =>
+            Alert.alert('Are you sure?', 'This is your last chance to keep your data.', [
+              { text: 'Keep my account', style: 'cancel' },
+              { text: 'Delete permanently', style: 'destructive', onPress: runDelete },
+            ]),
+        },
+      ],
+    );
+  };
 
   return (
     <ScreenBackground>
@@ -51,9 +89,23 @@ export default function PrivacySettingsScreen({ navigation }: any) {
           <AppIcon name="arrow-forward" size={16} color={colors.cyan} />
         </TouchableOpacity>
 
-        <Text style={styles.note}>
-          To request deletion of your account and data, contact support@jotminds.com.
-        </Text>
+        <View style={styles.dangerZone}>
+          <Text style={styles.dangerTitle}>Delete account</Text>
+          <Text style={styles.dangerDesc}>
+            Permanently delete your account and all associated data. This cannot be undone.
+          </Text>
+          <TouchableOpacity
+            style={styles.deleteBtn}
+            onPress={confirmDelete}
+            disabled={deleting}
+            accessibilityRole="button"
+            accessibilityLabel="Delete my account"
+          >
+            {deleting
+              ? <ActivityIndicator color="#EF4444" />
+              : <Text style={styles.deleteBtnText}>Delete my account</Text>}
+          </TouchableOpacity>
+        </View>
       </ScrollView>
     </ScreenBackground>
   );
@@ -76,5 +128,15 @@ const makeStyles = (colors: Palette) => StyleSheet.create({
     marginTop: 12, paddingVertical: 12,
   },
   linkBtnText: { fontSize: 14, fontWeight: '700', color: colors.cyan },
-  note: { fontSize: 12, color: colors.textSubtle, lineHeight: 18, marginTop: 12 },
+  dangerZone: {
+    marginTop: 28, padding: 16, borderRadius: radii.md,
+    borderWidth: 1, borderColor: 'rgba(239,68,68,0.35)', backgroundColor: 'rgba(239,68,68,0.06)',
+  },
+  dangerTitle: { fontSize: 15, fontWeight: '800', color: '#EF4444', marginBottom: 4 },
+  dangerDesc: { fontSize: 12, color: colors.textMuted, lineHeight: 18, marginBottom: 14 },
+  deleteBtn: {
+    paddingVertical: 13, borderRadius: radii.md, alignItems: 'center',
+    borderWidth: 1.5, borderColor: '#EF4444',
+  },
+  deleteBtnText: { fontSize: 15, fontWeight: '700', color: '#EF4444' },
 });

@@ -10,6 +10,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../../context/AuthContext';
 import { getOrganizationMembers, getAllAssessmentResults } from '../../utils/api';
+import { assessmentLabel } from '../../utils/scoring';
 import ScreenBackground from '../../components/ScreenBackground';
 import GlassCard from '../../components/GlassCard';
 import AppIcon from '../../components/AppIcon';
@@ -135,7 +136,7 @@ export default function ProfessionalDashboard({ navigation }: any) {
                   <View style={styles.dot} />
                   <View style={{ flex: 1 }}>
                     <Text style={styles.cardTitle}>
-                      {result.assessmentType.charAt(0).toUpperCase() + result.assessmentType.slice(1)} Assessment
+                      {assessmentLabel(result.assessmentType)}
                     </Text>
                     <Text style={styles.cardSubtle}>{new Date(result.completedAt ?? result.createdAt ?? Date.now()).toLocaleDateString()}</Text>
                   </View>

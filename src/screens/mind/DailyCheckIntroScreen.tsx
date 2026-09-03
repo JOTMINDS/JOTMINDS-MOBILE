@@ -8,7 +8,7 @@ import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 
 const STEPS = [
   { icon: '🎯', label: 'Focus Score', sub: 'Rate your focus from 1–5' },
-  { icon: '⏳', label: 'Decision Delay', sub: 'Did you delay decisions today?' },
+  { icon: '⏳', label: 'Decision Delay', sub: 'Any decisions you\'re putting off?' },
   { icon: '💭', label: 'Emotional State', sub: 'Pick your current emotion' },
 ];
 
@@ -27,7 +27,7 @@ export default function DailyCheckIntroScreen({ navigation }: any) {
           <AppIcon name="🧠" size={52} color="#FFFFFF" style={styles.heroIcon} />
           <Text style={styles.heroTitle}>Daily Mind Check</Text>
           <Text style={styles.heroSub}>
-            3 quick questions to track your cognitive performance today.
+            3 quick questions to check in on how your mind is working today.
           </Text>
         </LinearGradient>
 

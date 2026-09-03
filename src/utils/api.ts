@@ -164,3 +164,8 @@ export const enrollStudent = (args: {
   educationLevel?: string;
 }): Promise<{ student?: { id: string; name: string; studentCode: string }; code?: string; error?: string }> =>
   callEdgeFn('/enroll-student', { method: 'POST', body: JSON.stringify(args) });
+
+// ── Account deletion ─────────────────────────────────────────────────────
+/** Permanently deletes the signed-in user's account and all their data. */
+export const deleteAccount = (): Promise<{ success?: boolean; error?: string }> =>
+  callEdgeFn('/account/delete', { method: 'POST' });

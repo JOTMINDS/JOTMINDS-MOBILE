@@ -8,6 +8,8 @@ import { Palette } from '../theme';
 interface Props extends CertificateCardProps {
   visible: boolean;
   onClose: () => void;
+  /** Extra lines for the shared text — e.g. top strengths or domain scores. */
+  highlights?: string[];
 }
 
 /**
@@ -17,7 +19,7 @@ interface Props extends CertificateCardProps {
  * react-native-view-shot + expo-sharing; swapped back per the user's call
  * after flagging that path needs a native rebuild to actually test.)
  */
-export default function CertificateModal({ visible, onClose, icon, headline, subtitle, name, date }: Props) {
+export default function CertificateModal({ visible, onClose, icon, headline, subtitle, name, date, highlights }: Props) {
   const colors = useTheme();
   const styles = useThemedStyles(makeStyles);
   const [error, setError] = useState(false);
@@ -25,9 +27,17 @@ export default function CertificateModal({ visible, onClose, icon, headline, sub
   const handleShare = async () => {
     setError(false);
     try {
-      await Share.share({
-        message: `${icon} I just earned "${headline}" on JotMinds!\n${subtitle}\n\n— ${name}, ${date}`,
-      });
+      const lines = [
+        `${icon}  MY JOTMINDS COGNITIVE RESULT`,
+        '━━━━━━━━━━━━━━━━━━━━━━',
+        headline,
+        subtitle,
+        ...(highlights && highlights.length ? ['', ...highlights.map((h) => `• ${h}`)] : []),
+        '',
+        `${name} · ${date}`,
+        'Discover how you think → jotminds.com',
+      ];
+      await Share.share({ message: lines.join('\n') });
     } catch {
       setError(true);
     }
