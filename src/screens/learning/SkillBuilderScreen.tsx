@@ -268,8 +268,7 @@ export default function SkillBuilderScreen({ navigation }: any) {
                 !module.locked &&
                 navigation.navigate('PracticeModule', { moduleId: module.id })
               }
-              style={styles.moduleCard}
-              opacity={module.locked ? 0.5 : undefined}
+              style={[styles.moduleCard, module.locked && { opacity: 0.5 }]}
             >
               <View style={styles.moduleRow}>
                 <LinearGradient

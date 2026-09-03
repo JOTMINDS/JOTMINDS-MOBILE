@@ -91,7 +91,7 @@ export default function SignupScreen({ navigation }: any) {
 
   const isMinor = role === 'student' && dateOfBirth && calculateAge(dateOfBirth) < 18;
 
-  const getPasswordStrength = (pass: string): { label: string; color: string; width: string } => {
+  const getPasswordStrength = (pass: string): { label: string; color: string; width: `${number}%` } => {
     if (!pass) return { label: '', color: '', width: '0%' };
     if (pass.length < 6) return { label: 'Weak', color: '#EF4444', width: '33%' };
     if (pass.length < 10) return { label: 'Fair', color: '#F59E0B', width: '66%' };

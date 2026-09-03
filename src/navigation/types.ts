@@ -1,5 +1,4 @@
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import type { RouteProp } from '@react-navigation/native';
+import type { NativeStackNavigationProp, NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
 
 /**
@@ -77,10 +76,13 @@ export type RootStackParamList = {
 
 export type AppNavigation = NativeStackNavigationProp<RootStackParamList>;
 
-export type ScreenProps<T extends keyof RootStackParamList> = {
-  navigation: NativeStackNavigationProp<RootStackParamList, T>;
-  route: RouteProp<RootStackParamList, T>;
-};
+/**
+ * Props a screen component receives. Alias of React Navigation's own
+ * NativeStackScreenProps so a screen typed with this is assignable to
+ * `<Stack.Screen component={...} />` (a plain object of navigation/route is
+ * not — it lacks the internal component brand).
+ */
+export type ScreenProps<T extends keyof RootStackParamList> = NativeStackScreenProps<RootStackParamList, T>;
 
 /** Type-safe navigation hook for components that aren't screens. */
 export const useAppNavigation = () => useNavigation<AppNavigation>();

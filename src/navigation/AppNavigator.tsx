@@ -325,7 +325,10 @@ export default function AppNavigator() {
             <Stack.Screen name="Welcome" component={WelcomeScreen} />
             <Stack.Screen name="Login" component={LoginScreen} />
             <Stack.Screen name="Signup" component={SignupScreen} />
-            <Stack.Screen name="OtpVerification" component={OtpVerificationScreen} />
+            {/* Cast: OtpVerificationScreen types its props with ScreenProps for
+                route.params safety; native-stack's `component` expects a
+                looser FunctionComponent<{}> and won't accept the stricter sig. */}
+            <Stack.Screen name="OtpVerification" component={OtpVerificationScreen as React.ComponentType} />
           </>
         )}
       </Stack.Navigator>
