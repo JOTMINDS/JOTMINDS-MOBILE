@@ -18,6 +18,7 @@ export interface AppUser {
   assessmentsCompleted?: string[];
   studentCode?: string;
   avatarUrl?: string;
+  className?: string;
   subscriptionStatus?: 'free' | 'premium' | 'organization';
   firstWinCompleted?: boolean;
 }
@@ -85,6 +86,7 @@ async function fetchProfile(supabaseUser: SupabaseUser): Promise<AppUser> {
       assessmentsCompleted: profile.assessmentsCompleted ?? [],
       studentCode: profile.studentCode ?? profile.student_code,
       avatarUrl: profile.avatarUrl ?? profile.avatar_url,
+      className: profile.className ?? profile.class_name,
       subscriptionStatus: profile.subscriptionStatus ?? profile.subscription_status ?? 'free',
       // Backend-persisted onboarding flag (survives reinstall / new device).
       firstWinCompleted: profile.firstWinCompleted ?? !!profile.cognitiveProfile,
