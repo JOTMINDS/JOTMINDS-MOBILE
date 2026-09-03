@@ -1,10 +1,13 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import ScreenBackground from '../../components/ScreenBackground';
 import GlassCard from '../../components/GlassCard';
 import AppIcon from '../../components/AppIcon';
 import { generatePersonalizedReport, RoleCognitiveDemand } from '../../utils/roleFitEngine';
+import {
+  roleKey, buildDailyTasks, getCompletedToday, toggleTaskDone, getAdaptationStreak,
+} from '../../utils/adaptationTasks';
 import { colors, radii, spacing, Palette } from '../../theme';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 
@@ -105,6 +108,26 @@ export default function AdaptationScreen({ route, navigation }: any) {
 
   const report = result ? generatePersonalizedReport(result, roleName, true) : null;
 
+  // ── Daily practice ──────────────────────────────────────────────────────
+  const rk = roleKey(roleName ?? 'role');
+  const dailyTasks = buildDailyTasks(
+    rk,
+    weakestDimensions.map((dim) => ({ dim, ...DIMENSION_ACTIONS[dim] })),
+  );
+  const [done, setDone] = useState<Set<string>>(new Set());
+  const [streak, setStreak] = useState(0);
+
+  useEffect(() => {
+    getCompletedToday(rk).then(setDone);
+    getAdaptationStreak(rk).then(setStreak);
+  }, [rk]);
+
+  const toggle = async (id: string) => {
+    setDone(await toggleTaskDone(rk, id));
+    setStreak(await getAdaptationStreak(rk));
+  };
+  const doneCount = dailyTasks.filter((t) => done.has(t.id)).length;
+
   return (
     <ScreenBackground>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
@@ -167,6 +190,35 @@ export default function AdaptationScreen({ route, navigation }: any) {
           })
         )}
 
+        {dailyTasks.length > 0 && (
+          <GlassCard style={styles.mindCard}>
+            <View style={styles.mindTitleRow}>
+              <AppIcon name="✅" size={16} color={colors.text} />
+              <Text style={styles.mindTitle}>Today's Practice</Text>
+              <Text style={styles.practiceProgress}>
+                {doneCount}/{dailyTasks.length}{streak > 1 ? `  ·  ${streak}-day streak 🔥` : ''}
+              </Text>
+            </View>
+            <Text style={styles.practiceSub}>
+              Small reps against your gap areas. New tasks each day.
+            </Text>
+            {dailyTasks.map((t) => {
+              const isDone = done.has(t.id);
+              return (
+                <TouchableOpacity key={t.id} style={styles.taskRow} onPress={() => toggle(t.id)} accessibilityRole="checkbox" accessibilityState={{ checked: isDone }}>
+                  <View style={[styles.taskCheck, isDone && styles.taskCheckOn]}>
+                    {isDone && <AppIcon name="✓" size={13} color="#fff" />}
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.taskFocus}>{t.icon} {t.focus}</Text>
+                    <Text style={[styles.taskText, isDone && styles.taskTextDone]}>{t.text}</Text>
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
+          </GlassCard>
+        )}
+
         <GlassCard style={styles.mindCard}>
           <View style={styles.mindTitleRow}>
             <AppIcon name="📌" size={16} color={colors.text} />
@@ -224,6 +276,17 @@ const makeStyles = (colors: Palette) => StyleSheet.create({
   mindTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 },
   mindTitle: { fontSize: 15, fontWeight: '700', color: colors.text },
   mindText: { fontSize: 13, color: colors.textMuted, lineHeight: 21 },
+  practiceProgress: { marginLeft: 'auto', fontSize: 11, fontWeight: '700', color: colors.textMuted },
+  practiceSub: { fontSize: 12, color: colors.textMuted, marginBottom: 12, lineHeight: 17 },
+  taskRow: { flexDirection: 'row', gap: 12, paddingVertical: 10, alignItems: 'flex-start' },
+  taskCheck: {
+    width: 22, height: 22, borderRadius: 6, borderWidth: 2, borderColor: colors.textMuted,
+    alignItems: 'center', justifyContent: 'center', marginTop: 1,
+  },
+  taskCheckOn: { backgroundColor: colors.success, borderColor: colors.success },
+  taskFocus: { fontSize: 12, fontWeight: '800', color: colors.cyan, marginBottom: 2 },
+  taskText: { fontSize: 13, color: colors.textSecondary, lineHeight: 19 },
+  taskTextDone: { textDecorationLine: 'line-through', color: colors.textMuted },
   checkInBtn: { borderRadius: radii.md, overflow: 'hidden' },
   checkInBtnGradient: { paddingVertical: 18, alignItems: 'center' },
   checkInBtnText: { fontSize: 16, fontWeight: '700', color: '#FFFFFF' },
