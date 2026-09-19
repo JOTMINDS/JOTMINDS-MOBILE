@@ -60,6 +60,18 @@ export function buildCognitiveReport(stored: StoredResult[] = []): CognitiveRepo
   };
 }
 
+/** Friendly names for dimension keys (Kolb's four are stored as two-letter codes). */
+const DIMENSION_LABELS: Record<string, string> = {
+  CE: 'Concrete Experience',
+  RO: 'Reflective Observation',
+  AC: 'Abstract Conceptualization',
+  AE: 'Active Experimentation',
+};
+
+export function dimensionLabel(key: string): string {
+  return DIMENSION_LABELS[key] ?? key.charAt(0).toUpperCase() + key.slice(1);
+}
+
 export interface ReportTip { title: string; body: string }
 
 /** Three practical tips, one per domain (same guidance as the webapp's report). */

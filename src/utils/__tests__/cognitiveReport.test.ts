@@ -1,4 +1,4 @@
-import { buildCognitiveReport, reportTips, reportText } from '../cognitiveReport';
+import { buildCognitiveReport, reportTips, reportText, dimensionLabel } from '../cognitiveReport';
 
 // nested wire shape both clients write: { kolb: { style, scores } } with raw per-dimension sums
 const kolb = (style: string) => ({ kolb: { style, scores: { CE: 10, RO: 12, AC: 8, AE: 6 } } });
@@ -85,5 +85,16 @@ describe('reportText', () => {
     expect(text).toContain('Learning style: Diverging');
     expect(text).toContain('Decision style: Reflective');
     expect(text).toContain('jotminds.com');
+  });
+});
+
+describe('dimensionLabel', () => {
+  it('expands Kolb codes and capitalises other keys', () => {
+    expect(dimensionLabel('CE')).toBe('Concrete Experience');
+    expect(dimensionLabel('RO')).toBe('Reflective Observation');
+    expect(dimensionLabel('AC')).toBe('Abstract Conceptualization');
+    expect(dimensionLabel('AE')).toBe('Active Experimentation');
+    expect(dimensionLabel('Analytical')).toBe('Analytical');
+    expect(dimensionLabel('creative')).toBe('Creative');
   });
 });

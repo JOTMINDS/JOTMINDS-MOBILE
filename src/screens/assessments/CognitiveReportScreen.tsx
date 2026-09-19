@@ -5,9 +5,11 @@ import ScreenBackground from '../../components/ScreenBackground';
 import GlassCard from '../../components/GlassCard';
 import { CombinedInsightsCard, ExecutiveSummaryCard } from '../../components/ai/InsightCards';
 import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
+import { exportCognitiveReportPdf } from '../../utils/pdfReport';
 import { getAllAssessmentResults } from '../../utils/api';
 import { domainLabel, REQUIRED_DOMAINS, CognitiveDomain } from '../../utils/profileCompleteness';
-import { buildCognitiveReport, reportTips, reportText, CognitiveReport } from '../../utils/cognitiveReport';
+import { buildCognitiveReport, reportTips, reportText, dimensionLabel, CognitiveReport } from '../../utils/cognitiveReport';
 import { rs } from '../../utils/responsive';
 import { radii, spacing, Palette } from '../../theme';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
@@ -28,6 +30,8 @@ export default function CognitiveReportScreen({ navigation }: ScreenProps<'Cogni
   const colors = useTheme();
   const styles = useThemedStyles(makeStyles);
   const { user } = useAuth();
+  const toast = useToast();
+  const [pdfBusy, setPdfBusy] = useState(false);
   const [report, setReport] = useState<CognitiveReport | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -50,6 +54,14 @@ export default function CognitiveReportScreen({ navigation }: ScreenProps<'Cogni
     void load();
     return navigation.addListener('focus', () => { void load(); });
   }, [load, navigation]);
+
+  const downloadPdf = async () => {
+    if (!report || pdfBusy) return;
+    setPdfBusy(true);
+    const r = await exportCognitiveReportPdf(report, { name: user?.name, position: user?.position, organization: user?.organizationName });
+    setPdfBusy(false);
+    if (!r.ok) toast.error(r.error);
+  };
 
   if (loading) {
     return <ScreenBackground><View style={styles.centered}><ActivityIndicator size="large" color={colors.purple} /></View></ScreenBackground>;
@@ -140,7 +152,7 @@ export default function CognitiveReportScreen({ navigation }: ScreenProps<'Cogni
                 const n = Math.max(0, Math.min(100, Math.round(Number(v) || 0)));
                 return (
                   <View key={k} style={styles.barRow}>
-                    <Text style={styles.barLabel}>{k.charAt(0).toUpperCase() + k.slice(1)}</Text>
+                    <Text style={styles.barLabel}>{dimensionLabel(k)}</Text>
                     <View style={styles.track}><View style={[styles.fill, { width: `${Math.max(2, n)}%`, backgroundColor: GRAD[d][0] }]} /></View>
                     <Text style={styles.barVal}>{n}</Text>
                   </View>
@@ -178,8 +190,13 @@ export default function CognitiveReportScreen({ navigation }: ScreenProps<'Cogni
           </GlassCard>
         )}
 
+        <TouchableOpacity style={[styles.btn, pdfBusy && { opacity: 0.6 }]} disabled={pdfBusy} onPress={downloadPdf} accessibilityRole="button" accessibilityLabel="Download report as PDF">
+          {pdfBusy ? <ActivityIndicator color="#FFFFFF" /> : <Text style={styles.btnText}>Download PDF report 📄</Text>}
+        </TouchableOpacity>
+        {pdfBusy && <Text style={styles.pdfNote}>Preparing your report — this can take a few seconds…</Text>}
+
         {text && (
-          <TouchableOpacity style={styles.btn} onPress={() => Share.share({ message: text }).catch(() => {})} accessibilityRole="button">
+          <TouchableOpacity style={[styles.btn, styles.btnAlt]} onPress={() => Share.share({ message: text }).catch(() => {})} accessibilityRole="button">
             <Text style={styles.btnText}>Share my profile 📤</Text>
           </TouchableOpacity>
         )}
@@ -224,7 +241,7 @@ const makeStyles = (colors: Palette) => StyleSheet.create({
   heroDesc: { fontSize: rs(13), lineHeight: rs(19), color: 'rgba(255,255,255,0.9)' },
   heroDate: { fontSize: rs(11), color: 'rgba(255,255,255,0.65)', marginTop: 8 },
   barRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 9 },
-  barLabel: { width: 96, fontSize: rs(12), color: colors.textSecondary, fontWeight: '600' },
+  barLabel: { width: 132, fontSize: rs(12), color: colors.textSecondary, fontWeight: '600' },
   barVal: { width: 30, textAlign: 'right', fontSize: rs(12), fontWeight: '700', color: colors.text },
   track: { flex: 1, height: 9, borderRadius: 5, backgroundColor: colors.bgTertiary, overflow: 'hidden' },
   fill: { height: 9, borderRadius: 5 },
@@ -233,6 +250,8 @@ const makeStyles = (colors: Palette) => StyleSheet.create({
   fitLabel: { fontSize: rs(11), fontWeight: '800', letterSpacing: 1, color: colors.purpleSoft, marginBottom: 2 },
   btn: { backgroundColor: colors.success, borderRadius: radii.xl, paddingVertical: 15, alignItems: 'center', marginTop: spacing.sm },
   btnText: { color: '#FFFFFF', fontWeight: '800', fontSize: rs(14) },
+  btnAlt: { backgroundColor: colors.purple },
+  pdfNote: { fontSize: rs(11), color: colors.textMuted, textAlign: 'center', marginTop: 6 },
   retakeHead: { fontSize: rs(11), fontWeight: '800', letterSpacing: 1, color: colors.textMuted, marginTop: spacing.xl, marginBottom: 8 },
   retakeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   retake: { paddingHorizontal: 12, paddingVertical: 9, borderRadius: radii.pill, backgroundColor: colors.bgTertiary },
