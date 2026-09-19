@@ -192,3 +192,23 @@ describe('lesson tools', () => {
     expect(await generateReflectionFeedback('x', { audience: 'student' })).toBeNull();
   });
 });
+
+describe('educational resources', () => {
+  const { generateEducationalResources } = require('../aiGenerators');
+  it('normalises types, drops untitled items and caps at 4', async () => {
+    mockCallEdgeFn.mockResolvedValue({ reply: JSON.stringify({ resources: [
+      { title: 'A', description: 'd', type: 'video', relevance: 'r' },
+      { title: 'B', description: 'd', type: 'podcast' },
+      { title: '', description: 'd' },
+      { title: 'C', description: 'd' }, { title: 'D', description: 'd' }, { title: 'E', description: 'd' },
+    ] }) });
+    const r = await generateEducationalResources({ learningStyle: 'x', userType: 'parent' });
+    expect(r.map((x: any) => x.title)).toEqual(['A', 'B', 'C', 'D']);
+    expect(r[1].type).toBe('guide');
+    expect(r[0].relevance).toBe('r');
+  });
+  it('returns null when nothing usable comes back', async () => {
+    mockCallEdgeFn.mockResolvedValue({ reply: JSON.stringify({ resources: [{ description: 'no title' }] }) });
+    expect(await generateEducationalResources({ userType: 'teacher' })).toBeNull();
+  });
+});

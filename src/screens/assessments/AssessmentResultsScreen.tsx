@@ -19,7 +19,7 @@ import { getGhanaMapping } from '../../utils/ghanaMapping';
 import { getStyleInsights } from '../../utils/styleInsights';
 import { missingCognitiveDomains, domainLabel, findResultForDomain } from '../../utils/profileCompleteness';
 import CertificateModal from '../../components/CertificateModal';
-import { AssessmentInsightsCard, CombinedInsightsCard, ExecutiveSummaryCard } from '../../components/ai/InsightCards';
+import { CombinedInsightsCard, ExecutiveSummaryCard, AIInsightsBanner, useAIAssessmentInsights } from '../../components/ai/InsightCards';
 import { useAuth } from '../../context/AuthContext';
 import { rs } from '../../utils/responsive';
 import { colors, radii, shadow, spacing, Palette } from '../../theme';
@@ -85,6 +85,25 @@ export default function AssessmentResultsScreen({ route, navigation }: any) {
     && normalized?.primaryStyle && normalized.scores
       ? getStyleInsights(assessmentType, normalized.primaryStyle, normalized.scores)
       : null;
+
+  // Like the webapp: AI-written insights replace the rule-based ones when they arrive; the
+  // rule-based text is the fallback (and is sent to the model as grounding).
+  const ai = useAIAssessmentInsights(
+    normalized?.primaryStyle && normalized?.scores
+      ? {
+          scores: normalized.scores,
+          type: assessmentType,
+          role: user?.role,
+          algorithmicGuidance: insights
+            ? { primaryStyle: normalized.primaryStyle, strengths: insights.strengths, growthAreas: insights.weaknesses, recommendations: insights.improvements }
+            : { primaryStyle: normalized.primaryStyle },
+          context: { primaryStyle: normalized.primaryStyle, educationLevel: user?.educationLevel, age: user?.age },
+        }
+      : null,
+  );
+  const shown = insights && ai.data
+    ? { ...insights, strengths: ai.data.strengths, weaknesses: ai.data.weaknesses ?? insights.weaknesses, improvements: ai.data.improvements ?? insights.improvements }
+    : insights;
 
   if (loading) {
     return (
@@ -182,10 +201,12 @@ export default function AssessmentResultsScreen({ route, navigation }: any) {
           </View>
         )}
 
-        {insights && insights.strengths.length > 0 && (
+        {normalized?.primaryStyle && <AIInsightsBanner ai={ai} />}
+
+        {shown && shown.strengths.length > 0 && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Strengths</Text>
-            {insights.strengths.map((s: string, i: number) => (
+            {shown!.strengths.map((s: string, i: number) => (
               <GlassCard key={i} padding={16} style={styles.listCard}>
                 <View style={styles.listRow}>
                   <View style={[styles.listBadge, { backgroundColor: colors.successSoft }]}>
@@ -198,10 +219,10 @@ export default function AssessmentResultsScreen({ route, navigation }: any) {
           </View>
         )}
 
-        {insights && insights.weaknesses.length > 0 && (
+        {shown && shown.weaknesses.length > 0 && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Areas for Growth</Text>
-            {insights.weaknesses.map((w: string, i: number) => (
+            {shown!.weaknesses.map((w: string, i: number) => (
               <GlassCard key={i} padding={16} style={styles.listCard}>
                 <View style={styles.listRow}>
                   <View style={[styles.listBadge, { backgroundColor: colors.cyanSoft }]}>
@@ -214,10 +235,10 @@ export default function AssessmentResultsScreen({ route, navigation }: any) {
           </View>
         )}
 
-        {insights && insights.improvements.length > 0 && (
+        {shown && shown.improvements.length > 0 && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Recommendations</Text>
-            {insights.improvements.map((r: string, i: number) => (
+            {shown!.improvements.map((r: string, i: number) => (
               <GlassCard key={i} padding={16} style={[styles.listCard, styles.recCard]}>
                 <View style={styles.listRow}>
                   <AppIcon name="💡" size={22} style={styles.recIcon} />
@@ -280,21 +301,6 @@ export default function AssessmentResultsScreen({ route, navigation }: any) {
             </GlassCard>
           )}
         </View>
-
-        {normalized?.primaryStyle && (
-          <AssessmentInsightsCard
-            params={{
-              scores: normalized.scores,
-              type: assessmentType,
-              role: user?.role,
-              context: {
-                primaryStyle: normalized.primaryStyle,
-                educationLevel: user?.educationLevel,
-                age: user?.age,
-              },
-            }}
-          />
-        )}
 
         {ghanaMapping && (
           <>

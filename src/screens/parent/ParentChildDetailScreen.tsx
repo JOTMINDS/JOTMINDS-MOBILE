@@ -10,7 +10,7 @@ import { getConsent, getObservationsForParent } from '../../utils/parentApi';
 import { getObservationsForChild, TeacherObservation } from '../../utils/observationApi';
 import { completedDomains, REQUIRED_DOMAINS, domainLabel } from '../../utils/profileCompleteness';
 import { AdultResults } from '../../utils/adultScoring';
-import { ParentTipsCard } from '../../components/ai/InsightCards';
+import { ParentTipsCard, EducationalResourcesCard } from '../../components/ai/InsightCards';
 import { studentStyles, studentScores } from '../../utils/classInsights';
 import { useAuth } from '../../context/AuthContext';
 import { colors, radii, shadow, spacing, Palette } from '../../theme';
@@ -97,6 +97,7 @@ export default function ParentChildDetailScreen({ route, navigation }: any) {
             data={{ childName: child.name, styles: childStyles, scores: studentScores({ assessments }) }}
           />
         )}
+        {hasChildStyles && consentGranted && <EducationalResourcesCard userType="parent" styles={childStyles} />}
 
         <View style={styles.section}>
           <View style={styles.sectionHeaderRow}>

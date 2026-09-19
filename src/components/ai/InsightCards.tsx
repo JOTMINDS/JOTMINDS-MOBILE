@@ -6,7 +6,7 @@ import {
   generateProfessionalInsights, generateParentSupportTips, generateStudyStrategy, generateDailyDiscovery,
   generateCareerInsights, generateClassroomOverview, generateIntervention, generateTeachingStrategies,
   AIResult, ExecutiveSummary, CombinedInsights, StudentRecommendation, ProfessionalInsights, ClassroomOverview,
-  InterventionPlan, AssessmentInsights,
+  InterventionPlan, AssessmentInsights, generateEducationalResources,
 } from '../../utils/aiGenerators';
 
 type S = ReturnType<typeof useAICardStyles>;
@@ -271,6 +271,67 @@ export function TeachingStrategiesCard({ studentData, studentName, enabled = tru
           )}
         </>
       )}
+    </AICard>
+  );
+}
+
+// ── AI-first insights on result screens (the webapp's `aiInsights || fallbackInsights`) ──────────
+
+type InsightParams = Parameters<typeof generateAssessmentInsights>[0];
+
+/**
+ * Loads AI insights for a result screen. Pass null until the result exists (hooks can't be
+ * conditional). `algorithmicGuidance` should carry the rule-based text so the model is grounded
+ * in it — and so the screen can fall back to it when the AI is unavailable.
+ */
+export function useAIAssessmentInsights(params: InsightParams | null) {
+  return useAIData<AssessmentInsights>(
+    (force) => generateAssessmentInsights(params!, { force }),
+    [JSON.stringify(params)],
+    params !== null,
+  );
+}
+
+/** Banner above the insight sections: loading, the AI archetype + summary, or an honest fallback notice. */
+export function AIInsightsBanner({ ai }: { ai: { loading: boolean; data: AssessmentInsights | null; refresh: () => void } }) {
+  const s = useAICardStyles();
+  return (
+    <AICard title={ai.data ? ai.data.archetype.name : 'AI insights'} icon="✦" loading={ai.loading} ai={!!ai.data} onRefresh={ai.refresh}>
+      {ai.data ? (
+        <>
+          <Text style={s.text}>{ai.data.archetype.tagline}</Text>
+          {!!ai.data.summary && <Text style={[s.text, { marginTop: 8 }]}>{ai.data.summary}</Text>}
+        </>
+      ) : (
+        <>
+          <Text style={s.text}>AI insights aren’t available right now, so you’re seeing our standard insights for your style.</Text>
+          <TouchableOpacity onPress={ai.refresh} accessibilityRole="button" style={{ marginTop: 8 }}>
+            <Text style={s.link}>Try again</Text>
+          </TouchableOpacity>
+        </>
+      )}
+    </AICard>
+  );
+}
+
+// ── Educational resources for a parent / teacher ─────────────────────────────
+const RESOURCE_ICON: Record<string, string> = { article: '📄', video: '🎬', guide: '📘', tip: '💡' };
+
+export function EducationalResourcesCard({ userType, styles: st, enabled = true }: {
+  userType: 'parent' | 'teacher'; styles: { learning?: string; thinking?: string; decision?: string }; enabled?: boolean;
+}) {
+  const s = useAICardStyles();
+  const params = { learningStyle: st.learning, thinkingStyle: st.thinking, decisionStyle: st.decision, userType };
+  const { data, loading, refresh } = useAIData((f) => generateEducationalResources(params, { force: f }), [JSON.stringify(params)], enabled);
+  return (
+    <AICard title="Recommended resources" icon="📚" loading={loading && enabled} empty={!data?.length} onRefresh={refresh}>
+      {data?.map((r, i) => (
+        <View key={i} style={s.block}>
+          <Text style={s.strong}>{RESOURCE_ICON[r.type] ?? '📘'} {r.title}</Text>
+          <Text style={s.text}>{r.description}</Text>
+          {!!r.relevance && <Text style={[s.text, { marginTop: 3, fontStyle: 'italic' }]}>{r.relevance}</Text>}
+        </View>
+      ))}
     </AICard>
   );
 }

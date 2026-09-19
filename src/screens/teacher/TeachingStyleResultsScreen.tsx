@@ -1,3 +1,4 @@
+import { AIInsightsBanner, useAIAssessmentInsights } from '../../components/ai/InsightCards';
 import React, { useState } from 'react';
 import {
   View,
@@ -39,6 +40,22 @@ export default function TeachingStyleResultsScreen({ route, navigation }: any) {
   const score: TeachingStyleScore | undefined = route.params?.score;
   const [showCertificate, setShowCertificate] = useState(false);
 
+  const staticProfile = score ? teachingStyleProfiles[score.primaryStyle] : undefined;
+  const ai = useAIAssessmentInsights(
+    score
+      ? {
+          scores: score.scores,
+          type: 'teaching-style',
+          role: 'teacher',
+          algorithmicGuidance: {
+            primaryStyle: score.primaryStyle, secondaryStyle: score.secondaryStyle,
+            strengths: staticProfile?.strengths, blindSpots: staticProfile?.blindSpots, recommendations: staticProfile?.recommendations,
+          },
+          context: { primaryStyle: score.primaryStyle, secondaryStyle: score.secondaryStyle },
+        }
+      : null,
+  );
+
   if (!score) {
     return (
       <ScreenBackground>
@@ -53,7 +70,14 @@ export default function TeachingStyleResultsScreen({ route, navigation }: any) {
     );
   }
 
-  const profile = teachingStyleProfiles[score.primaryStyle];
+  const base = teachingStyleProfiles[score.primaryStyle];
+  // AI-first: AI text replaces the canned strengths / blind spots / recommendations when available.
+  const profile = base && {
+    ...base,
+    strengths: ai.data?.strengths ?? base.strengths,
+    blindSpots: ai.data?.weaknesses ?? base.blindSpots,
+    recommendations: ai.data?.improvements ?? base.recommendations,
+  };
   const visual = PROFILE_STYLE[score.primaryStyle] ?? { icon: '🎓', gradient: ['#10B981', '#059669'] as [string, string] };
 
   return (
@@ -109,6 +133,8 @@ export default function TeachingStyleResultsScreen({ route, navigation }: any) {
             })}
           </GlassCard>
         </View>
+
+        <AIInsightsBanner ai={ai} />
 
         {profile && (
           <>

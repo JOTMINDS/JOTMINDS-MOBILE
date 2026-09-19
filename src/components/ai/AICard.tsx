@@ -107,6 +107,7 @@ export const makeStyles = (colors: Palette) => StyleSheet.create({
   text: { flex: 1, fontSize: rs(13), lineHeight: rs(19), color: colors.textSecondary },
   strong: { fontSize: rs(13), fontWeight: '800', color: colors.text, marginBottom: 3 },
   sub: { fontSize: rs(11), fontWeight: '800', color: colors.purpleSoft, letterSpacing: 0.8, marginTop: 8, marginBottom: 4 },
+  link: { fontSize: rs(13), fontWeight: '700', color: colors.purpleSoft },
   quote: { fontSize: rs(13), fontStyle: 'italic', color: colors.purpleSoft, marginTop: 8 },
   chip: { alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10, backgroundColor: colors.bgTertiary, marginBottom: 4 },
   chipText: { fontSize: rs(10), fontWeight: '700', color: colors.textSecondary },
