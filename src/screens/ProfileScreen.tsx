@@ -17,10 +17,12 @@ import { pickAndSaveAvatar, removeAvatar } from '../utils/avatar';
 import ScreenBackground from '../components/ScreenBackground';
 import GlassCard from '../components/GlassCard';
 import AppIcon from '../components/AppIcon';
+import { useParentGate } from '../utils/useParentGate';
 import { colors, radii, shadow, spacing, Palette } from '../theme';
 
 export default function ProfileScreen({ navigation }: any) {
   const { user, signOut, refreshUser } = useAuth();
+  const { gate, gateModal } = useParentGate();
   const styles = useThemedStyles(makeStyles);
   const toast = useToast();
   const [photoBusy, setPhotoBusy] = useState(false);
@@ -64,7 +66,7 @@ export default function ProfileScreen({ navigation }: any) {
   const handleSignOut = () => {
     Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
       { text: 'Cancel', style: 'cancel' },
-      { text: 'Sign Out', style: 'destructive', onPress: async () => { await signOut(); } },
+      { text: 'Sign Out', style: 'destructive', onPress: () => gate(() => { void signOut(); }, 'Ask a parent to enter the PIN to sign out') },
     ]);
   };
 
@@ -159,13 +161,18 @@ export default function ProfileScreen({ navigation }: any) {
             { label: 'Accessibility', icon: '👁️', screen: 'Accessibility' },
             { label: 'Edit Profile', icon: '✏️', screen: 'EditProfile' },
             { label: 'Privacy Settings', icon: '🔒', screen: 'PrivacySettings' },
+            { label: 'Reflections & Notes', icon: '📓', screen: 'Reflections' },
+            ...(user?.role === 'professional' ? [{ label: 'Track Record', icon: '📈', screen: 'TrackRecord' }] : []),
+            { label: 'Send Feedback', icon: '⭐', screen: 'Feedback' },
             { label: 'Help & Support', icon: '💬', screen: 'HelpSupport' },
           ].map((a) => (
             <GlassCard
               key={a.label}
               padding={16}
               style={styles.actionCard}
-              onPress={a.screen ? () => navigation.navigate(a.screen!) : undefined}
+              onPress={a.screen ? () => (a.screen === 'PrivacySettings'
+                ? gate(() => navigation.navigate('PrivacySettings'), 'Ask a parent to enter the PIN to open privacy settings')
+                : navigation.navigate(a.screen!)) : undefined}
             >
               <View style={styles.actionRow}>
                 <AppIcon name={a.icon} size={20} color={colors.purpleSoft} style={styles.actionIcon} />
@@ -185,6 +192,7 @@ export default function ProfileScreen({ navigation }: any) {
           <Text style={styles.footerText}>© 2026 JotMinds</Text>
         </View>
       </ScrollView>
+      {gateModal}
     </ScreenBackground>
   );
 }

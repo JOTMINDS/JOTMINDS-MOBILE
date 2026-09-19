@@ -22,6 +22,8 @@ export interface LessonPlan extends LessonPlanInput {
   objectives: string[];
   differentiationStrategies: { style: string; activity: string }[];
   assessmentQuestions: { question: string; answer: string }[];
+  /** post-lesson reflections, newest first */
+  reflections?: { at: string; text: string; feedback?: { encouragement: string; insight: string; actionableStep: string } }[];
 }
 
 const KEY = 'jotminds.lessonPlans';

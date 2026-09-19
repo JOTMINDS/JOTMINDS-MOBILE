@@ -144,3 +144,51 @@ describe('null-on-failure generators', () => {
     expect(await generateParentSupportTips({ y: 1 })).toBeNull();
   });
 });
+
+describe('lesson tools', () => {
+  const { normalizeSuite, generateLessonAssessmentSuite, generateCurriculumTopics, generateReflectionFeedback, generateDifferentiatedInstruction } =
+    require('../aiGenerators');
+
+  it('normalizeSuite drops broken items and rejects an empty suite', () => {
+    const suite = normalizeSuite({
+      mcqs: [{ question: 'Q1', options: ['a', 'b'], correctAnswer: 'a' }, { question: 'no options', options: ['only'] }, { nope: 1 }],
+      shortAnswer: [{ question: 'S1' }],
+    }, 'Photosynthesis');
+    expect(suite.title).toBe('Photosynthesis Assessment Suite');
+    expect(suite.mcqs).toHaveLength(1);
+    expect(suite.mcqs[0].id).toBe('m1');
+    expect(suite.shortAnswer).toHaveLength(1);
+    expect(normalizeSuite({ mcqs: [{ question: 'x', options: ['a'] }] }, 't')).toBeNull();
+    expect(normalizeSuite(null, 't')).toBeNull();
+  });
+
+  it('assessment suite is cached after the first generation', async () => {
+    mockCallEdgeFn.mockResolvedValue({ reply: JSON.stringify({ title: 'T', mcqs: [{ question: 'Q', options: ['a', 'b', 'c', 'd'], correctAnswer: 'a' }] }) });
+    const a = await generateLessonAssessmentSuite({ subject: 'Sci', topic: 'Cells', gradeClass: 'JHS 1' });
+    const b = await generateLessonAssessmentSuite({ subject: 'Sci', topic: 'Cells', gradeClass: 'JHS 1' });
+    expect(a.mcqs).toHaveLength(1);
+    expect(b).toEqual(a);
+    expect(mockCallEdgeFn).toHaveBeenCalledTimes(1);
+  });
+
+  it('curriculum topics clamp hours and skip untitled entries', async () => {
+    mockCallEdgeFn.mockResolvedValue({ reply: JSON.stringify({ topics: [{ title: ' Intro ', estimatedHours: 9 }, { title: '', estimatedHours: 1 }, { title: 'Next', estimatedHours: 0 }] }) });
+    expect(await generateCurriculumTopics({ subject: 's', grade: 'g', curriculum: 'c', mainTopic: 'm' })).toEqual([
+      { title: 'Intro', estimatedHours: 3 }, { title: 'Next', estimatedHours: 1 },
+    ]);
+  });
+
+  it('differentiation ideas require group + strategy on every item', async () => {
+    mockCallEdgeFn.mockResolvedValue({ reply: JSON.stringify({ strategies: [{ group: 'g' }] }) });
+    expect(await generateDifferentiatedInstruction({ subject: 's', topic: 't', gradeClass: 'c' })).toBeNull();
+  });
+
+  it('reflection feedback needs all three parts and works for teachers', async () => {
+    mockCallEdgeFn.mockResolvedValue({ reply: JSON.stringify({ encouragement: 'e', insight: 'i', actionableStep: 'a' }) });
+    expect(await generateReflectionFeedback('The lesson ran long', { audience: 'teacher' })).toEqual({ encouragement: 'e', insight: 'i', actionableStep: 'a' });
+    const sent = JSON.parse(mockCallEdgeFn.mock.calls[0][1].body);
+    expect(sent.messages[0].content).toMatch(/instructional coach/);
+    mockCallEdgeFn.mockResolvedValue({ reply: '{"encouragement":"only"}' });
+    expect(await generateReflectionFeedback('x', { audience: 'student' })).toBeNull();
+  });
+});

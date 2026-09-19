@@ -21,6 +21,8 @@ export interface AppUser {
   className?: string;
   subscriptionStatus?: 'free' | 'premium' | 'organization';
   firstWinCompleted?: boolean;
+  /** Kids-mode parent PIN (same profile field the webapp uses) */
+  parentPin?: string;
 }
 
 interface AuthContextType {
@@ -90,6 +92,7 @@ async function fetchProfile(supabaseUser: SupabaseUser): Promise<AppUser> {
       subscriptionStatus: profile.subscriptionStatus ?? profile.subscription_status ?? 'free',
       // Backend-persisted onboarding flag (survives reinstall / new device).
       firstWinCompleted: profile.firstWinCompleted ?? !!profile.cognitiveProfile,
+      parentPin: typeof profile.parentPin === 'string' ? profile.parentPin : undefined,
     };
   } catch {
     // Fallback: build minimal profile from Supabase user metadata

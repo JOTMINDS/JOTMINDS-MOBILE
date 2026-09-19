@@ -102,6 +102,15 @@ import LessonPlannerScreen from '../screens/teacher/LessonPlannerScreen';
 import AskJottiScreen from '../screens/shared/AskJottiScreen';
 import DailyChallengeScreen from '../screens/challenge/DailyChallengeScreen';
 import { withFeature } from '../components/FeatureGate';
+import CurriculumTrackerScreen from '../screens/teacher/CurriculumTrackerScreen';
+import DeepLinkHandler from './DeepLinkHandler';
+import ClassAnalyticsScreen from '../screens/teacher/ClassAnalyticsScreen';
+import StudentDetailScreen from '../screens/teacher/StudentDetailScreen';
+import ProfessionalCognitiveScreen from '../screens/professional/ProfessionalCognitiveScreen';
+import ProfessionalReportScreen from '../screens/professional/ProfessionalReportScreen';
+import TrackRecordScreen from '../screens/professional/TrackRecordScreen';
+import ReflectionsScreen from '../screens/shared/ReflectionsScreen';
+import FeedbackScreen from '../screens/shared/FeedbackScreen';
 import ProfessionalV2IntroScreen from '../screens/professional/ProfessionalV2IntroScreen';
 import ProfessionalV2SessionScreen from '../screens/professional/ProfessionalV2SessionScreen';
 import ProfessionalV2ResultsScreen from '../screens/professional/ProfessionalV2ResultsScreen';
@@ -215,6 +224,7 @@ export default function AppNavigator() {
 
   return (
     <NavigationContainer>
+      <DeepLinkHandler />
       <Stack.Navigator
         screenOptions={{
           headerShown: false,
@@ -330,7 +340,15 @@ export default function AppNavigator() {
             <Stack.Screen name="DailyChallenge" component={GatedDailyChallenge} options={{ headerShown: true, title: 'Daily Challenge' }} />
             <Stack.Screen name="ClassManagement" component={ClassManagementScreen} options={{ headerShown: true, title: 'My Classes' }} />
             <Stack.Screen name="ObservationLog" component={ObservationLogScreen} options={{ headerShown: true, title: 'Observation Log' }} />
+            <Stack.Screen name="CurriculumTracker" component={CurriculumTrackerScreen} options={{ headerShown: true, title: 'Curriculum Tracker' }} />
+            <Stack.Screen name="ClassAnalytics" component={ClassAnalyticsScreen} options={{ headerShown: true, title: 'Class Analytics' }} />
+            <Stack.Screen name="StudentDetail" component={StudentDetailScreen as React.ComponentType} options={{ headerShown: true, title: 'Student' }} />
             {/* Cast: these screens type their props with ScreenProps (see OtpVerification below). */}
+            <Stack.Screen name="ProfessionalCognitive" component={ProfessionalCognitiveScreen as React.ComponentType} options={{ headerShown: true, title: 'Professional Assessment' }} />
+            <Stack.Screen name="ProfessionalReport" component={ProfessionalReportScreen as React.ComponentType} options={{ headerShown: true, title: 'Assessment Report' }} />
+            <Stack.Screen name="TrackRecord" component={TrackRecordScreen as React.ComponentType} options={{ headerShown: true, title: 'Track Record' }} />
+            <Stack.Screen name="Reflections" component={ReflectionsScreen} options={{ headerShown: true, title: 'Reflections & Notes' }} />
+            <Stack.Screen name="Feedback" component={FeedbackScreen as React.ComponentType} options={{ headerShown: true, title: 'Send Feedback' }} />
             <Stack.Screen name="ProfessionalV2Intro" component={ProfessionalV2IntroScreen as React.ComponentType} options={{ headerShown: true, title: 'Professional Intelligence' }} />
             <Stack.Screen name="ProfessionalV2Session" component={ProfessionalV2SessionScreen as React.ComponentType} options={{ headerShown: true, title: 'Assessment', gestureEnabled: false, headerBackVisible: false }} />
             <Stack.Screen name="ProfessionalV2Results" component={ProfessionalV2ResultsScreen as React.ComponentType} options={{ headerShown: true, title: 'Your Profile', gestureEnabled: false, headerBackVisible: false }} />

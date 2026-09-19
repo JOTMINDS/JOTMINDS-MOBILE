@@ -432,3 +432,110 @@ export function generateIntervention(
     validate: (x) => nonEmptyArray(x.suggestions) && typeof x.focus === 'string',
   }).then((o) => (o ? { ...o, priority: fb.priority } : null)), opts);
 }
+
+// ── Teacher: lesson tools ────────────────────────────────────────────────────
+
+export interface AssessmentItem {
+  id: string; type: 'mcq' | 'short_answer' | 'discussion' | 'practical' | 'homework';
+  question: string; options?: string[]; correctAnswer?: string; explanation?: string;
+}
+export interface AssessmentSuite {
+  title: string; mcqs: AssessmentItem[]; shortAnswer: AssessmentItem[]; discussion: AssessmentItem[];
+  practicalExercises: AssessmentItem[]; homework: AssessmentItem[];
+}
+
+const asItems = (a: any, type: AssessmentItem['type'], prefix: string): AssessmentItem[] =>
+  (Array.isArray(a) ? a : [])
+    .filter((x) => x && typeof x.question === 'string' && x.question.trim())
+    .map((x, i) => ({
+      id: String(x.id ?? `${prefix}${i + 1}`), type, question: x.question,
+      options: Array.isArray(x.options) ? x.options.map(String) : undefined,
+      correctAnswer: x.correctAnswer != null ? String(x.correctAnswer) : undefined,
+      explanation: x.explanation != null ? String(x.explanation) : undefined,
+    }));
+
+/** Normalises a model-produced suite; null when it has no usable items. */
+export function normalizeSuite(raw: any, topic: string): AssessmentSuite | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const suite: AssessmentSuite = {
+    title: typeof raw.title === 'string' && raw.title ? raw.title : `${topic} Assessment Suite`,
+    mcqs: asItems(raw.mcqs, 'mcq', 'm').filter((q) => (q.options?.length ?? 0) >= 2),
+    shortAnswer: asItems(raw.shortAnswer, 'short_answer', 's'),
+    discussion: asItems(raw.discussion, 'discussion', 'd'),
+    practicalExercises: asItems(raw.practicalExercises, 'practical', 'p'),
+    homework: asItems(raw.homework, 'homework', 'h'),
+  };
+  const n = suite.mcqs.length + suite.shortAnswer.length + suite.discussion.length + suite.practicalExercises.length + suite.homework.length;
+  return n > 0 ? suite : null;
+}
+
+export async function generateLessonAssessmentSuite(
+  p: { subject: string; topic: string; gradeClass: string }, opts?: { force?: boolean },
+): Promise<AssessmentSuite | null> {
+  const key = `suite_${hashKey(p)}`;
+  if (!opts?.force) { const c = await getCached<AssessmentSuite>(key); if (c) return c; }
+  const raw = await aiJson<any>({
+    system: 'You are an expert assessment designer creating differentiated quizzes and homework aligned to the Ghanaian (NaCCA/GES) and international curricula.',
+    user: `Generate a multi-format lesson assessment suite.\nSubject: ${p.subject}\nTopic: ${p.topic}\nGrade/Class: ${p.gradeClass || 'Not specified'}\n\nJSON: {"title":"...","mcqs":[{"id":"m1","question":"...","options":["A","B","C","D"],"correctAnswer":"A","explanation":"..."}] (4),"shortAnswer":[{"id":"s1","question":"...","correctAnswer":"model answer","explanation":"marking note"}] (2),"discussion":[{"id":"d1","question":"...","explanation":"facilitation guide"}] (1),"practicalExercises":[{"id":"p1","question":"...","explanation":"success criteria"}] (1),"homework":[{"id":"h1","question":"...","explanation":"target time"}] (1)}`,
+    maxTokens: 1400,
+    validate: (x) => !!normalizeSuite(x, p.topic),
+  });
+  const suite = raw ? normalizeSuite(raw, p.topic) : null;
+  if (suite) await setCached(key, suite);
+  return suite;
+}
+
+export interface DifferentiationIdeas {
+  strategies: { group: string; strategy: string }[];
+  tips?: string[];
+}
+
+export async function generateDifferentiatedInstruction(
+  p: { subject: string; topic: string; gradeClass: string; classSummary?: any }, opts?: { force?: boolean },
+): Promise<DifferentiationIdeas | null> {
+  const key = `diff_${hashKey(p)}`;
+  if (!opts?.force) { const c = await getCached<DifferentiationIdeas>(key); if (c) return c; }
+  const out = await aiJson<DifferentiationIdeas>({
+    system: 'You are an expert in differentiated instruction for mixed-ability classrooms, including large classes with limited resources.',
+    user: `Generate differentiated instruction strategies.\n${JSON.stringify(p)}\n\nJSON: {"strategies":[{"group":"e.g. Learners who need support / On-level / Extension / Visual learners / Kinaesthetic learners","strategy":"specific classroom activity"}] (5 items),"tips":["2 short practical tips"]}`,
+    maxTokens: 700,
+    validate: (x) => Array.isArray(x.strategies) && x.strategies.length > 0 && x.strategies.every((s: any) => s?.group && s?.strategy),
+  });
+  if (out) await setCached(key, out);
+  return out;
+}
+
+export interface CurriculumTopic { title: string; estimatedHours: number }
+
+export async function generateCurriculumTopics(
+  p: { subject: string; grade: string; curriculum: string; mainTopic: string },
+): Promise<CurriculumTopic[] | null> {
+  const out = await aiJson<{ topics: any[] }>({
+    system: 'You are an expert curriculum designer. Output strict JSON only.',
+    user: `Generate a structured list of sub-topics for a curriculum tracker.\nSubject: ${p.subject}\nGrade/Class: ${p.grade}\nCurriculum: ${p.curriculum}\nMain topic/strand: ${p.mainTopic}\n\nJSON: {"topics":[{"title":"specific lesson goal","estimatedHours":1}]} — 5 to 8 topics, estimatedHours between 1 and 3.`,
+    maxTokens: 600,
+    validate: (x) => Array.isArray(x.topics) && x.topics.length > 0,
+  });
+  if (!out) return null;
+  const topics = out.topics
+    .filter((t) => t && typeof t.title === 'string' && t.title.trim())
+    .map((t) => ({ title: t.title.trim(), estimatedHours: Math.min(3, Math.max(1, Math.round(Number(t.estimatedHours) || 1))) }));
+  return topics.length ? topics : null;
+}
+
+export interface ReflectionFeedback { encouragement: string; insight: string; actionableStep: string }
+
+/** Coaching feedback on a written reflection (student journal or a teacher's post-lesson note). */
+export async function generateReflectionFeedback(
+  text: string, opts: { audience: 'student' | 'teacher'; topic?: string },
+): Promise<ReflectionFeedback | null> {
+  const teacher = opts.audience === 'teacher';
+  return aiJson<ReflectionFeedback>({
+    system: teacher
+      ? 'You are a warm, supportive instructional coach helping teachers reflect on their practice.'
+      : 'You are a warm, supportive educational mentor helping students build metacognition and emotional intelligence.',
+    user: `${teacher ? 'A teacher wrote this post-lesson reflection' : 'A student wrote this self-reflection journal entry'}:\n${opts.topic ? `Topic: ${opts.topic}\n` : ''}Writing: "${text.slice(0, 2000)}"\n\nProvide empathetic, constructive coaching feedback.\nJSON: {"encouragement":"warm 1-2 sentence praise for their effort and honesty","insight":"a deeper insight about what the reflection reveals about growth","actionableStep":"one concrete micro-action to try next"}`,
+    maxTokens: 400,
+    validate: (x) => !!(x.encouragement && x.insight && x.actionableStep),
+  });
+}

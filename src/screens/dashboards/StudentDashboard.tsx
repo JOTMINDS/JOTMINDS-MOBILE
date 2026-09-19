@@ -22,13 +22,17 @@ import { Skeleton, SkeletonCard } from '../../components/Skeleton';
 import { FeatureVisible } from '../../components/FeatureGate';
 import { StudentRecommendationsCard, ExecutiveSummaryCard } from '../../components/ai/InsightCards';
 import { stylesFromResults, hasAllStyles } from '../../utils/profileStyles';
+import { isKidsAge } from '../../utils/kidsMode';
+import ParentPinModal from '../../components/ParentPinModal';
+import { updateUserProfile } from '../../utils/api';
 import { colors, radii, shadow, spacing, Palette } from '../../theme';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 
 export default function StudentDashboard({ navigation }: any) {
   const colors = useTheme();
   const styles = useThemedStyles(makeStyles);
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
+  const [pinPrompt, setPinPrompt] = useState(false);
   const [assessments, setAssessments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -61,10 +65,24 @@ export default function StudentDashboard({ navigation }: any) {
   const completedTypes = [...new Set(assessments.map((a) => a.assessmentType))];
   const profileStyles = stylesFromResults(assessments);
 
-  // Determine if user is in kids age group (7-12). AppUser has no
-  // `ageGroup` field (only `age`), so this previously always evaluated to
-  // false and silently never routed anyone to Kids mode.
-  const isKidsMode = typeof user?.age === 'number' && user.age >= 7 && user.age <= 12;
+  // Kids mode = age 6–10, the same rule as the webapp (see utils/kidsMode.ts).
+  const isKidsMode = isKidsAge(user?.age);
+
+  // Kids accounts (6–10) get a parent PIN so they can't sign out or change privacy
+  // settings alone. Prompted once per launch until set; "Set up later" dismisses it.
+  useEffect(() => {
+    if (isKidsMode && user && !user.parentPin) setPinPrompt(true);
+  }, [isKidsMode, user?.id, user?.parentPin]);
+
+  const savePin = async (pin: string) => {
+    setPinPrompt(false);
+    try {
+      await updateUserProfile({ parentPin: pin });
+      await refreshUser();
+    } catch {
+      // non-fatal: the prompt returns next launch
+    }
+  };
 
   const assessmentCards = [
     {
@@ -288,6 +306,14 @@ export default function StudentDashboard({ navigation }: any) {
         )}
 
       </ScrollView>
+      <ParentPinModal
+        visible={pinPrompt}
+        mode="setup"
+        title="Set up a parent PIN"
+        description="Create a 4-digit PIN. Kids mode asks for it before signing out or changing privacy settings."
+        onSuccess={savePin}
+        onCancel={() => setPinPrompt(false)}
+      />
     </ScreenBackground>
   );
 }

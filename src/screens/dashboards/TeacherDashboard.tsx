@@ -6,18 +6,16 @@ import {
   StyleSheet,
   RefreshControl,
   ActivityIndicator,
-  TouchableOpacity,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../../context/AuthContext';
-import { useToast } from '../../context/ToastContext';
 import { getStudentsForTeacher } from '../../utils/api';
 import ScreenBackground from '../../components/ScreenBackground';
 import GlassCard from '../../components/GlassCard';
 import AppIcon from '../../components/AppIcon';
 import AskJottiCard from '../../components/AskJottiCard';
-import { ClassroomOverviewCard, TeachingStrategiesCard } from '../../components/ai/InsightCards';
-import { classStyles, studentStyles, studentScores } from '../../utils/classInsights';
+import { ClassroomOverviewCard } from '../../components/ai/InsightCards';
+import { classStyles } from '../../utils/classInsights';
 import { colors, radii, shadow, spacing, Palette } from '../../theme';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 
@@ -25,9 +23,7 @@ export default function TeacherDashboard({ navigation }: any) {
   const colors = useTheme();
   const styles = useThemedStyles(makeStyles);
   const { user } = useAuth();
-  const toast = useToast();
   const [students, setStudents] = useState<any[]>([]);
-  const [strategiesFor, setStrategiesFor] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -139,7 +135,7 @@ export default function TeacherDashboard({ navigation }: any) {
             </GlassCard>
           ) : (
             students.map((student, i) => (
-              <GlassCard key={i} padding={16} style={styles.spacedCard}>
+              <GlassCard key={student.id ?? i} padding={16} style={styles.spacedCard} onPress={() => navigation.navigate('StudentDetail', { student })}>
                 <View style={styles.row}>
                   <LinearGradient colors={['#10B981', '#059669']} style={styles.avatar} start={{x:0,y:0}} end={{x:1,y:1}}>
                     <Text style={styles.avatarText}>{(student.name || '?')[0].toUpperCase()}</Text>
@@ -153,25 +149,6 @@ export default function TeacherDashboard({ navigation }: any) {
                     <Text style={styles.statBadgeLabel}>tests</Text>
                   </View>
                 </View>
-                {Object.keys(studentStyles(student)).length > 0 && (
-                  <TouchableOpacity
-                    onPress={() => setStrategiesFor(strategiesFor === (student.id ?? String(i)) ? null : (student.id ?? String(i)))}
-                    accessibilityRole="button"
-                    style={{ marginTop: 10 }}
-                  >
-                    <Text style={{ color: colors.purpleSoft, fontWeight: '700', fontSize: 13 }}>
-                      {strategiesFor === (student.id ?? String(i)) ? 'Hide teaching strategies' : '✦ AI teaching strategies'}
-                    </Text>
-                  </TouchableOpacity>
-                )}
-                {strategiesFor === (student.id ?? String(i)) && (
-                  <View style={{ marginTop: 10 }}>
-                    <TeachingStrategiesCard
-                      studentName={student.name}
-                      studentData={{ name: student.name, styles: studentStyles(student), scores: studentScores(student) }}
-                    />
-                  </View>
-                )}
               </GlassCard>
             ))
           )}
@@ -180,17 +157,16 @@ export default function TeacherDashboard({ navigation }: any) {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Quick Actions</Text>
           {[
-            { icon: '📊', title: 'View Class Analytics', desc: 'See overall class performance', g: ['#3B82F6', '#2563EB'] as [string, string], nav: 'GrowthTracker' as const },
+            { icon: '📊', title: 'View Class Analytics', desc: 'Style distributions, completion and alignment with your profile', g: ['#3B82F6', '#2563EB'] as [string, string], nav: 'ClassAnalytics' as const },
             { icon: '👥', title: 'My Classes', desc: 'Manage classes, enrol students, import a roster', g: ['#10B981', '#059669'] as [string, string], nav: 'ClassManagement' as const },
             { icon: '🗂️', title: 'Lesson Planner', desc: 'AI lesson plans with differentiation', g: ['#10B981', '#059669'] as [string, string], nav: 'LessonPlanner' as const },
             { icon: '📋', title: 'Observation Log', desc: 'Note a student observation, share with parents', g: ['#EC4899', '#DB2777'] as [string, string], nav: 'ObservationLog' as const },
-            { icon: '📝', title: 'Create Assignment', desc: 'Assign assessments to students', g: ['#6E4D9C', '#5A3E82'] as [string, string], nav: null },
           ].map((a) => (
             <GlassCard
               key={a.title}
               padding={16}
               style={styles.spacedCard}
-              onPress={() => (a.nav ? navigation.navigate(a.nav) : toast.info('This feature is coming soon.'))}
+              onPress={() => navigation.navigate(a.nav)}
             >
               <View style={styles.row}>
                 <LinearGradient colors={a.g} style={styles.iconWrap} start={{x:0,y:0}} end={{x:1,y:1}}>
