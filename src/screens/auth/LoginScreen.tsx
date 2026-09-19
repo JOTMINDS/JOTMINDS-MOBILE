@@ -31,7 +31,8 @@ export default function LoginScreen({ navigation, route }: any) {
   const styles = useThemedStyles(makeStyles);
   const { signIn, requestLoginOtp, requestPasswordReset, signInWithStudentCode } = useAuth();
   const toast = useToast();
-  const [mode, setMode] = useState<'email' | 'code'>('email');
+  const linkedCode: string | undefined = route?.params?.studentCode;
+  const [mode, setMode] = useState<'email' | 'code'>(linkedCode ? 'code' : 'email');
   const [email, setEmail] = useState(route?.params?.email ?? '');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -40,7 +41,7 @@ export default function LoginScreen({ navigation, route }: any) {
   const [emailError, setEmailError] = useState('');
 
   // Student-code sign-in (institutional / school-issued codes)
-  const [code, setCode] = useState('');
+  const [code, setCode] = useState(linkedCode ?? '');
   const [codeValidated, setCodeValidated] = useState(false);
   const [codeStudentName, setCodeStudentName] = useState('');
   const [codeSchoolName, setCodeSchoolName] = useState('');

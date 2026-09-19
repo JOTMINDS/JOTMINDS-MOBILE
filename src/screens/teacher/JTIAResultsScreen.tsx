@@ -4,7 +4,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import ScreenBackground from '../../components/ScreenBackground';
 import GlassCard from '../../components/GlassCard';
 import RadarChart from '../../components/RadarChart';
-import { JTIAReportData } from '../../utils/jtiaScoring';
+import { JTIAReportData, JTIAAIRecommendations } from '../../utils/jtiaScoring';
+import { generateJTIAAIRecommendations } from '../../utils/aiService';
 import { getLastJTIAReport } from '../../utils/jtiaStatus';
 import { rs } from '../../utils/responsive';
 import { radii, spacing, Palette } from '../../theme';
@@ -37,8 +38,21 @@ export default function JTIAResultsScreen({ route, navigation }: any) {
   const styles = useThemedStyles(makeStyles);
   const [report, setReport] = useState<JTIAReportData | undefined>(route.params?.report);
 
+  const [aiRecs, setAiRecs] = useState<JTIAAIRecommendations | null>(null);
+
   useEffect(() => {
     if (!report) getLastJTIAReport().then((r) => r && setReport(r));
+  }, [report]);
+
+  // Upgrade the baseline recommendations with AI-personalised ones when the
+  // call succeeds; on any failure the on-device baseline stays in place.
+  useEffect(() => {
+    if (!report) return;
+    let cancelled = false;
+    generateJTIAAIRecommendations(report).then((res) => {
+      if (!cancelled && res) setAiRecs({ ...report.recommendations, ...res });
+    });
+    return () => { cancelled = true; };
   }, [report]);
 
   if (!report) {
@@ -55,6 +69,7 @@ export default function JTIAResultsScreen({ route, navigation }: any) {
     );
   }
 
+  const recs = aiRecs ?? report.recommendations;
   const radarData = DOMAIN_META.map((d) => ({ label: d.label, value: report.domainScores[d.key] }));
 
   return (
@@ -74,6 +89,16 @@ export default function JTIAResultsScreen({ route, navigation }: any) {
           <Text style={styles.scoreValue}>{report.overallScore}</Text>
           <Text style={styles.scoreLabel}>Overall · {bandLabel(report.overallScore)}</Text>
         </LinearGradient>
+
+        {(recs.pedagogicalArchetype || recs.executiveSummary) && (
+          <GlassCard variant="dark" padding={16} style={styles.card}>
+            {!!recs.pedagogicalArchetype && (
+              <Text style={styles.archetype}>{recs.pedagogicalArchetype}</Text>
+            )}
+            {!!recs.executiveSummary && <Text style={styles.summary}>{recs.executiveSummary}</Text>}
+            {aiRecs && <Text style={styles.aiTag}>✦ Personalised with AI</Text>}
+          </GlassCard>
+        )}
 
         <GlassCard variant="dark" padding={16} style={styles.card}>
           <Text style={styles.cardTitle}>Domain Profile</Text>
@@ -119,7 +144,7 @@ export default function JTIAResultsScreen({ route, navigation }: any) {
         </GlassCard>
 
         {REC_SECTIONS.map((sec) => {
-          const items = report.recommendations[sec.key];
+          const items = recs[sec.key] as string[] | undefined;
           if (!items?.length) return null;
           return (
             <GlassCard key={sec.key} variant="dark" padding={16} style={styles.card}>
@@ -177,6 +202,9 @@ const makeStyles = (colors: Palette) => StyleSheet.create({
   capScore: { fontSize: rs(13), fontWeight: '800', marginLeft: 8 },
   capDesc: { fontSize: rs(12), color: colors.textMuted, lineHeight: rs(18) },
 
+  archetype: { fontSize: rs(17), fontWeight: '800', color: colors.text, marginBottom: 6 },
+  summary: { fontSize: rs(13), lineHeight: rs(19), color: colors.textSecondary },
+  aiTag: { fontSize: rs(11), fontWeight: '700', color: colors.cyan, marginTop: 10 },
   recRow: { flexDirection: 'row', gap: 8, marginBottom: 8 },
   recBullet: { fontSize: rs(13), color: colors.cyan, fontWeight: '900' },
   recText: { flex: 1, fontSize: rs(12), color: colors.textSecondary, lineHeight: rs(18) },

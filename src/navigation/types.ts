@@ -12,8 +12,8 @@ export type RootStackParamList = {
   // Auth / onboarding
   Splash: undefined;
   Welcome: undefined;
-  Login: { email?: string } | undefined;
-  Signup: undefined;
+  Login: { email?: string; studentCode?: string } | undefined;
+  Signup: { role?: string; organizationCode?: string } | undefined;
   OtpVerification: { mode: 'signup' | 'login'; email: string; signupData?: any };
   FirstWin: undefined;
   Main: undefined;
@@ -74,6 +74,19 @@ export type RootStackParamList = {
   ClassManagement: undefined;
   LessonPlanner: undefined;
   ObservationLog: undefined;
+  ClassAnalytics: undefined;
+  CurriculumTracker: undefined;
+  StudentDetail: { student: any };
+
+  // Professional Intelligence V2
+  ProfessionalV2Intro: undefined;
+  ProfessionalV2Session: { sessionId: string };
+  ProfessionalV2Results: { sessionId: string };
+  ProfessionalCognitive: undefined;
+  ProfessionalReport: { entryId?: string } | undefined;
+  TrackRecord: undefined;
+  Reflections: undefined;
+  Feedback: undefined;
 };
 
 export type AppNavigation = NativeStackNavigationProp<RootStackParamList>;

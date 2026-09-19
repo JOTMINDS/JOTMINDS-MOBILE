@@ -5,6 +5,7 @@ import {
 import ScreenBackground from '../../components/ScreenBackground';
 import GlassCard from '../../components/GlassCard';
 import AppIcon from '../../components/AppIcon';
+import LessonToolsPanel from '../../components/teacher/LessonToolsPanel';
 import { useToast } from '../../context/ToastContext';
 import {
   generateLessonPlan, getLessonPlans, saveLessonPlan, updateLessonPlan, deleteLessonPlan,
@@ -152,6 +153,14 @@ export default function LessonPlannerScreen({ navigation }: any) {
             ))}
           </GlassCard>
 
+          <LessonToolsPanel
+            plan={active}
+            onPlanChange={(p) => { setActive(p); getLessonPlans().then(setPlans); }}
+            onCopilot={() => navigation.navigate('AskJotti', {
+              prompt: `I'm teaching "${active.topic}" (${active.subject}${active.gradeClass ? `, ${active.gradeClass}` : ''}, ${active.durationMinutes} minutes). Objectives: ${active.objectives.join('; ')}. Help me improve this lesson plan and anticipate where students might struggle.`,
+            })}
+          />
+
           <TouchableOpacity style={[styles.primaryBtn, active.delivered && styles.deliveredBtn]} onPress={toggleDelivered}>
             <Text style={styles.primaryBtnText}>{active.delivered ? '✓ Delivered' : 'Mark as delivered'}</Text>
           </TouchableOpacity>
@@ -172,6 +181,9 @@ export default function LessonPlannerScreen({ navigation }: any) {
 
         <TouchableOpacity style={styles.primaryBtn} onPress={() => setMode('new')}>
           <Text style={styles.primaryBtnText}>+ New plan</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => navigation.navigate('CurriculumTracker')} accessibilityRole="button" style={{ alignItems: 'center', paddingVertical: 12 }}>
+          <Text style={{ color: colors.purpleSoft, fontWeight: '800', fontSize: 13 }}>📚 Curriculum tracker →</Text>
         </TouchableOpacity>
 
         {plans.length === 0 ? (

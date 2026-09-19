@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase, callEdgeFn } from '../utils/supabase';
-import { signInWithStudentCode as signInWithStudentCodeApi } from '../utils/api';
+import { signInWithCode } from '../utils/studentCodeAuth';
 import type { Session, User as SupabaseUser } from '@supabase/supabase-js';
 
 export interface AppUser {
@@ -21,6 +21,8 @@ export interface AppUser {
   className?: string;
   subscriptionStatus?: 'free' | 'premium' | 'organization';
   firstWinCompleted?: boolean;
+  /** Kids-mode parent PIN (same profile field the webapp uses) */
+  parentPin?: string;
 }
 
 interface AuthContextType {
@@ -90,6 +92,7 @@ async function fetchProfile(supabaseUser: SupabaseUser): Promise<AppUser> {
       subscriptionStatus: profile.subscriptionStatus ?? profile.subscription_status ?? 'free',
       // Backend-persisted onboarding flag (survives reinstall / new device).
       firstWinCompleted: profile.firstWinCompleted ?? !!profile.cognitiveProfile,
+      parentPin: typeof profile.parentPin === 'string' ? profile.parentPin : undefined,
     };
   } catch {
     // Fallback: build minimal profile from Supabase user metadata
@@ -215,21 +218,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (error) throw new Error(error.message);
   };
 
-  // Institutional sign-in: exchange a school-issued student code for a session.
-  // The server verifies the code and returns a Supabase session; setSession then
-  // triggers onAuthStateChange, which loads the profile like any other sign-in.
-  const signInWithStudentCode = async (code: string) => {
-    const res = await signInWithStudentCodeApi(code);
-    const session = res?.session;
-    if (!session?.access_token) {
-      throw new Error('Could not sign in with that student code.');
-    }
-    const { error } = await supabase.auth.setSession({
-      access_token: session.access_token,
-      refresh_token: session.refresh_token ?? session.access_token,
-    });
-    if (error) throw new Error(error.message);
-  };
+  // Institutional sign-in: exchange a school-issued student code for a session
+  // (see utils/studentCodeAuth.ts).
+  const signInWithStudentCode = (code: string) => signInWithCode(code);
 
   const signOut = async () => {
     await supabase.auth.signOut();

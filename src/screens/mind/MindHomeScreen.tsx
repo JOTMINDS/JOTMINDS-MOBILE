@@ -10,6 +10,7 @@ import GlassCard from '../../components/GlassCard';
 import AppIcon from '../../components/AppIcon';
 import { colors, radii, spacing, Palette } from '../../theme';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
+import { FeatureVisible } from '../../components/FeatureGate';
 
 export default function MindHomeScreen({ navigation }: any) {
   const colors = useTheme();
@@ -181,28 +182,30 @@ export default function MindHomeScreen({ navigation }: any) {
         </GlassCard>
 
         {/* Brain Gym */}
-        <GlassCard
-          style={styles.snapshotCard}
-          onPress={() => navigation.navigate('BrainGym')}
-        >
-          <View style={styles.snapshotRow}>
-            <View style={styles.snapshotIconWrap}>
-              <LinearGradient
-                colors={['#3D52C9', '#6E4D9C']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.snapshotIconGradient}
-              >
-                <AppIcon name="🧩" size={22} color="#FFFFFF" />
-              </LinearGradient>
+        <FeatureVisible flag="brain-gym">
+          <GlassCard
+            style={styles.snapshotCard}
+            onPress={() => navigation.navigate('BrainGym')}
+          >
+            <View style={styles.snapshotRow}>
+              <View style={styles.snapshotIconWrap}>
+                <LinearGradient
+                  colors={['#3D52C9', '#6E4D9C']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.snapshotIconGradient}
+                >
+                  <AppIcon name="🧩" size={22} color="#FFFFFF" />
+                </LinearGradient>
+              </View>
+              <View style={styles.snapshotText}>
+                <Text style={styles.snapshotTitle}>Brain Gym</Text>
+                <Text style={styles.snapshotSub}>Memory, attention & focus mini-games</Text>
+              </View>
+              <Text style={styles.snapshotArrow}>→</Text>
             </View>
-            <View style={styles.snapshotText}>
-              <Text style={styles.snapshotTitle}>Brain Gym</Text>
-              <Text style={styles.snapshotSub}>Memory, attention & focus mini-games</Text>
-            </View>
-            <Text style={styles.snapshotArrow}>→</Text>
-          </View>
-        </GlassCard>
+          </GlassCard>
+        </FeatureVisible>
       </ScrollView>
     </ScreenBackground>
   );

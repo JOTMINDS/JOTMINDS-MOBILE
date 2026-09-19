@@ -191,3 +191,35 @@ Suggested as **one PR per numbered step** (A1 and D as small PRs; B split into "
 
 ### Parity test to add regardless
 A `src/utils/__tests__/webapp-parity.test.ts` that runs a fixed set of response vectors through each shared scorer and asserts exact outputs, with the expected values copied from the webapp. This is what keeps "verbatim port" true over time — the pro-scoring drift in A1 would have been caught the day it shipped.
+
+## Sync — 2026-09-19 (webapp `711fd9d`, 54 commits since `e8bda38`)
+
+| Webapp change | Mobile | Notes |
+|---|---|---|
+| JTIA personalised NaCCA/GES recommendations + executive summary + archetype | ✅ ported | `generatePersonalizedRecommendations`; results screen shows summary/archetype and upgrades to AI recs |
+| Feature flags (`/feature-flags/effective`: ai-coach, brain-gym, daily-challenge) | ✅ ported | fail-open; gates Ask Jotti, Brain Gym, Daily Challenge (screens + entry cards) |
+| Retry once after spurious 401 | ✅ adapted | mobile refreshes the session and retries once (`callEdgeFn`) |
+| Server: OpenAI key/Resend key hard-coded fallbacks removed, AI usage logging, admin role hardening | server-only | live for mobile once webapp `main` is deployed; requires `OPENAI_API_KEY` secret (set) |
+| Super Admin portal, Item Bank Studio, Pilot analytics, Professional V2 assessment engine, institution/school dashboards, marketing home | ⛔ web-only | super admin explicitly out of scope |
+| Professional V2 assessment engine (sessions, item bank, simulations, scoring, AI-bounded profile) | ✅ client built | Mobile is the first test-taker UI (webapp only has the admin Studio). Consent → items (all 9 types + multi-stage simulations) → batched behavioural events → server scoring → structured profile + AI narrative; pause/resume; erase attempt. Needs the `professional_v2` assessment to be published in the Studio |
+| AI-generated reports/insights (executive summary, per-assessment insights, combined profile, student recs, professional profile, parent tips, study strategy, daily discovery, career insights, classroom overview, per-student teaching strategies) | ✅ ported | `aiGenerators.ts` via `/ai/chat` (JSON) with the webapp's local fallbacks + 14-day cache. Intervention plan generator ported but not surfaced: mobile has no student risk model |
+| Education levels `Early Years`/`Primary` (type only), class assignment roles `substitute`/`assistant` | ➖ skipped | no mobile consumer yet |
+
+## Sync round 3 — 2026-09-19 (decisions applied)
+
+Decisions: teachers keep **all** functions on mobile (class management, enrolment, CSV stay); Kids mode = age 6–10 + parent PIN; local-only features stay device-local; push deferred (local reminders only); code/invite links accepted, code issuing stays web.
+
+| Area | Status |
+|---|---|
+| Teacher: Class Analytics (style distributions, module completion, alignment with own profile, AI classroom overview) | ✅ |
+| Teacher: Student detail (profile, dimension scores, AI teaching strategies, observation shortcut) | ✅ |
+| Teacher: Lesson planner tools (assessment suite, differentiation ideas, post-lesson reflection + coaching, Copilot), Curriculum Tracker | ✅ (on-device, like the webapp) |
+| Teacher: reissue student code | ⛔ server has no route to list a teacher's code ids (webapp `getStudentCodesForTeacher` calls a route that doesn't exist) |
+| Teacher: "Create Assignment" | removed the "coming soon" stub; the webapp keeps assignments in localStorage only |
+| Professional Cognitive Assessment + results/report (position & organisation) + share | ✅ (on-device history) |
+| Professional Track Record (with per-attempt style changes) | ✅ |
+| Reflections & Notes (`/reflection`, AI coaching, offline outbox) | ✅ all roles |
+| Feedback & Support | ✅ in-app feedback → support ticket (`/superadmin/tickets`, visible in admin Support Center). The webapp form only saves to localStorage |
+| Kids age rule 6–10, parent PIN (`parentPin`, same field as web; gates sign-out and privacy settings; 5 tries then 60 s lockout; weak PINs rejected) | ✅ |
+| Invite/code links (`?code=`, `?role=`) via `jotminds://` and `https://jotminds.com` | ✅ client; universal links need the association files hosted on jotminds.com |
+| Push notifications | deferred |

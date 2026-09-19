@@ -15,6 +15,8 @@ import ScreenBackground from '../../components/ScreenBackground';
 import GlassCard from '../../components/GlassCard';
 import AppIcon from '../../components/AppIcon';
 import AskJottiCard from '../../components/AskJottiCard';
+import { ProfessionalInsightsCard, ExecutiveSummaryCard } from '../../components/ai/InsightCards';
+import { stylesFromResults, hasAllStyles } from '../../utils/profileStyles';
 import { colors, radii, shadow, spacing, Palette } from '../../theme';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 
@@ -54,7 +56,14 @@ export default function ProfessionalDashboard({ navigation }: any) {
     );
   }
 
+  const profileStyles = stylesFromResults(assessments);
+
   const actions: { icon: string; title: string; desc: string; g: [string, string]; onPress?: () => void }[] = [
+    { icon: '🧭', title: 'Professional Intelligence (Pilot)', desc: 'Scenario-based profile of how you think and decide', g: ['#6E4D9C', '#3D52C9'], onPress: () => navigation.navigate('ProfessionalV2Intro') },
+    { icon: '🧩', title: 'Professional Cognitive Assessment', desc: 'Learning, thinking and decision-making at work', g: ['#F59E0B', '#D97706'], onPress: () => navigation.navigate('ProfessionalCognitive') },
+    { icon: '📄', title: 'Assessment Report', desc: 'Your latest professional report', g: ['#3D52C9', '#2E3FA8'], onPress: () => navigation.navigate('ProfessionalReport') },
+    { icon: '📈', title: 'Track Record', desc: 'Your assessments over time', g: ['#10B981', '#059669'], onPress: () => navigation.navigate('TrackRecord') },
+    { icon: '📓', title: 'Reflections & Notes', desc: 'Capture what you’re learning', g: ['#EC4899', '#DB2777'], onPress: () => navigation.navigate('Reflections') },
     { icon: '🎯', title: 'Take Assessment', desc: 'Discover your cognitive profile', g: ['#F59E0B', '#D97706'], onPress: () => navigation.navigate('AssessmentList') },
     { icon: '👥', title: 'View Team', desc: 'See organization members', g: ['#3B82F6', '#2563EB'], onPress: () => navigation.navigate('Team') },
   ];
@@ -101,6 +110,25 @@ export default function ProfessionalDashboard({ navigation }: any) {
         </LinearGradient>
 
         <AskJottiCard style={{ marginBottom: spacing.xl }} />
+
+        {hasAllStyles(profileStyles) && (
+          <>
+            <ExecutiveSummaryCard
+              profile={{
+                name: user?.name, position: user?.position, organization: user?.organizationName,
+                learning: profileStyles.learning, thinking: profileStyles.thinking, decision: profileStyles.decision,
+              }}
+            />
+            <ProfessionalInsightsCard
+              profile={{
+                name: user?.name, position: user?.position,
+                learning: { style: profileStyles.learning, scores: profileStyles.scores.learning },
+                thinking: { style: profileStyles.thinking, scores: profileStyles.scores.thinking },
+                decisionMaking: { style: profileStyles.decision, scores: profileStyles.scores.decision },
+              }}
+            />
+          </>
+        )}
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Quick Actions</Text>

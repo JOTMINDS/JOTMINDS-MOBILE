@@ -10,6 +10,8 @@ import { getConsent, getObservationsForParent } from '../../utils/parentApi';
 import { getObservationsForChild, TeacherObservation } from '../../utils/observationApi';
 import { completedDomains, REQUIRED_DOMAINS, domainLabel } from '../../utils/profileCompleteness';
 import { AdultResults } from '../../utils/adultScoring';
+import { ParentTipsCard } from '../../components/ai/InsightCards';
+import { studentStyles, studentScores } from '../../utils/classInsights';
 import { useAuth } from '../../context/AuthContext';
 import { colors, radii, shadow, spacing, Palette } from '../../theme';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
@@ -30,6 +32,8 @@ export default function ParentChildDetailScreen({ route, navigation }: any) {
 
   const completedTypes: string[] = (assessments ?? []).map((a: any) => a.type);
   const domains = completedDomains(completedTypes);
+  const childStyles = studentStyles({ assessments });
+  const hasChildStyles = !!(childStyles.learning || childStyles.thinking || childStyles.decision);
   const childHasCoreThinking = (assessments ?? []).some((a: any) => CORE_THINKING_TYPES.includes(a.type));
 
   useEffect(() => {
@@ -86,6 +90,13 @@ export default function ParentChildDetailScreen({ route, navigation }: any) {
             ))}
           </GlassCard>
         </View>
+
+        {hasChildStyles && consentGranted && (
+          <ParentTipsCard
+            childName={child.name}
+            data={{ childName: child.name, styles: childStyles, scores: studentScores({ assessments }) }}
+          />
+        )}
 
         <View style={styles.section}>
           <View style={styles.sectionHeaderRow}>

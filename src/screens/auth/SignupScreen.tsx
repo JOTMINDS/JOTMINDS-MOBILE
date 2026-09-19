@@ -32,7 +32,7 @@ const EDUCATION_LEVELS = [
   { value: 'Tertiary', label: 'Tertiary' },
 ];
 
-export default function SignupScreen({ navigation }: any) {
+export default function SignupScreen({ navigation, route }: any) {
   const colors = useTheme();
   const styles = useThemedStyles(makeStyles);
   const { signUp } = useAuth();
@@ -64,14 +64,15 @@ export default function SignupScreen({ navigation }: any) {
   const [showDatePicker, setShowDatePicker] = useState(false);
 
   // Step 3: Role & Organization
-  const [role, setRole] = useState('student');
+  // Pre-filled from an invite link (see navigation/DeepLinkHandler.tsx)
+  const [role, setRole] = useState<string>(route?.params?.role ?? 'student');
   const [school, setSchool] = useState('');
   const [educationLevel, setEducationLevel] = useState('JHS');
   const [organizationName, setOrganizationName] = useState('');
   const [organizationType, setOrganizationType] = useState('Corporate');
   const [position, setPosition] = useState('');
   const [department, setDepartment] = useState('');
-  const [organizationCode, setOrganizationCode] = useState('');
+  const [organizationCode, setOrganizationCode] = useState<string>(route?.params?.organizationCode ?? '');
   const [verifiedOrgName, setVerifiedOrgName] = useState('');
 
   // Step 4: Consent
