@@ -22,16 +22,19 @@ export async function callEdgeFn(
   endpoint: string,
   options: RequestInit = {},
   timeoutMs = 20000,
+  _retried = false,
 ): Promise<any> {
   // Getting the session shouldn't hang, but guard it so a stalled auth read
   // can't freeze the whole request forever.
   let token = SUPABASE_ANON_KEY;
+  let hadSession = false;
   try {
     const { data: { session } } = await Promise.race([
       supabase.auth.getSession(),
       new Promise<never>((_, rej) => setTimeout(() => rej(new Error('timeout')), 5000)),
     ]) as any;
     token = session?.access_token ?? SUPABASE_ANON_KEY;
+    hadSession = !!session?.access_token;
   } catch {
     // fall back to anon key — the request itself will 401 if auth was required
   }
@@ -54,6 +57,12 @@ export async function callEdgeFn(
     const text = await res.text();
     let json: any = null;
     try { json = text ? JSON.parse(text) : null; } catch { /* non-JSON body */ }
+    // A 401 while signed in usually means the access token expired or lagged
+    // behind a refresh. Refresh the session and retry once before failing.
+    if (res.status === 401 && hadSession && !_retried) {
+      const refreshed = await supabase.auth.refreshSession().then((r) => !r.error, () => false);
+      if (refreshed) return callEdgeFn(endpoint, options, timeoutMs, true);
+    }
     if (!res.ok) {
       throw new Error((json && json.error) || `Request failed (${res.status})`);
     }

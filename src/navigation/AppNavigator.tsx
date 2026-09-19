@@ -101,8 +101,14 @@ import ExpertChatScreen from '../screens/shared/ExpertChatScreen';
 import LessonPlannerScreen from '../screens/teacher/LessonPlannerScreen';
 import AskJottiScreen from '../screens/shared/AskJottiScreen';
 import DailyChallengeScreen from '../screens/challenge/DailyChallengeScreen';
+import { withFeature } from '../components/FeatureGate';
 import ClassManagementScreen from '../screens/teacher/ClassManagementScreen';
 import ObservationLogScreen from '../screens/teacher/ObservationLogScreen';
+
+// Server-driven kill switches (Super Admin → Feature Flags).
+const GatedBrainGym = withFeature('brain-gym', 'Brain Gym', BrainGymScreen);
+const GatedAskJotti = withFeature('ai-coach', 'Ask Jotti', AskJottiScreen);
+const GatedDailyChallenge = withFeature('daily-challenge', 'Daily Challenge', DailyChallengeScreen);
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -236,7 +242,7 @@ export default function AppNavigator() {
             <Stack.Screen name="BehavioralDashboard" component={BehavioralDashboardScreen} options={{ headerShown: true, title: 'Behavioral Insights' }} />
 
             {/* Brain Gym */}
-            <Stack.Screen name="BrainGym" component={BrainGymScreen} />
+            <Stack.Screen name="BrainGym" component={GatedBrainGym} />
             <Stack.Screen name="MemoryMatch" component={MemoryMatchScreen} />
             <Stack.Screen name="NBack" component={NBackScreen} />
             <Stack.Screen name="Stroop" component={StroopScreen} />
@@ -317,8 +323,8 @@ export default function AppNavigator() {
             {/* Shared */}
             <Stack.Screen name="ExpertChat" component={ExpertChatScreen} options={{ headerShown: true, title: 'Chat with Expert' }} />
             <Stack.Screen name="LessonPlanner" component={LessonPlannerScreen} options={{ headerShown: true, title: 'Lesson Planner' }} />
-            <Stack.Screen name="AskJotti" component={AskJottiScreen} options={{ headerShown: true, title: 'Ask Jotti' }} />
-            <Stack.Screen name="DailyChallenge" component={DailyChallengeScreen} options={{ headerShown: true, title: 'Daily Challenge' }} />
+            <Stack.Screen name="AskJotti" component={GatedAskJotti} options={{ headerShown: true, title: 'Ask Jotti' }} />
+            <Stack.Screen name="DailyChallenge" component={GatedDailyChallenge} options={{ headerShown: true, title: 'Daily Challenge' }} />
             <Stack.Screen name="ClassManagement" component={ClassManagementScreen} options={{ headerShown: true, title: 'My Classes' }} />
             <Stack.Screen name="ObservationLog" component={ObservationLogScreen} options={{ headerShown: true, title: 'Observation Log' }} />
           </>

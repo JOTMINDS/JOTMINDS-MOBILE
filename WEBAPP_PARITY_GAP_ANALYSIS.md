@@ -191,3 +191,14 @@ Suggested as **one PR per numbered step** (A1 and D as small PRs; B split into "
 
 ### Parity test to add regardless
 A `src/utils/__tests__/webapp-parity.test.ts` that runs a fixed set of response vectors through each shared scorer and asserts exact outputs, with the expected values copied from the webapp. This is what keeps "verbatim port" true over time — the pro-scoring drift in A1 would have been caught the day it shipped.
+
+## Sync — 2026-09-19 (webapp `711fd9d`, 54 commits since `e8bda38`)
+
+| Webapp change | Mobile | Notes |
+|---|---|---|
+| JTIA personalised NaCCA/GES recommendations + executive summary + archetype | ✅ ported | `generatePersonalizedRecommendations`; results screen shows summary/archetype and upgrades to AI recs |
+| Feature flags (`/feature-flags/effective`: ai-coach, brain-gym, daily-challenge) | ✅ ported | fail-open; gates Ask Jotti, Brain Gym, Daily Challenge (screens + entry cards) |
+| Retry once after spurious 401 | ✅ adapted | mobile refreshes the session and retries once (`callEdgeFn`) |
+| Server: OpenAI key/Resend key hard-coded fallbacks removed, AI usage logging, admin role hardening | server-only | live for mobile once webapp `main` is deployed; requires `OPENAI_API_KEY` secret (set) |
+| Super Admin portal, Item Bank Studio, Pilot analytics, Professional V2 assessment engine, institution/school dashboards, marketing home | ⛔ web-only | super admin explicitly out of scope |
+| Education levels `Early Years`/`Primary` (type only), class assignment roles `substitute`/`assistant` | ➖ skipped | no mobile consumer yet |

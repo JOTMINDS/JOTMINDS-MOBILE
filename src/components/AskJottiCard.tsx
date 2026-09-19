@@ -5,6 +5,8 @@ import GlassCard from './GlassCard';
 import { useAppNavigation } from '../navigation/types';
 import { spacing, Palette } from '../theme';
 import { useTheme, useThemedStyles } from '../context/ThemeContext';
+import { useAuth } from '../context/AuthContext';
+import { useFeatureFlag } from '../utils/featureFlags';
 
 /**
  * "Ask Jotti" entry-point card. Dropped into each role dashboard so the AI
@@ -13,6 +15,9 @@ import { useTheme, useThemedStyles } from '../context/ThemeContext';
 export default function AskJottiCard({ style }: { style?: any }) {
   const navigation = useAppNavigation();
   const styles = useThemedStyles(makeStyles);
+  const { user } = useAuth();
+  const enabled = useFeatureFlag('ai-coach', user?.id);
+  if (!enabled) return null;
 
   return (
     <GlassCard padding={16} style={style} onPress={() => navigation.navigate('AskJotti')}>

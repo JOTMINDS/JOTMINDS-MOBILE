@@ -11,6 +11,7 @@
  * caller falls back to the existing static content.
  */
 import { callEdgeFn } from './supabase';
+import type { JTIAAIRecommendations } from './jtiaScoring';
 
 export interface ChatMessage {
   role: 'user' | 'assistant' | 'system';
@@ -116,7 +117,7 @@ export async function generateAIInsights(params: {
  */
 export async function generateJTIAAIRecommendations(
   report: Record<string, any>,
-): Promise<{ resources: string[]; activities: string[]; coaching: string[]; pathways: string[] } | null> {
+): Promise<JTIAAIRecommendations | null> {
   try {
     const res = await callEdgeFn(
       '/ai/generate-jtia-insights',

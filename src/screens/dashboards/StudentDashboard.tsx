@@ -19,6 +19,7 @@ import AskJottiCard from '../../components/AskJottiCard';
 import AITipCard from '../../components/AITipCard';
 import NudgeFeed from '../../components/NudgeFeed';
 import { Skeleton, SkeletonCard } from '../../components/Skeleton';
+import { FeatureVisible } from '../../components/FeatureGate';
 import { colors, radii, shadow, spacing, Palette } from '../../theme';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 
@@ -151,27 +152,29 @@ export default function StudentDashboard({ navigation }: any) {
         <AskJottiCard style={styles.jottiCard} />
         <NudgeFeed />
 
-        <GlassCard
-          padding={16}
-          style={styles.challengeCard}
-          onPress={() => navigation.navigate('DailyChallenge')}
-        >
-          <View style={styles.challengeRow}>
-            <LinearGradient
-              colors={['#F59E0B', '#DB2777']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.challengeIcon}
-            >
-              <Text style={styles.challengeIconText}>🔥</Text>
-            </LinearGradient>
-            <View style={{ flex: 1, marginLeft: spacing.md }}>
-              <Text style={styles.challengeTitle}>Daily Challenge</Text>
-              <Text style={styles.challengeSub}>A quick brain workout — keep your streak going</Text>
+        <FeatureVisible flag="daily-challenge">
+          <GlassCard
+            padding={16}
+            style={styles.challengeCard}
+            onPress={() => navigation.navigate('DailyChallenge')}
+          >
+            <View style={styles.challengeRow}>
+              <LinearGradient
+                colors={['#F59E0B', '#DB2777']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.challengeIcon}
+              >
+                <Text style={styles.challengeIconText}>🔥</Text>
+              </LinearGradient>
+              <View style={{ flex: 1, marginLeft: spacing.md }}>
+                <Text style={styles.challengeTitle}>Daily Challenge</Text>
+                <Text style={styles.challengeSub}>A quick brain workout — keep your streak going</Text>
+              </View>
+              <Text style={styles.challengeArrow}>→</Text>
             </View>
-            <Text style={styles.challengeArrow}>→</Text>
-          </View>
-        </GlassCard>
+          </GlassCard>
+        </FeatureVisible>
 
         <AITipCard
           cacheKey="student-home"

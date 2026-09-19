@@ -1,4 +1,4 @@
-import { calculateJTIAScore } from '../jtiaScoring';
+import { calculateJTIAScore, generatePersonalizedRecommendations } from '../jtiaScoring';
 import {
   jtiaQuestions,
   getFullJTIAQuestionBank,
@@ -57,5 +57,28 @@ describe('calculateJTIAScore (webapp parity)', () => {
   it('clamps a uniform "5" response to 100 and floors low scores at 20', () => {
     expect(calculateJTIAScore(new Array(120).fill(5), jtiaQuestions).overallScore).toBe(100);
     expect(calculateJTIAScore(new Array(120).fill(1), jtiaQuestions).overallScore).toBe(20);
+  });
+});
+
+describe('generatePersonalizedRecommendations (webapp parity)', () => {
+  it('returns 4 items per section plus a summary and archetype', () => {
+    const report = calculateJTIAScore(new Array(jtiaQuestions.length).fill(4), jtiaQuestions);
+    const r = report.recommendations;
+    expect(r.resources).toHaveLength(4);
+    expect(r.activities).toHaveLength(4);
+    expect(r.coaching).toHaveLength(4);
+    expect(r.pathways).toHaveLength(4);
+    expect(r.executiveSummary).toContain('Intelligence');
+    expect(r.pedagogicalArchetype).toMatch(/-Driven Facilitator$/);
+  });
+
+  it('references the top and lowest domains', () => {
+    const r = generatePersonalizedRecommendations(
+      { cognitive: 60, instructional: 95, leadership: 80 },
+      [],
+      [],
+    );
+    expect(r.pedagogicalArchetype).toBe('Instructional-Driven Facilitator');
+    expect(r.executiveSummary).toContain('Cognitive Intelligence');
   });
 });
