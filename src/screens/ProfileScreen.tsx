@@ -18,6 +18,7 @@ import ScreenBackground from '../components/ScreenBackground';
 import GlassCard from '../components/GlassCard';
 import AppIcon from '../components/AppIcon';
 import { useParentGate } from '../utils/useParentGate';
+import { isKidsAge } from '../utils/kidsMode';
 import { colors, radii, shadow, spacing, Palette } from '../theme';
 
 export default function ProfileScreen({ navigation }: any) {
@@ -161,6 +162,7 @@ export default function ProfileScreen({ navigation }: any) {
             { label: 'Accessibility', icon: '👁️', screen: 'Accessibility' },
             { label: 'Edit Profile', icon: '✏️', screen: 'EditProfile' },
             { label: 'Privacy Settings', icon: '🔒', screen: 'PrivacySettings' },
+            ...(isKidsAge(user?.age) ? [] : [{ label: 'Full Cognitive Report', icon: '📊', screen: 'CognitiveReport' }]),
             { label: 'Reflections & Notes', icon: '📓', screen: 'Reflections' },
             ...(user?.role === 'professional' ? [{ label: 'Track Record', icon: '📈', screen: 'TrackRecord' }] : []),
             { label: 'Send Feedback', icon: '⭐', screen: 'Feedback' },
