@@ -5,6 +5,7 @@ import { getAssessmentResults } from '../../utils/api';
 import { ThinkingStylesTrack } from '../../utils/thinkingStylesTrack';
 import { JHSResults } from '../../utils/jhsScoring';
 import { SHSResults, getSHSInsights } from '../../utils/shsScoring';
+import { AIInsightsBanner, useAIAssessmentInsights } from '../../components/ai/InsightCards';
 import { AdultResults, getAdultInsights } from '../../utils/adultScoring';
 import ScreenBackground from '../../components/ScreenBackground';
 import AppIcon from '../../components/AppIcon';
@@ -53,6 +54,25 @@ export default function ThinkingStylesResultsScreen({ route, navigation }: any) 
     })();
   }, [track, route.params?.result]);
 
+  // AI-first insights (webapp parity): AI text replaces the rule-based strengths/recommendations.
+  const headlineForAI = results
+    ? (track === 'jhs' ? (results as JHSResults).personalityType : track === 'shs' ? (results as SHSResults).personalityType : (results as AdultResults).professionalProfile)
+    : undefined;
+  const staticForAI = results
+    ? (track === 'shs' ? getSHSInsights(results as SHSResults) : track === 'adult' ? getAdultInsights(results as AdultResults) : null)
+    : null;
+  const ai = useAIAssessmentInsights(
+    results && headlineForAI
+      ? {
+          scores: results.percentages ?? {},
+          type: `${track}-thinking`,
+          role: user?.role,
+          algorithmicGuidance: { profile: headlineForAI, strengths: staticForAI?.strengths, recommendations: staticForAI?.recommendations },
+          context: { profile: headlineForAI, educationLevel: user?.educationLevel, age: user?.age },
+        }
+      : null,
+  );
+
   if (loading) {
     return (
       <ScreenBackground>
@@ -85,9 +105,10 @@ export default function ThinkingStylesResultsScreen({ route, navigation }: any) 
 
   const percentages: Record<string, number> = results.percentages ?? {};
 
-  const insights = track === 'shs' ? getSHSInsights(results as SHSResults)
-    : track === 'adult' ? getAdultInsights(results as AdultResults)
-    : null;
+  const insights = staticForAI;
+  const shown = ai.data
+    ? { strengths: ai.data.strengths, growth: ai.data.weaknesses ?? [], recommendations: ai.data.improvements ?? [] }
+    : insights ? { strengths: insights.strengths, growth: [] as string[], recommendations: insights.recommendations } : null;
 
   return (
     <ScreenBackground>
@@ -171,10 +192,12 @@ export default function ThinkingStylesResultsScreen({ route, navigation }: any) 
           </View>
         )}
 
-        {insights && insights.strengths.length > 0 && (
+        <AIInsightsBanner ai={ai} />
+
+        {shown && shown.strengths.length > 0 && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Strengths</Text>
-            {insights.strengths.map((s, i) => (
+            {shown!.strengths.map((s, i) => (
               <GlassCard key={i} padding={16} style={styles.listCard}>
                 <View style={styles.listRow}>
                   <View style={[styles.listBadge, { backgroundColor: colors.successSoft }]}>
@@ -187,10 +210,26 @@ export default function ThinkingStylesResultsScreen({ route, navigation }: any) 
           </View>
         )}
 
-        {insights && insights.recommendations.length > 0 && (
+        {shown && shown.growth.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Areas for Growth</Text>
+            {shown.growth.map((w, i) => (
+              <GlassCard key={i} padding={16} style={styles.listCard}>
+                <View style={styles.listRow}>
+                  <View style={[styles.listBadge, { backgroundColor: colors.cyanSoft }]}>
+                    <Text style={{ color: '#2E3FA8', fontWeight: '800' }}>→</Text>
+                  </View>
+                  <Text style={styles.listText}>{w}</Text>
+                </View>
+              </GlassCard>
+            ))}
+          </View>
+        )}
+
+        {shown && shown.recommendations.length > 0 && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Recommendations</Text>
-            {insights.recommendations.map((r, i) => (
+            {shown!.recommendations.map((r, i) => (
               <GlassCard key={i} padding={16} style={[styles.listCard, styles.recCard]}>
                 <View style={styles.listRow}>
                   <AppIcon name="💡" size={22} style={styles.listIcon} />
@@ -222,7 +261,7 @@ export default function ThinkingStylesResultsScreen({ route, navigation }: any) 
         icon="🎨"
         headline={String(headline)}
         subtitle={`Thinking Styles · ${track.toUpperCase()} Track · JotMinds`}
-        highlights={(insights?.strengths ?? []).slice(0, 3)}
+        highlights={(shown?.strengths ?? []).slice(0, 3)}
         name={user?.name ?? 'JotMinds User'}
         date={new Date().toLocaleDateString()}
       />

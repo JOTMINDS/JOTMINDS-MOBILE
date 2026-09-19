@@ -539,3 +539,34 @@ export async function generateReflectionFeedback(
     validate: (x) => !!(x.encouragement && x.insight && x.actionableStep),
   });
 }
+
+// ── Educational resources (parent / teacher) ─────────────────────────────────
+
+export interface EducationalResource { title: string; description: string; type: 'article' | 'video' | 'guide' | 'tip'; relevance: string }
+
+export async function generateEducationalResources(
+  p: { learningStyle?: string; thinkingStyle?: string; decisionStyle?: string; userType: 'parent' | 'teacher' },
+  opts?: { force?: boolean },
+): Promise<EducationalResource[] | null> {
+  const key = `edu_res_${hashKey(p)}`;
+  if (!opts?.force) { const c = await getCached<EducationalResource[]>(key); if (c) return c; }
+  const out = await aiJson<{ resources: any[] }>({
+    system: 'You are an educational resource specialist. Recommend inspiring, practical resources tailored to the given student styles. Do not invent web addresses.',
+    user: `Generate 4 tailored educational resources and guides for a ${p.userType} working with a student profile.\nLearning style: ${p.learningStyle || 'General'}\nThinking style: ${p.thinkingStyle || 'General'}\nDecision style: ${p.decisionStyle || 'General'}\n\nJSON: {"resources":[{"title":"specific resource title","description":"2-sentence practical description","type":"article|video|guide|tip","relevance":"why this fits their cognitive profile"}]}`,
+    maxTokens: 700,
+    validate: (x) => Array.isArray(x.resources) && x.resources.length > 0,
+  });
+  if (!out) return null;
+  const kinds = ['article', 'video', 'guide', 'tip'] as const;
+  const list = out.resources
+    .filter((r) => r && typeof r.title === 'string' && r.title.trim() && typeof r.description === 'string')
+    .slice(0, 4)
+    .map((r) => ({
+      title: r.title.trim(), description: r.description,
+      type: (kinds as readonly string[]).includes(r.type) ? r.type : 'guide',
+      relevance: typeof r.relevance === 'string' ? r.relevance : '',
+    })) as EducationalResource[];
+  if (list.length === 0) return null;
+  await setCached(key, list);
+  return list;
+}

@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 import ScreenBackground from '../../components/ScreenBackground';
 import GlassCard from '../../components/GlassCard';
-import { TeachingStrategiesCard } from '../../components/ai/InsightCards';
+import { TeachingStrategiesCard, EducationalResourcesCard } from '../../components/ai/InsightCards';
 import { studentStyles, studentScores, DOMAINS, Domain } from '../../utils/classInsights';
 import { rs } from '../../utils/responsive';
 import { radii, spacing, Palette } from '../../theme';
@@ -61,6 +61,8 @@ export default function StudentDetailScreen({ route, navigation }: ScreenProps<'
             studentData={{ name: student.name, styles: st, scores }}
           />
         )}
+
+        {has && <EducationalResourcesCard userType="teacher" styles={st} />}
 
         <TouchableOpacity
           style={styles.btn}
