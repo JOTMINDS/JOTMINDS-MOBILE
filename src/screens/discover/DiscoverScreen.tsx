@@ -6,6 +6,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../../context/AuthContext';
 import { getAllAssessmentResults } from '../../utils/api';
 import { completedDomains, CognitiveDomain } from '../../utils/profileCompleteness';
+import { DailyDiscoveryCard, StudyStrategyCard } from '../../components/ai/InsightCards';
+import { stylesFromResults } from '../../utils/profileStyles';
 import ScreenBackground from '../../components/ScreenBackground';
 import GlassCard from '../../components/GlassCard';
 import AppIcon from '../../components/AppIcon';
@@ -78,10 +80,14 @@ export default function DiscoverScreen({ navigation }: any) {
   const { user } = useAuth();
   const [activeCategory, setActiveCategory] = useState('All');
   const [myDomains, setMyDomains] = useState<Set<CognitiveDomain>>(new Set());
+  const [learningStyle, setLearningStyle] = useState<string | undefined>();
 
   useEffect(() => {
     getAllAssessmentResults()
-      .then((res) => setMyDomains(completedDomains((res?.results ?? []).map((r: any) => r.assessmentType))))
+      .then((res) => {
+        setMyDomains(completedDomains((res?.results ?? []).map((r: any) => r.assessmentType)));
+        setLearningStyle(stylesFromResults(res?.results ?? []).learning);
+      })
       .catch(() => {});
   }, []);
 
@@ -109,6 +115,9 @@ export default function DiscoverScreen({ navigation }: any) {
           <Text style={styles.greeting}>Discover</Text>
           <Text style={styles.subtitle}>Insights tailored for you</Text>
         </View>
+
+        <DailyDiscoveryCard />
+        {learningStyle && <StudyStrategyCard learningStyle={learningStyle} />}
 
         {/* Featured card */}
         <TouchableOpacity

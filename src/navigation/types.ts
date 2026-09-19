@@ -74,6 +74,11 @@ export type RootStackParamList = {
   ClassManagement: undefined;
   LessonPlanner: undefined;
   ObservationLog: undefined;
+
+  // Professional Intelligence V2
+  ProfessionalV2Intro: undefined;
+  ProfessionalV2Session: { sessionId: string };
+  ProfessionalV2Results: { sessionId: string };
 };
 
 export type AppNavigation = NativeStackNavigationProp<RootStackParamList>;

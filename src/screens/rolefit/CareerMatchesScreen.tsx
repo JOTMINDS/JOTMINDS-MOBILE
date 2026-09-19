@@ -4,6 +4,9 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { callEdgeFn } from '../../utils/supabase';
+import { getAllAssessmentResults } from '../../utils/api';
+import { CareerInsightsCard } from '../../components/ai/InsightCards';
+import { stylesFromResults, hasAllStyles, ProfileStyles } from '../../utils/profileStyles';
 import { useToast } from '../../context/ToastContext';
 import { useAuth } from '../../context/AuthContext';
 import { missingCognitiveDomains, domainLabel } from '../../utils/profileCompleteness';
@@ -36,6 +39,7 @@ export default function CareerMatchesScreen({ navigation }: any) {
   const [loading, setLoading] = useState(true);
   const [needsProfile, setNeedsProfile] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [profileStyles, setProfileStyles] = useState<ProfileStyles | null>(null);
 
   // Career matching requires the full cognitive profile (all three core
   // assessments) — not a single quick test or the 60-second First Win.
@@ -73,6 +77,11 @@ export default function CareerMatchesScreen({ navigation }: any) {
   };
 
   useEffect(() => { load(); }, []);
+  useEffect(() => {
+    getAllAssessmentResults()
+      .then((r) => setProfileStyles(stylesFromResults(r?.results ?? [])))
+      .catch(() => {});
+  }, []);
 
   return (
     <ScreenBackground>
@@ -90,6 +99,14 @@ export default function CareerMatchesScreen({ navigation }: any) {
           <Text style={styles.title}>Career Matches</Text>
           <Text style={styles.subtitle}>Roles aligned to your cognitive profile</Text>
         </View>
+
+        {!loading && !needsProfile && profileStyles && hasAllStyles(profileStyles) && (
+          <CareerInsightsCard
+            archetype={`${profileStyles.learning} learner · ${profileStyles.thinking} thinker · ${profileStyles.decision} decision-maker`}
+            strengths={[profileStyles.learning, profileStyles.thinking, profileStyles.decision]}
+            scores={profileStyles.scores}
+          />
+        )}
 
         {loading ? (
           <View style={styles.centered}><ActivityIndicator size="large" color={colors.purple} /></View>

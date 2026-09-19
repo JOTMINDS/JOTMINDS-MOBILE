@@ -102,6 +102,9 @@ import LessonPlannerScreen from '../screens/teacher/LessonPlannerScreen';
 import AskJottiScreen from '../screens/shared/AskJottiScreen';
 import DailyChallengeScreen from '../screens/challenge/DailyChallengeScreen';
 import { withFeature } from '../components/FeatureGate';
+import ProfessionalV2IntroScreen from '../screens/professional/ProfessionalV2IntroScreen';
+import ProfessionalV2SessionScreen from '../screens/professional/ProfessionalV2SessionScreen';
+import ProfessionalV2ResultsScreen from '../screens/professional/ProfessionalV2ResultsScreen';
 import ClassManagementScreen from '../screens/teacher/ClassManagementScreen';
 import ObservationLogScreen from '../screens/teacher/ObservationLogScreen';
 
@@ -327,6 +330,10 @@ export default function AppNavigator() {
             <Stack.Screen name="DailyChallenge" component={GatedDailyChallenge} options={{ headerShown: true, title: 'Daily Challenge' }} />
             <Stack.Screen name="ClassManagement" component={ClassManagementScreen} options={{ headerShown: true, title: 'My Classes' }} />
             <Stack.Screen name="ObservationLog" component={ObservationLogScreen} options={{ headerShown: true, title: 'Observation Log' }} />
+            {/* Cast: these screens type their props with ScreenProps (see OtpVerification below). */}
+            <Stack.Screen name="ProfessionalV2Intro" component={ProfessionalV2IntroScreen as React.ComponentType} options={{ headerShown: true, title: 'Professional Intelligence' }} />
+            <Stack.Screen name="ProfessionalV2Session" component={ProfessionalV2SessionScreen as React.ComponentType} options={{ headerShown: true, title: 'Assessment', gestureEnabled: false, headerBackVisible: false }} />
+            <Stack.Screen name="ProfessionalV2Results" component={ProfessionalV2ResultsScreen as React.ComponentType} options={{ headerShown: true, title: 'Your Profile', gestureEnabled: false, headerBackVisible: false }} />
           </>
         ) : (
           // ── Auth Stack ─────────────────────────────────────────────────────

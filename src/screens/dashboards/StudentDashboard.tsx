@@ -20,6 +20,8 @@ import AITipCard from '../../components/AITipCard';
 import NudgeFeed from '../../components/NudgeFeed';
 import { Skeleton, SkeletonCard } from '../../components/Skeleton';
 import { FeatureVisible } from '../../components/FeatureGate';
+import { StudentRecommendationsCard, ExecutiveSummaryCard } from '../../components/ai/InsightCards';
+import { stylesFromResults, hasAllStyles } from '../../utils/profileStyles';
 import { colors, radii, shadow, spacing, Palette } from '../../theme';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 
@@ -57,6 +59,7 @@ export default function StudentDashboard({ navigation }: any) {
   };
 
   const completedTypes = [...new Set(assessments.map((a) => a.assessmentType))];
+  const profileStyles = stylesFromResults(assessments);
 
   // Determine if user is in kids age group (7-12). AppUser has no
   // `ageGroup` field (only `age`), so this previously always evaluated to
@@ -186,6 +189,23 @@ export default function StudentDashboard({ navigation }: any) {
             'Match the task to your energy: hard analytical work early, review and organising later.',
           ]}
         />
+
+        {hasAllStyles(profileStyles) && !isKidsMode && (
+          <>
+            <ExecutiveSummaryCard
+              profile={{ name: user?.name, learning: profileStyles.learning, thinking: profileStyles.thinking, decision: profileStyles.decision }}
+            />
+            <StudentRecommendationsCard
+              params={{
+                name: user?.name,
+                learningStyle: profileStyles.learning,
+                thinkingStyle: profileStyles.thinking,
+                decisionStyle: profileStyles.decision,
+                educationLevel: user?.educationLevel,
+              }}
+            />
+          </>
+        )}
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Your Assessments</Text>

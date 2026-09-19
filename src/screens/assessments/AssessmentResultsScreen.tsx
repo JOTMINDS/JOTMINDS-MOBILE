@@ -19,6 +19,7 @@ import { getGhanaMapping } from '../../utils/ghanaMapping';
 import { getStyleInsights } from '../../utils/styleInsights';
 import { missingCognitiveDomains, domainLabel, findResultForDomain } from '../../utils/profileCompleteness';
 import CertificateModal from '../../components/CertificateModal';
+import { AssessmentInsightsCard, CombinedInsightsCard, ExecutiveSummaryCard } from '../../components/ai/InsightCards';
 import { useAuth } from '../../context/AuthContext';
 import { rs } from '../../utils/responsive';
 import { colors, radii, shadow, spacing, Palette } from '../../theme';
@@ -279,6 +280,48 @@ export default function AssessmentResultsScreen({ route, navigation }: any) {
             </GlassCard>
           )}
         </View>
+
+        {normalized?.primaryStyle && (
+          <AssessmentInsightsCard
+            params={{
+              scores: normalized.scores,
+              type: assessmentType,
+              role: user?.role,
+              context: {
+                primaryStyle: normalized.primaryStyle,
+                educationLevel: user?.educationLevel,
+                age: user?.age,
+              },
+            }}
+          />
+        )}
+
+        {ghanaMapping && (
+          <>
+            <CombinedInsightsCard
+              params={{
+                userName: user?.name,
+                kolbStyle: byDomain('learning')?.primaryStyle,
+                sternbergStyle: byDomain('thinking')?.primaryStyle,
+                dualProcessStyle: byDomain('decision')?.primaryStyle,
+                scores: {
+                  learning: byDomain('learning')?.scores,
+                  thinking: byDomain('thinking')?.scores,
+                  decision: byDomain('decision')?.scores,
+                },
+              }}
+            />
+            <ExecutiveSummaryCard
+              profile={{
+                name: user?.name,
+                position: user?.position,
+                learning: byDomain('learning')?.primaryStyle,
+                thinking: byDomain('thinking')?.primaryStyle,
+                decision: byDomain('decision')?.primaryStyle,
+              }}
+            />
+          </>
+        )}
 
         {normalized?.primaryStyle && (
           <GradientButton

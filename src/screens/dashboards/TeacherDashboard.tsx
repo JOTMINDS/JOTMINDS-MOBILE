@@ -6,6 +6,7 @@ import {
   StyleSheet,
   RefreshControl,
   ActivityIndicator,
+  TouchableOpacity,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../../context/AuthContext';
@@ -15,6 +16,8 @@ import ScreenBackground from '../../components/ScreenBackground';
 import GlassCard from '../../components/GlassCard';
 import AppIcon from '../../components/AppIcon';
 import AskJottiCard from '../../components/AskJottiCard';
+import { ClassroomOverviewCard, TeachingStrategiesCard } from '../../components/ai/InsightCards';
+import { classStyles, studentStyles, studentScores } from '../../utils/classInsights';
 import { colors, radii, shadow, spacing, Palette } from '../../theme';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 
@@ -24,6 +27,7 @@ export default function TeacherDashboard({ navigation }: any) {
   const { user } = useAuth();
   const toast = useToast();
   const [students, setStudents] = useState<any[]>([]);
+  const [strategiesFor, setStrategiesFor] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -43,6 +47,7 @@ export default function TeacherDashboard({ navigation }: any) {
     fetchStudents();
   }, []);
 
+  const cls = classStyles(students);
   const totalAssessments = students.reduce((s, st) => s + (st.assessmentsCompleted?.length || 0), 0);
 
   if (loading) {
@@ -106,6 +111,18 @@ export default function TeacherDashboard({ navigation }: any) {
 
         <AskJottiCard style={{ marginBottom: spacing.xl }} />
 
+        {cls.profiled >= 3 && cls.dominantLearning && cls.dominantThinking && (
+          <ClassroomOverviewCard
+            params={{
+              className: 'your class',
+              studentCount: students.length,
+              dominantLearning: cls.dominantLearning,
+              dominantThinking: cls.dominantThinking,
+              dominantDecision: cls.dominantDecision,
+            }}
+          />
+        )}
+
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>My Students</Text>
           <Text style={styles.sectionSubtitle}>
@@ -136,6 +153,25 @@ export default function TeacherDashboard({ navigation }: any) {
                     <Text style={styles.statBadgeLabel}>tests</Text>
                   </View>
                 </View>
+                {Object.keys(studentStyles(student)).length > 0 && (
+                  <TouchableOpacity
+                    onPress={() => setStrategiesFor(strategiesFor === (student.id ?? String(i)) ? null : (student.id ?? String(i)))}
+                    accessibilityRole="button"
+                    style={{ marginTop: 10 }}
+                  >
+                    <Text style={{ color: colors.purpleSoft, fontWeight: '700', fontSize: 13 }}>
+                      {strategiesFor === (student.id ?? String(i)) ? 'Hide teaching strategies' : '✦ AI teaching strategies'}
+                    </Text>
+                  </TouchableOpacity>
+                )}
+                {strategiesFor === (student.id ?? String(i)) && (
+                  <View style={{ marginTop: 10 }}>
+                    <TeachingStrategiesCard
+                      studentName={student.name}
+                      studentData={{ name: student.name, styles: studentStyles(student), scores: studentScores(student) }}
+                    />
+                  </View>
+                )}
               </GlassCard>
             ))
           )}
