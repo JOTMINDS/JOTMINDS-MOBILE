@@ -6,16 +6,17 @@
  * instead rather than adding new signup fields.
  */
 import { AppUser } from '../context/AuthContext';
+import { isPreschoolLevel } from './educationLevels';
 import { missingCognitiveDomains } from './profileCompleteness';
 
 export type ThinkingStylesTrack = 'jhs' | 'shs' | 'adult';
 
-/** null means no track applies (e.g. Elementary-level users — out of scope). */
+/** null means no track applies (Pre-school and Elementary-level users — out of scope). */
 export function getThinkingStylesTrack(user: AppUser | null | undefined): ThinkingStylesTrack | null {
   const level = user?.educationLevel;
   if (level === 'JHS') return 'jhs';
   if (level === 'SHS') return 'shs';
-  if (level === 'Elementary') return null;
+  if (level === 'Elementary' || isPreschoolLevel(level)) return null;
   if (level === 'Tertiary') return 'adult';
   // No educationLevel set: fall back to age, defaulting to adult (mirrors
   // the webapp's own fallback in StudentDashboard.tsx's education-band routing).

@@ -10,14 +10,8 @@ import ScreenBackground from '../../components/ScreenBackground';
 import AppIcon from '../../components/AppIcon';
 import { radii, spacing, Palette } from '../../theme';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
+import { EDUCATION_LEVELS } from '../../utils/educationLevels';
 
-// Mirrors the jotminds.com web signup (students only).
-const EDUCATION_LEVELS = [
-  { value: 'Elementary', label: 'Primary' },
-  { value: 'JHS', label: 'JHS' },
-  { value: 'SHS', label: 'SHS' },
-  { value: 'Tertiary', label: 'Tertiary' },
-];
 
 interface Field {
   key: string;
