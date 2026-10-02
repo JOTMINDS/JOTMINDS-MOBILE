@@ -115,6 +115,10 @@ import ProfessionalV2IntroScreen from '../screens/professional/ProfessionalV2Int
 import ProfessionalV2SessionScreen from '../screens/professional/ProfessionalV2SessionScreen';
 import ProfessionalV2ResultsScreen from '../screens/professional/ProfessionalV2ResultsScreen';
 import ClassManagementScreen from '../screens/teacher/ClassManagementScreen';
+import PreschoolChildrenScreen from '../screens/preschool/PreschoolChildrenScreen';
+import PreschoolChildProgressScreen from '../screens/preschool/PreschoolChildProgressScreen';
+import PreschoolAssessScreen from '../screens/preschool/PreschoolAssessScreen';
+import PreschoolActivitiesScreen from '../screens/preschool/PreschoolActivitiesScreen';
 import ObservationLogScreen from '../screens/teacher/ObservationLogScreen';
 
 // Server-driven kill switches (Super Admin → Feature Flags).
@@ -342,6 +346,10 @@ export default function AppNavigator() {
             <Stack.Screen name="ObservationLog" component={ObservationLogScreen} options={{ headerShown: true, title: 'Observation Log' }} />
             <Stack.Screen name="CurriculumTracker" component={CurriculumTrackerScreen} options={{ headerShown: true, title: 'Curriculum Tracker' }} />
             <Stack.Screen name="ClassAnalytics" component={ClassAnalyticsScreen} options={{ headerShown: true, title: 'Class Analytics' }} />
+            <Stack.Screen name="PreschoolChildren" component={PreschoolChildrenScreen as React.ComponentType} options={{ headerShown: true, title: 'Early Years' }} />
+            <Stack.Screen name="PreschoolChildProgress" component={PreschoolChildProgressScreen as React.ComponentType} options={{ headerShown: true, title: 'Child progress' }} />
+            <Stack.Screen name="PreschoolAssess" component={PreschoolAssessScreen} options={{ headerShown: true, title: 'Record observation' }} />
+            <Stack.Screen name="PreschoolActivities" component={PreschoolActivitiesScreen as React.ComponentType} options={{ headerShown: true, title: 'Activities' }} />
             <Stack.Screen name="StudentDetail" component={StudentDetailScreen as React.ComponentType} options={{ headerShown: true, title: 'Student' }} />
             {/* Cast: these screens type their props with ScreenProps (see OtpVerification below). */}
             <Stack.Screen name="ProfessionalCognitive" component={ProfessionalCognitiveScreen as React.ComponentType} options={{ headerShown: true, title: 'Professional Assessment' }} />
