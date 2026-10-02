@@ -38,6 +38,9 @@ export default function PreschoolChildrenScreen({ navigation }: ScreenProps<'Pre
         <TouchableOpacity style={styles.secondaryBtn} onPress={() => navigation.navigate('PreschoolActivities')} accessibilityRole="button">
           <Text style={styles.secondaryBtnText}>🎨 Browse developmental activities</Text>
         </TouchableOpacity>
+        <TouchableOpacity style={styles.secondaryBtn} onPress={() => navigation.navigate('PreschoolClassInsights')} accessibilityRole="button">
+          <Text style={styles.secondaryBtnText}>📊 Class insights</Text>
+        </TouchableOpacity>
 
         {error ? (
           <GlassCard padding={20} style={styles.card}>
