@@ -201,6 +201,14 @@ export default function AssessmentResultsScreen({ route, navigation }: any) {
           </View>
         )}
 
+        {ghanaMapping && (
+          <GlassCard variant="dark" padding={16} style={{ marginBottom: spacing.lg }} onPress={() => navigation.navigate('CognitiveReport')}>
+            <Text style={styles.sectionTitle}>🎉 Your cognitive profile is complete</Text>
+            <Text style={styles.listText}>You’ve finished all three assessments. See how your learning, thinking and decision styles fit together.</Text>
+            <Text style={{ color: colors.success, fontWeight: '800', marginTop: 10 }}>View your full cognitive report →</Text>
+          </GlassCard>
+        )}
+
         {normalized?.primaryStyle && <AIInsightsBanner ai={ai} />}
 
         {shown && shown.strengths.length > 0 && (

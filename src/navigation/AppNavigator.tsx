@@ -104,6 +104,7 @@ import DailyChallengeScreen from '../screens/challenge/DailyChallengeScreen';
 import { withFeature } from '../components/FeatureGate';
 import CurriculumTrackerScreen from '../screens/teacher/CurriculumTrackerScreen';
 import DeepLinkHandler from './DeepLinkHandler';
+import CognitiveReportScreen from '../screens/assessments/CognitiveReportScreen';
 import ClassAnalyticsScreen from '../screens/teacher/ClassAnalyticsScreen';
 import StudentDetailScreen from '../screens/teacher/StudentDetailScreen';
 import ProfessionalCognitiveScreen from '../screens/professional/ProfessionalCognitiveScreen';
@@ -341,6 +342,7 @@ export default function AppNavigator() {
             <Stack.Screen name="ClassManagement" component={ClassManagementScreen} options={{ headerShown: true, title: 'My Classes' }} />
             <Stack.Screen name="ObservationLog" component={ObservationLogScreen} options={{ headerShown: true, title: 'Observation Log' }} />
             <Stack.Screen name="CurriculumTracker" component={CurriculumTrackerScreen} options={{ headerShown: true, title: 'Curriculum Tracker' }} />
+            <Stack.Screen name="CognitiveReport" component={CognitiveReportScreen as React.ComponentType} options={{ headerShown: true, title: 'Cognitive Report' }} />
             <Stack.Screen name="ClassAnalytics" component={ClassAnalyticsScreen} options={{ headerShown: true, title: 'Class Analytics' }} />
             <Stack.Screen name="StudentDetail" component={StudentDetailScreen as React.ComponentType} options={{ headerShown: true, title: 'Student' }} />
             {/* Cast: these screens type their props with ScreenProps (see OtpVerification below). */}
