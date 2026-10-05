@@ -31,4 +31,10 @@ describe('diagnoseStudentRisk', () => {
     expect(d.riskLevel).toBe('high');
     expect(d.metrics.daysSinceLastActive).toBeGreaterThan(60);
   });
+
+  it('does not treat low style scores as risk (participation only)', () => {
+    const low = kolb(2, 2, 2, 2);
+    const d = diagnoseStudentRisk({ id: 's1', name: 'Ama' }, [low, { ...sternberg, score: { sternberg: { style: 'Analytical', scores: { analytical: 1, creative: 1, practical: 1 } } } }, decision]);
+    expect(d.riskLevel).toBe('low');
+  });
 });

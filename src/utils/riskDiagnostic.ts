@@ -2,7 +2,7 @@
  * Deterministic pedagogical risk diagnostic — ported from the webapp's
  * riskDiagnostic.ts. Works on a /teacher/students student
  * ({ id, name, assessments: [{ type, completedAt, score }] }) using the same
- * domain/score readers as classInsights, and the webapp's engagement + risk
+ * domain/score readers as classInsights, and the webapp's engagement-only risk
  * rules (SchoolAnalyticsDashboard.calculateStudentEngagementAndRisk, with no
  * local engagement/gamification overrides, as the diagnostic uses).
  */
@@ -11,9 +11,6 @@ import type { Domain } from './classInsights';
 type Assessment = any;
 type User = { id: string; name: string };
 
-const KOLB_MAX = 48;
-const THINKING_MAX = 30;
-
 const DOMAIN_OF: Record<string, Domain> = {
   kolb: 'learning', learning: 'learning',
   sternberg: 'thinking', thinking: 'thinking', 'jhs-thinking': 'thinking', 'shs-thinking': 'thinking',
@@ -21,35 +18,11 @@ const DOMAIN_OF: Record<string, Domain> = {
   'dual-process': 'decision', decision: 'decision',
 };
 
-const SCORE_KEYS: Record<Domain, string[]> = {
-  learning: ['kolb', 'learning'],
-  thinking: ['sternberg', 'jhs-thinking', 'shs-thinking', 'adult-thinking', 'child-thinking', 'thinking'],
-  decision: ['dualProcess', 'decision', 'dual-process'],
-};
-
 const time = (a: Assessment) => new Date(a?.completedAt || 0).getTime() || 0;
-
-/** Each numeric dimension of an assessment as a 0-100 percentage. */
-function dimensionPercents(a: Assessment): number[] {
-  const domain = DOMAIN_OF[a?.type];
-  if (!domain) return [];
-  const max = domain === 'learning' ? KOLB_MAX : domain === 'thinking' ? THINKING_MAX : 100;
-  for (const key of SCORE_KEYS[domain]) {
-    const sc = a?.score?.[key]?.scores;
-    if (sc && typeof sc === 'object') {
-      return Object.values(sc)
-        .map(Number)
-        .filter((n) => Number.isFinite(n))
-        .map((n) => Math.min(100, Math.round((n / max) * 100)));
-    }
-  }
-  return [];
-}
 
 function engagementAndRisk(
   assessments: Assessment[],
   completedTypes: string[],
-  avgScore: number,
 ): { engagementScore: number; risk: 'high' | 'medium' | 'low' | 'unassessed' } {
   if (assessments.length === 0) return { engagementScore: 0, risk: 'unassessed' };
 
@@ -62,15 +35,16 @@ function engagementAndRisk(
   if (stamps.length > 0) {
     if (daysSince <= 14) recency = 10;
     else if (daysSince <= 35) recency = 5;
-    else if (daysSince >= 45 && completedTypes.length === 1) recency = -18;
     else if (daysSince >= 60) recency = -20;
+    else if (daysSince >= 45 && completedTypes.length === 1) recency = -18;
   }
   const engagementScore = Math.max(15, Math.min(100, base + recency));
 
-  const criticalGaps = assessments.flatMap(dimensionPercents).filter((p) => p < 35).length;
+  // Style scores describe preferences, not ability, so a low dimension is not a deficit
+  // (webapp, 2026-10-05). Risk reflects participation only.
   let risk: 'high' | 'medium' | 'low' = 'low';
-  if (engagementScore < 30 || criticalGaps >= 3 || (avgScore > 0 && avgScore < 30)) risk = 'high';
-  else if (engagementScore < 65 || criticalGaps > 0 || (avgScore > 0 && avgScore < 50)) risk = 'medium';
+  if (engagementScore < 30) risk = 'high';
+  else if (engagementScore < 50) risk = 'medium';
   return { engagementScore, risk };
 }
 
@@ -154,12 +128,7 @@ export function diagnoseStudentRisk(
   // Calculate engagement score using student's actual normalized score
   // Distinct domains completed (the webapp's summary dedupes the same way).
   const completedTypes = [...new Set(studentAssessments.map((a) => DOMAIN_OF[a.type]).filter(Boolean))];
-  const allNormalizedScores = studentAssessments.flatMap(dimensionPercents);
-  const avgScore = allNormalizedScores.length
-    ? Math.round(allNormalizedScores.reduce((t, v) => t + v, 0) / allNormalizedScores.length)
-    : 70;
-
-  const { engagementScore, risk } = engagementAndRisk(studentAssessments, completedTypes, avgScore);
+  const { engagementScore, risk } = engagementAndRisk(studentAssessments, completedTypes);
 
   // Extract Learning Modality Scores
   const learningScore = latestLearning?.score?.kolb?.scores || 
