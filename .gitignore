@@ -30,3 +30,6 @@ yarn-error.*
 
 # misc
 *.orig.*
+
+# Supabase CLI local state
+supabase/.temp
