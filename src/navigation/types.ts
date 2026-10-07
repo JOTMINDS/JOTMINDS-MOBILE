@@ -77,6 +77,10 @@ export type RootStackParamList = {
   ClassAnalytics: undefined;
   CurriculumTracker: undefined;
   StudentDetail: { student: any };
+  PreschoolChildren: undefined;
+  PreschoolChildProgress: { child: import('../types/preschoolDevelopmental').PreschoolUser & { classId?: string } };
+  PreschoolAssess: { child?: import('../types/preschoolDevelopmental').PreschoolUser & { classId?: string }; indicatorId?: string } | undefined;
+  PreschoolActivities: undefined;
 
   // Professional Intelligence V2
   ProfessionalV2Intro: undefined;

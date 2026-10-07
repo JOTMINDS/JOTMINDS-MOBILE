@@ -160,6 +160,7 @@ export default function TeacherDashboard({ navigation }: any) {
             { icon: '📊', title: 'View Class Analytics', desc: 'Style distributions, completion and alignment with your profile', g: ['#3B82F6', '#2563EB'] as [string, string], nav: 'ClassAnalytics' as const },
             { icon: '👥', title: 'My Classes', desc: 'Manage classes, enrol students, import a roster', g: ['#10B981', '#059669'] as [string, string], nav: 'ClassManagement' as const },
             { icon: '🗂️', title: 'Lesson Planner', desc: 'AI lesson plans with differentiation', g: ['#10B981', '#059669'] as [string, string], nav: 'LessonPlanner' as const },
+            { icon: '🧸', title: 'Early Years (Pre-school)', desc: 'Record developmental observations for ages 2–6', g: ['#F59E0B', '#D97706'] as [string, string], nav: 'PreschoolChildren' as const },
             { icon: '📋', title: 'Observation Log', desc: 'Note a student observation, share with parents', g: ['#EC4899', '#DB2777'] as [string, string], nav: 'ObservationLog' as const },
           ].map((a) => (
             <GlassCard
