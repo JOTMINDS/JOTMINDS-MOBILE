@@ -99,3 +99,25 @@ describe('calculateChildDevelopmentProfile', () => {
     expect(() => calculateChildDevelopmentProfile(child({ age: 3 }), [])).not.toThrow();
   });
 });
+
+describe('class intelligence and home activities', () => {
+  const { calculateClassDevelopmentIntelligence } = require('../preschoolEngine');
+  it('summarises a cohort with and without evidence', () => {
+    const kids = [child({ id: 'a', name: 'A', age: 3 }), child({ id: 'b', name: 'B', age: 6 })];
+    const empty = calculateClassDevelopmentIntelligence(kids, [], 'x', 'KG');
+    expect(empty.totalChildren).toBe(2);
+    expect(empty.activeObservations).toBe(0);
+    expect(empty.bandDistribution).toMatchObject({ P1: 1, P4: 1 });
+
+    const ind = MASTER_PRESCHOOL_INDICATORS[0];
+    const ev = { ...event(ind.id, 3), childId: 'a' };
+    const full = calculateClassDevelopmentIntelligence(kids, [ev], 'x', 'KG');
+    expect(full.activeObservations).toBe(1);
+    expect(full.domainAverages.length).toBeGreaterThan(0);
+  });
+  it('has home activities for every age band', () => {
+    (['P1', 'P2', 'P3', 'P4'] as const).forEach((b) => {
+      expect(getIndicatorsByBandAndDomain(b).some((i) => !!i.homeActivity)).toBe(true);
+    });
+  });
+});

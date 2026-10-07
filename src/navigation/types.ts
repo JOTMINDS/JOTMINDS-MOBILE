@@ -81,6 +81,8 @@ export type RootStackParamList = {
   PreschoolChildProgress: { child: import('../types/preschoolDevelopmental').PreschoolUser & { classId?: string } };
   PreschoolAssess: { child?: import('../types/preschoolDevelopmental').PreschoolUser & { classId?: string }; indicatorId?: string } | undefined;
   PreschoolActivities: undefined;
+  PreschoolClassInsights: undefined;
+  PreschoolHomeActivities: { child: any };
 
   // Professional Intelligence V2
   ProfessionalV2Intro: undefined;

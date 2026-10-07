@@ -119,6 +119,8 @@ import PreschoolChildrenScreen from '../screens/preschool/PreschoolChildrenScree
 import PreschoolChildProgressScreen from '../screens/preschool/PreschoolChildProgressScreen';
 import PreschoolAssessScreen from '../screens/preschool/PreschoolAssessScreen';
 import PreschoolActivitiesScreen from '../screens/preschool/PreschoolActivitiesScreen';
+import PreschoolClassInsightsScreen from '../screens/preschool/PreschoolClassInsightsScreen';
+import PreschoolHomeActivitiesScreen from '../screens/preschool/PreschoolHomeActivitiesScreen';
 import ObservationLogScreen from '../screens/teacher/ObservationLogScreen';
 
 // Server-driven kill switches (Super Admin → Feature Flags).
@@ -350,6 +352,8 @@ export default function AppNavigator() {
             <Stack.Screen name="PreschoolChildProgress" component={PreschoolChildProgressScreen as React.ComponentType} options={{ headerShown: true, title: 'Child progress' }} />
             <Stack.Screen name="PreschoolAssess" component={PreschoolAssessScreen} options={{ headerShown: true, title: 'Record observation' }} />
             <Stack.Screen name="PreschoolActivities" component={PreschoolActivitiesScreen as React.ComponentType} options={{ headerShown: true, title: 'Activities' }} />
+            <Stack.Screen name="PreschoolClassInsights" component={PreschoolClassInsightsScreen as React.ComponentType} options={{ headerShown: true, title: 'Class insights' }} />
+            <Stack.Screen name="PreschoolHomeActivities" component={PreschoolHomeActivitiesScreen as React.ComponentType} options={{ headerShown: true, title: 'Home activities' }} />
             <Stack.Screen name="StudentDetail" component={StudentDetailScreen as React.ComponentType} options={{ headerShown: true, title: 'Student' }} />
             {/* Cast: these screens type their props with ScreenProps (see OtpVerification below). */}
             <Stack.Screen name="ProfessionalCognitive" component={ProfessionalCognitiveScreen as React.ComponentType} options={{ headerShown: true, title: 'Professional Assessment' }} />
