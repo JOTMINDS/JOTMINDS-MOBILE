@@ -6,6 +6,8 @@
  * ids MUST stay `{type}-{timestamp}`.
  */
 
+import { getBrainBoostPuzzle } from './brainBoostData';
+
 export type ChallengeType = 'questions' | 'puzzle' | 'reflection' | 'practical';
 
 export interface DailyChallenge {
@@ -203,8 +205,19 @@ export function generateDailyChallenge(dayNumber: number, age: number): DailyCha
   switch (type) {
     case 'questions':
       return { id: `questions-${Date.now()}`, type, content: { questions: QUESTION_SETS[group] }, points: 20 };
-    case 'puzzle':
+    case 'puzzle': {
+      // Ages 10-18 draw from the enriched Brain Boost bank (as the webapp does for youth/teen).
+      if (age >= 10 && age <= 18) {
+        const p = getBrainBoostPuzzle(age, Math.floor(Math.random() * 10));
+        return {
+          id: `puzzle-${Date.now()}`,
+          type,
+          content: { title: p.title, description: p.description, hint: p.hint, answer: p.answer, explanation: p.explanation, kolbAlignment: p.kolbAlignment },
+          points: p.points || 30,
+        };
+      }
       return { id: `puzzle-${Date.now()}`, type, content: pick(PUZZLES[group]), points: 30 };
+    }
     case 'reflection':
       return {
         id: `reflection-${Date.now()}`,

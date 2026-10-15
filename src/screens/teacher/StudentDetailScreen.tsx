@@ -4,10 +4,15 @@ import ScreenBackground from '../../components/ScreenBackground';
 import GlassCard from '../../components/GlassCard';
 import { TeachingStrategiesCard, EducationalResourcesCard } from '../../components/ai/InsightCards';
 import { studentStyles, studentScores, DOMAINS, Domain } from '../../utils/classInsights';
+import { diagnoseStudentRisk } from '../../utils/riskDiagnostic';
 import { rs } from '../../utils/responsive';
 import { radii, spacing, Palette } from '../../theme';
 import { useThemedStyles } from '../../context/ThemeContext';
 import type { ScreenProps } from '../../navigation/types';
+
+const RISK_COLOR = { high: '#DC2626', medium: '#E0A020', low: '#1E8A6E', unassessed: '#9ca3af' };
+const RISK_LABEL = { high: 'At risk', medium: 'Needs support', low: 'On track', unassessed: 'Not started' };
+const SEVERITY_COLOR = { critical: '#DC2626', moderate: '#E0A020', low: '#6B7280', positive: '#1E8A6E' };
 
 const LABEL: Record<Domain, string> = { learning: 'Learning style', thinking: 'Thinking style', decision: 'Decision style' };
 
@@ -18,6 +23,7 @@ export default function StudentDetailScreen({ route, navigation }: ScreenProps<'
   const st = studentStyles(student);
   const scores = studentScores(student);
   const has = DOMAINS.some((d) => st[d]);
+  const dx = React.useMemo(() => diagnoseStudentRisk(student, student.assessments ?? []), [student]);
 
   return (
     <ScreenBackground>
@@ -53,6 +59,37 @@ export default function StudentDetailScreen({ route, navigation }: ScreenProps<'
               </View>
             ))
           )}
+        </GlassCard>
+
+        <GlassCard variant="dark" padding={16} style={styles.card}>
+          <View style={styles.riskHead}>
+            <Text style={styles.cardTitle}>Risk diagnostic</Text>
+            <View style={[styles.riskPill, { backgroundColor: RISK_COLOR[dx.riskLevel] }]}>
+              <Text style={styles.riskPillText}>{RISK_LABEL[dx.riskLevel]}</Text>
+            </View>
+          </View>
+          <Text style={styles.domainValue}>{dx.primaryRiskFactor}</Text>
+          <Text style={styles.text}>{dx.pedagogicalSummary}</Text>
+          <Text style={[styles.meta, styles.dxMeta]}>
+            Confidence {dx.diagnosticConfidence}% · Engagement {dx.metrics.engagementScore} · {dx.metrics.completedCount}/3 assessments
+          </Text>
+          <Text style={[styles.meta, styles.dxMeta]}>Pathway: {dx.learningPathway}</Text>
+
+          {dx.rootCauses.map((rc) => (
+            <View key={rc.title} style={[styles.cause, { borderLeftColor: SEVERITY_COLOR[rc.severity] }]}>
+              <Text style={styles.causeTitle}>{rc.title}</Text>
+              <Text style={styles.text}>{rc.explanation}</Text>
+              <Text style={styles.impact}>{rc.impactOnLearning}</Text>
+            </View>
+          ))}
+
+          {dx.interventions.length > 0 && <Text style={styles.subHead}>Recommended actions</Text>}
+          {dx.interventions.map((iv, i) => (
+            <View key={i} style={styles.action}>
+              <Text style={styles.actionTag}>{iv.target} · {iv.priority}</Text>
+              <Text style={styles.text}>{iv.action}</Text>
+            </View>
+          ))}
         </GlassCard>
 
         {has && (
@@ -94,6 +131,16 @@ const makeStyles = (colors: Palette) => StyleSheet.create({
   dimVal: { width: 30, textAlign: 'right', fontSize: rs(11), fontWeight: '700', color: colors.text },
   track: { flex: 1, height: 8, borderRadius: 4, backgroundColor: colors.bgTertiary, overflow: 'hidden' },
   fill: { height: 8, borderRadius: 4, backgroundColor: colors.cyan },
+  riskHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  riskPill: { borderRadius: 10, paddingHorizontal: 10, paddingVertical: 3, marginBottom: 10 },
+  riskPillText: { color: '#FFFFFF', fontSize: rs(11), fontWeight: '800' },
+  dxMeta: { marginTop: 6 },
+  cause: { borderLeftWidth: 3, paddingLeft: 10, marginTop: 12 },
+  causeTitle: { fontSize: rs(13), fontWeight: '800', color: colors.text, marginBottom: 2 },
+  impact: { fontSize: rs(12), lineHeight: rs(18), color: colors.textMuted, marginTop: 3, fontStyle: 'italic' },
+  subHead: { fontSize: rs(11), fontWeight: '800', letterSpacing: 0.8, color: colors.purpleSoft, marginTop: 16, marginBottom: 6 },
+  action: { marginBottom: 8 },
+  actionTag: { fontSize: rs(11), fontWeight: '800', color: colors.cyan, marginBottom: 2 },
   btn: { backgroundColor: colors.success, borderRadius: radii.xl, paddingVertical: 15, alignItems: 'center', marginTop: spacing.sm },
   btnText: { color: '#FFFFFF', fontSize: rs(14), fontWeight: '800' },
 });
