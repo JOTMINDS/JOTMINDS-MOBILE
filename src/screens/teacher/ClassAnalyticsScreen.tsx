@@ -62,11 +62,27 @@ export default function ClassAnalyticsScreen() {
         showsVerticalScrollIndicator={false}
       >
         <Text style={styles.title}>Class Analytics</Text>
-        <Text style={styles.sub}>{students.length} student{students.length !== 1 ? 's' : ''} · {cls.profiled} with results</Text>
-        {!!error && <Text style={styles.error}>{error}</Text>}
+        {!(error && students.length === 0) && (
+          <Text style={styles.sub}>{students.length} student{students.length !== 1 ? 's' : ''} · {cls.profiled} with results</Text>
+        )}
+        {!!error && (
+          <GlassCard padding={16} style={[styles.card, { marginTop: spacing.lg }]}>
+            <Text style={styles.cardTitle}>Couldn't load your class</Text>
+            <Text style={styles.text}>{error}</Text>
+            <Text
+              style={[styles.text, { marginTop: 8, color: colors.cyan, fontWeight: '700' }]}
+              onPress={() => { setRefreshing(true); void load(); }}
+              accessibilityRole="button"
+            >
+              Tap to retry
+            </Text>
+          </GlassCard>
+        )}
 
         {students.length === 0 ? (
-          <GlassCard padding={24}><Text style={styles.text}>Your class analytics appear here once students join your class and take their assessments.</Text></GlassCard>
+          error ? null : (
+            <GlassCard padding={24}><Text style={styles.text}>Your class analytics appear here once students join your class and take their assessments.</Text></GlassCard>
+          )
         ) : (
           <>
             <GlassCard variant="dark" padding={16} style={styles.card}>
