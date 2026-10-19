@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import ScreenBackground from '../../components/ScreenBackground';
 import GlassCard from '../../components/GlassCard';
@@ -123,8 +123,12 @@ export default function AdaptationScreen({ route, navigation }: any) {
   }, [rk]);
 
   const toggle = async (id: string) => {
-    setDone(await toggleTaskDone(rk, id));
-    setStreak(await getAdaptationStreak(rk));
+    try {
+      setDone(await toggleTaskDone(rk, id));
+      setStreak(await getAdaptationStreak(rk));
+    } catch {
+      Alert.alert('Could not save', 'Your progress could not be saved on this device. Free up storage and try again.');
+    }
   };
   const doneCount = dailyTasks.filter((t) => done.has(t.id)).length;
 
