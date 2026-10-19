@@ -4,7 +4,7 @@
  * AsyncStorage (the webapp keeps them in localStorage — there is no sync
  * route). Good enough for "plan it on the bus, teach it in class".
  */
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { readScoped, writeScoped } from './userStorage';
 import { callEdgeFn } from './supabase';
 
 export interface LessonPlanInput {
@@ -60,7 +60,7 @@ export async function generateLessonPlan(input: LessonPlanInput): Promise<Lesson
 
 export async function getLessonPlans(): Promise<LessonPlan[]> {
   try {
-    const raw = await AsyncStorage.getItem(KEY);
+    const raw = await readScoped(KEY);
     return raw ? (JSON.parse(raw) as LessonPlan[]) : [];
   } catch {
     return [];
@@ -70,18 +70,15 @@ export async function getLessonPlans(): Promise<LessonPlan[]> {
 export async function saveLessonPlan(plan: LessonPlan): Promise<void> {
   const all = await getLessonPlans();
   const next = [plan, ...all.filter((p) => p.id !== plan.id)];
-  await AsyncStorage.setItem(KEY, JSON.stringify(next)).catch(() => {});
+  await writeScoped(KEY, JSON.stringify(next));
 }
 
 export async function updateLessonPlan(id: string, patch: Partial<LessonPlan>): Promise<void> {
   const all = await getLessonPlans();
-  await AsyncStorage.setItem(
-    KEY,
-    JSON.stringify(all.map((p) => (p.id === id ? { ...p, ...patch } : p))),
-  ).catch(() => {});
+  await writeScoped(KEY, JSON.stringify(all.map((p) => (p.id === id ? { ...p, ...patch } : p))));
 }
 
 export async function deleteLessonPlan(id: string): Promise<void> {
   const all = await getLessonPlans();
-  await AsyncStorage.setItem(KEY, JSON.stringify(all.filter((p) => p.id !== id))).catch(() => {});
+  await writeScoped(KEY, JSON.stringify(all.filter((p) => p.id !== id)));
 }

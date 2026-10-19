@@ -83,7 +83,10 @@ export default function ObservationLogScreen() {
   const remove = (o: TeacherObservation) => {
     Alert.alert('Delete observation', `Delete your note about ${o.studentName}?`, [
       { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: async () => { await deleteTeacherObservation(o.id); load(); } },
+      { text: 'Delete', style: 'destructive', onPress: async () => {
+        if (await deleteTeacherObservation(o.id)) load();
+        else toast.error('Could not delete the observation. Check your connection and try again.');
+      } },
     ]);
   };
 

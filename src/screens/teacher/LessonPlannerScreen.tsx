@@ -46,7 +46,12 @@ export default function LessonPlannerScreen({ navigation }: any) {
       toast.error('Could not generate a plan right now. Try again in a moment.');
       return;
     }
-    await saveLessonPlan(plan);
+    try {
+      await saveLessonPlan(plan);
+    } catch {
+      toast.error('Could not save the plan to this device. Free up storage and try again.');
+      return;
+    }
     setPlans(await getLessonPlans());
     setActive(plan);
     setMode('view');

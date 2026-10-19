@@ -5,9 +5,8 @@
  * whole daily check-in flow is a real, device-local journal. Mirrors the
  * AsyncStorage pattern already established in coachingProgress.ts.
  */
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { focusTrend } from './scoring';
-import { supabase } from './supabase';
+import { readScoped, writeScoped } from './userStorage';
 
 export interface Checkin {
   focus_score: number;
@@ -18,19 +17,9 @@ export interface Checkin {
 
 const STORAGE_KEY = 'jotminds.mind.checkins';
 
-/** Scoped per signed-in user so accounts sharing a device never see each other's journal. */
-async function storageKey(): Promise<string> {
-  try {
-    const { data: { session } } = await supabase.auth.getSession();
-    return session?.user?.id ? `${STORAGE_KEY}.${session.user.id}` : STORAGE_KEY;
-  } catch {
-    return STORAGE_KEY;
-  }
-}
-
 async function readAll(): Promise<Checkin[]> {
   try {
-    const raw = await AsyncStorage.getItem(await storageKey());
+    const raw = await readScoped(STORAGE_KEY);
     const list: Checkin[] = raw ? JSON.parse(raw) : [];
     return list.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
   } catch {
@@ -48,7 +37,7 @@ export async function saveCheckin(checkin: Checkin): Promise<void> {
   const existing = await readAll();
   const today = dateKey(checkin.created_at);
   const filtered = existing.filter((c) => dateKey(c.created_at) !== today);
-  await AsyncStorage.setItem(await storageKey(), JSON.stringify([checkin, ...filtered]));
+  await writeScoped(STORAGE_KEY, JSON.stringify([checkin, ...filtered]));
 }
 
 export async function getTodayCheckin(): Promise<Checkin | null> {
