@@ -70,6 +70,7 @@
       ],
       "@react-native-community/datetimepicker",
       "./plugins/withFmtCxx17Fix",
+      "./plugins/withPodsDeploymentTargetFloor",
       "expo-secure-store",
       [
         "expo-image-picker",
