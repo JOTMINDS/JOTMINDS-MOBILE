@@ -172,3 +172,10 @@ export function alignmentInsight(score: number | null): string {
   }
   return 'Your profile is quite distinct from your students’ dominant styles — a good chance to stretch your teaching approaches while accommodating their preferred ways of learning.';
 }
+
+/** Distinct assessments a student has completed (retakes count once). The server sends `assessments`, not `assessmentsCompleted`. */
+export function completedCount(student: any): number {
+  const types = new Set<string>();
+  for (const a of student?.assessments ?? []) if (a?.type) types.add(String(a.type));
+  return types.size;
+}

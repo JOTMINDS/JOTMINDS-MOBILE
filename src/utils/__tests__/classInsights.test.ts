@@ -102,3 +102,12 @@ describe('alignment', () => {
     expect(alignmentInsight(5)).toMatch(/distinct/);
   });
 });
+
+describe('completedCount', () => {
+  it('counts distinct assessment types; retakes count once', () => {
+    const { completedCount } = require('../classInsights');
+    expect(completedCount({ assessments: [{ type: 'kolb' }, { type: 'kolb' }, { type: 'sternberg' }] })).toBe(2);
+    expect(completedCount({})).toBe(0);
+    expect(completedCount(null)).toBe(0);
+  });
+});
