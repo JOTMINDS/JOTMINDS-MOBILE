@@ -7,6 +7,7 @@
  */
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { focusTrend } from './scoring';
+import { supabase } from './supabase';
 
 export interface Checkin {
   focus_score: number;
@@ -17,9 +18,19 @@ export interface Checkin {
 
 const STORAGE_KEY = 'jotminds.mind.checkins';
 
+/** Scoped per signed-in user so accounts sharing a device never see each other's journal. */
+async function storageKey(): Promise<string> {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    return session?.user?.id ? `${STORAGE_KEY}.${session.user.id}` : STORAGE_KEY;
+  } catch {
+    return STORAGE_KEY;
+  }
+}
+
 async function readAll(): Promise<Checkin[]> {
   try {
-    const raw = await AsyncStorage.getItem(STORAGE_KEY);
+    const raw = await AsyncStorage.getItem(await storageKey());
     const list: Checkin[] = raw ? JSON.parse(raw) : [];
     return list.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
   } catch {
@@ -33,14 +44,11 @@ function dateKey(iso: string): string {
 
 /** Saves a check-in, replacing any existing one from the same calendar day. */
 export async function saveCheckin(checkin: Checkin): Promise<void> {
-  try {
-    const existing = await readAll();
-    const today = dateKey(checkin.created_at);
-    const filtered = existing.filter((c) => dateKey(c.created_at) !== today);
-    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify([checkin, ...filtered]));
-  } catch {
-    // non-critical; local-only journal
-  }
+  // Throws on failure so the caller can tell the user instead of pretending it saved.
+  const existing = await readAll();
+  const today = dateKey(checkin.created_at);
+  const filtered = existing.filter((c) => dateKey(c.created_at) !== today);
+  await AsyncStorage.setItem(await storageKey(), JSON.stringify([checkin, ...filtered]));
 }
 
 export async function getTodayCheckin(): Promise<Checkin | null> {
