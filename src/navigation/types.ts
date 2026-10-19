@@ -14,7 +14,8 @@ export type RootStackParamList = {
   Welcome: undefined;
   Login: { email?: string; studentCode?: string } | undefined;
   Signup: { role?: string; organizationCode?: string } | undefined;
-  OtpVerification: { mode: 'signup' | 'login'; email: string; signupData?: any };
+  OtpVerification: { mode: 'signup' | 'login' | 'reset'; email: string; signupData?: any };
+  SetNewPassword: undefined;
   FirstWin: undefined;
   Main: undefined;
 

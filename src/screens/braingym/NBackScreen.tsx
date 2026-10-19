@@ -13,10 +13,11 @@ import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 
 const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'];
 const TRIALS = 15;
+const PRACTICE_TRIALS = 8;
 
-function buildSequence(n: number): string[] {
+function buildSequence(n: number, trials = TRIALS, minMatches = 0): string[] {
   const seq: string[] = [];
-  for (let i = 0; i < TRIALS; i++) {
+  for (let i = 0; i < trials; i++) {
     // ~33% chance this trial repeats the letter from n trials back (a "match")
     if (i >= n && Math.random() < 0.33) {
       seq.push(seq[i - n]);
@@ -26,6 +27,9 @@ function buildSequence(n: number): string[] {
       seq.push(l);
     }
   }
+  // Practice rounds must contain matches, or there'd be nothing to learn from.
+  const matches = () => seq.filter((l, i) => i >= n && l === seq[i - n]).length;
+  for (let p = n + 1; matches() < minMatches && p < trials; p += 2) seq[p] = seq[p - n];
   return seq;
 }
 
@@ -35,7 +39,9 @@ export default function NBackScreen({ navigation, route }: any) {
   const difficulty: Difficulty = route.params?.difficulty ?? 'easy';
   const { n, intervalMs } = N_BACK_PARAMS[difficulty];
   const [phase, setPhase] = useState<'intro' | 'play' | 'done'>('intro');
-  const [seq] = useState<string[]>(() => buildSequence(n));
+  const [practice, setPractice] = useState(false);
+  const [seq, setSeq] = useState<string[]>(() => buildSequence(n));
+  const [feedback, setFeedback] = useState<{ ok: boolean; text: string } | null>(null);
   const [index, setIndex] = useState(0);
   const [flash, setFlash] = useState<'none' | 'hit' | 'miss'>('none');
   const tapped = useRef(false);
@@ -49,10 +55,20 @@ export default function NBackScreen({ navigation, route }: any) {
     if (index >= seq.length) { finish(); return; }
     const t = setTimeout(() => {
       responses.current[index] = tapped.current;
+      if (practice) {
+        const m = isMatch(index);
+        const t = tapped.current;
+        setFeedback(
+          m && t ? { ok: true, text: 'Nice, that was a match!' }
+          : m ? { ok: false, text: `Missed it. It repeated the letter from ${n} step${n > 1 ? 's' : ''} back.` }
+          : t ? { ok: false, text: 'Not a match. Only tap when it repeats.' }
+          : null,
+        );
+      }
       setIndex((i) => i + 1);
     }, intervalMs);
     return () => clearTimeout(t);
-  }, [index, phase]);
+  }, [index, phase, practice]);
 
   const isMatch = (i: number) => i >= n && seq[i] === seq[i - n];
 
@@ -65,6 +81,11 @@ export default function NBackScreen({ navigation, route }: any) {
   };
 
   const finish = () => {
+    if (practice) {
+      // Practice is untimed-score: never saved, never counted toward bests.
+      setPractice(false); setFeedback(null); setPhase('intro');
+      return;
+    }
     let hits = 0, falseAlarms = 0, correct = 0;
     for (let i = 0; i < seq.length; i++) {
       const m = isMatch(i);
@@ -80,7 +101,15 @@ export default function NBackScreen({ navigation, route }: any) {
     saveDifficultyBest('n-back', difficulty, s);
   };
 
-  const start = () => { responses.current = []; setIndex(0); setPhase('play'); };
+  const begin = (isPractice: boolean) => {
+    responses.current = [];
+    setFeedback(null);
+    setPractice(isPractice);
+    setSeq(isPractice ? buildSequence(n, PRACTICE_TRIALS, 2) : buildSequence(n));
+    setIndex(0);
+    setPhase('play');
+  };
+  const start = () => begin(false);
 
   if (phase === 'done') {
     return (
@@ -95,6 +124,8 @@ export default function NBackScreen({ navigation, route }: any) {
   }
 
   if (phase === 'intro') {
+    // Example sequence per level: demo[n] repeats demo[0] (the first n-back match).
+    const demo = ['K', 'T', 'R', 'B'].slice(0, n).concat(['K', 'R']);
     return (
       <ScreenBackground>
         <View style={styles.introWrap}>
@@ -108,8 +139,8 @@ export default function NBackScreen({ navigation, route }: any) {
           <View style={styles.demoBox}>
             <Text style={styles.demoLabel}>EXAMPLE ({n}-back)</Text>
             <View style={styles.demoRow}>
-              {['K', 'T', 'K', 'R', 'R'].map((c, i) => {
-                const isMatch = i >= n && ['K', 'T', 'K', 'R', 'R'][i - n] === c;
+              {demo.map((c, i) => {
+                const isMatch = i >= n && demo[i - n] === c;
                 return (
                   <View key={i} style={[styles.demoCell, isMatch && styles.demoCellMatch]}>
                     <Text style={styles.demoLetter}>{c}</Text>
@@ -118,9 +149,7 @@ export default function NBackScreen({ navigation, route }: any) {
               })}
             </View>
             <Text style={styles.demoHint}>
-              {n === 1
-                ? 'The 5th "R" matches the 4th "R" one step back → tap Match.'
-                : `The 3rd "K" matches the 1st "K" ${n} steps back → tap Match.`}
+              {`The highlighted ${demo[n]} matches the ${demo[0]} ${n} step${n > 1 ? 's' : ''} back → tap Match.`}
             </Text>
           </View>
 
@@ -128,6 +157,9 @@ export default function NBackScreen({ navigation, route }: any) {
             <LinearGradient colors={['#3D52C9', '#6E4D9C']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.startGradient}>
               <Text style={styles.startText}>Start</Text>
             </LinearGradient>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => begin(true)} style={styles.practiceBtn} accessibilityRole="button" accessibilityLabel="Try a practice round">
+            <Text style={styles.practiceText}>Try a practice round</Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.quit}>
             <Text style={styles.quitText}>Cancel</Text>
@@ -146,7 +178,7 @@ export default function NBackScreen({ navigation, route }: any) {
           <TouchableOpacity onPress={() => navigation.goBack()} accessibilityRole="button" accessibilityLabel="Quit game">
             <AppIcon name="✕" size={22} color={colors.textMuted} />
           </TouchableOpacity>
-          <Text style={styles.progress}>{Math.min(index + 1, seq.length)} / {seq.length}</Text>
+          <Text style={styles.progress}>{practice ? 'Practice · ' : ''}{Math.min(index + 1, seq.length)} / {seq.length}</Text>
         </View>
 
         <View style={styles.stimWrap}>
@@ -164,7 +196,9 @@ export default function NBackScreen({ navigation, route }: any) {
             <Text style={styles.matchText}>MATCH</Text>
           </LinearGradient>
         </TouchableOpacity>
-        <Text style={styles.helper}>Tap when the letter repeats the previous one</Text>
+        <Text style={styles.helper}>
+          {practice && feedback ? feedback.text : `Tap when the letter matches the one from ${n} step${n > 1 ? 's' : ''} back`}
+        </Text>
       </View>
     </ScreenBackground>
   );
@@ -204,6 +238,8 @@ const makeStyles = (colors: Palette) => StyleSheet.create({
   startBtn: { borderRadius: radii.md, overflow: 'hidden', width: '100%' },
   startGradient: { paddingVertical: 18, alignItems: 'center' },
   startText: { fontSize: 17, fontWeight: '700', color: '#FFFFFF' },
+  practiceBtn: { paddingVertical: 14 },
+  practiceText: { fontSize: 15, fontWeight: '700', color: colors.cyan },
   quit: { paddingVertical: 16 },
   quitText: { fontSize: 15, color: colors.textMuted },
 });

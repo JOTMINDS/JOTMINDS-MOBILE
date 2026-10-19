@@ -53,6 +53,7 @@ export default function PrivacySettingsScreen({ navigation }: any) {
     try {
       const res = await deleteAccount();
       if (res?.error) throw new Error(res.error);
+      await disableBiometricLogin(); // don't leave deleted-account credentials in the keychain
       toast.success('Your account has been deleted.');
       await signOut();
     } catch (e: any) {

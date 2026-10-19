@@ -75,10 +75,12 @@ export async function getObservationsForChild(childId: string): Promise<TeacherO
   }
 }
 
-export async function deleteTeacherObservation(id: string): Promise<void> {
+/** Resolves true on success; false (never throws) so callers can tell the teacher it failed. */
+export async function deleteTeacherObservation(id: string): Promise<boolean> {
   try {
     await callEdgeFn(`/teacher-observation/${id}`, { method: 'DELETE' });
+    return true;
   } catch {
-    // non-critical
+    return false;
   }
 }

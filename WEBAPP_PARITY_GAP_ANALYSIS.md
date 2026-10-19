@@ -223,3 +223,16 @@ Decisions: teachers keep **all** functions on mobile (class management, enrolmen
 | Kids age rule 6–10, parent PIN (`parentPin`, same field as web; gates sign-out and privacy settings; 5 tries then 60 s lockout; weak PINs rejected) | ✅ |
 | Invite/code links (`?code=`, `?role=`) via `jotminds://` and `https://jotminds.com` | ✅ client; universal links need the association files hosted on jotminds.com |
 | Push notifications | deferred |
+
+## Sync round 4 — 2026-10-19 (webapp `a743bf3`, 27 commits since `711fd9d`)
+
+| Webapp change | Mobile | Notes |
+|---|---|---|
+| Ages 15–18 question bank rewording (`4410fe2`) | ✅ | All 36 mobile teen items matched the old pool by text; wording updated, ids/dimensions unchanged |
+| Preschool vs Elementary labels; no self-report assessments for pre-school students (`a0fd624`) | ✅ | Student dashboard shows a "learning through play" note instead |
+| Verified email OTP for all signups (`bf831b8`) | ✅ already | Mobile signup already requires OTP |
+| Head-teacher / institution dashboards, risk engine, school analytics (`e2c1351`, `5de6287`, `e531c24`, `b6d1cd4`) | ⛔ web-only | |
+| Curriculum-aware lesson generation, larger assessments (`786b76f`) | ⏸ not ported | Changes the AI request shape; review separately |
+| JM-PDAF preschool framework updates (`596b28e`, `deae4a2`) | ⏸ not re-diffed | Mobile preschool port predates these |
+
+Mobile-only fixes this round: in-app password recovery (OTP → set new password), assessment retry after failed save, N-Back practice round, per-user device storage (`utils/userStorage.ts`) for check-ins / lesson plans / trackers, lesson-planner streak, DST-safe streak helper.

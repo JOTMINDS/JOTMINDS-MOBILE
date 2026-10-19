@@ -1,7 +1,7 @@
 /** Education levels offered at signup / profile edit — mirrors the jotminds.com web signup (students only). */
 export const EDUCATION_LEVELS = [
-  { value: 'Pre-school', label: 'Pre-school' },
-  { value: 'Elementary', label: 'Primary' },
+  { value: 'Pre-school', label: 'Preschool (Crèche, Nursery, KG)' },
+  { value: 'Elementary', label: 'Elementary (Primary 1–6)' },
   { value: 'JHS', label: 'JHS' },
   { value: 'SHS', label: 'SHS' },
   { value: 'Tertiary', label: 'Tertiary' },

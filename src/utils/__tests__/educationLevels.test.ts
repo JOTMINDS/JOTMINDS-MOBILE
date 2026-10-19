@@ -3,7 +3,7 @@ import { getThinkingStylesTrack } from '../thinkingStylesTrack';
 
 describe('educationLevels', () => {
   it('offers Pre-school first, using the webapp value', () => {
-    expect(EDUCATION_LEVELS[0]).toEqual({ value: 'Pre-school', label: 'Pre-school' });
+    expect(EDUCATION_LEVELS[0]).toEqual({ value: 'Pre-school', label: 'Preschool (Crèche, Nursery, KG)' });
     expect(EDUCATION_LEVELS.map((l) => l.value)).toEqual(['Pre-school', 'Elementary', 'JHS', 'SHS', 'Tertiary']);
   });
   it('derives level from young ages like the webapp migration', () => {

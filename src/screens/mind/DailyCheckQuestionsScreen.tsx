@@ -3,6 +3,7 @@ import {
   View, Text, StyleSheet, TouchableOpacity, ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { saveCheckin } from '../../utils/mindCheckins';
 import ScreenBackground from '../../components/ScreenBackground';
@@ -23,6 +24,8 @@ export default function DailyCheckQuestionsScreen({ navigation }: any) {
   const colors = useTheme();
   const styles = useThemedStyles(makeStyles);
   const toast = useToast();
+  const { user } = useAuth();
+  const isKid = user?.role === 'student' && typeof user.age === 'number' && user.age < 13;
   const [step, setStep] = useState(1);
   const [focusScore, setFocusScore] = useState<number | null>(null);
   const [decisionDelay, setDecisionDelay] = useState<boolean | null>(null);
@@ -74,7 +77,7 @@ export default function DailyCheckQuestionsScreen({ navigation }: any) {
         {step === 1 && (
           <GlassCard style={styles.questionCard}>
             <Text style={styles.qLabel}>QUESTION 1</Text>
-            <Text style={styles.qTitle}>Over the last hour, how much did your attention wander from what you meant to be doing?</Text>
+            <Text style={styles.qTitle}>{isKid ? 'How well did you pay attention to what you were doing today?' : 'Over the last hour, how well did you stay on what you meant to be doing?'}</Text>
             <Text style={styles.qSub}>1 = drifted constantly · 5 = stayed on task</Text>
             <View style={styles.scaleRow}>
               {[1, 2, 3, 4, 5].map((n) => (
@@ -109,7 +112,7 @@ export default function DailyCheckQuestionsScreen({ navigation }: any) {
         {step === 2 && (
           <GlassCard style={styles.questionCard}>
             <Text style={styles.qLabel}>QUESTION 2</Text>
-            <Text style={styles.qTitle}>Is there a choice you keep coming back to without landing on it?</Text>
+            <Text style={styles.qTitle}>{isKid ? 'Is there something you can\'t make up your mind about?' : 'Is there a choice you keep coming back to without landing on it?'}</Text>
             <Text style={styles.qSub}>Something you've thought about more than once today and still haven't settled</Text>
             <View style={styles.yesNoRow}>
               {[
@@ -139,7 +142,7 @@ export default function DailyCheckQuestionsScreen({ navigation }: any) {
         {step === 3 && (
           <GlassCard style={styles.questionCard}>
             <Text style={styles.qLabel}>QUESTION 3</Text>
-            <Text style={styles.qTitle}>Which of these has been closest to how most of today has felt?</Text>
+            <Text style={styles.qTitle}>{isKid ? 'How have you mostly felt today?' : 'Which of these has been closest to how most of today has felt?'}</Text>
             <Text style={styles.qSub}>Go with your first read, not the version you'd like it to be</Text>
             <View style={styles.emotionsGrid}>
               {EMOTIONS.map((em) => (

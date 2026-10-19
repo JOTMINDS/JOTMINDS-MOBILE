@@ -37,7 +37,12 @@ export default function CurriculumTrackerScreen() {
     const topics = await generateCurriculumTopics({ subject: input.subject, grade: input.grade, curriculum, mainTopic: input.mainTopic });
     setBusy(false);
     if (!topics) { toast.error('Could not suggest sub-topics right now. Try again in a moment.'); return; }
-    await saveTracker(newTracker(input, topics));
+    try {
+      await saveTracker(newTracker(input, topics));
+    } catch {
+      toast.error('Could not save the tracker to this device. Free up storage and try again.');
+      return;
+    }
     await refresh();
     setSubject(''); setGrade(''); setMainTopic('');
     setMode('list');

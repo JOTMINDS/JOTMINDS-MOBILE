@@ -1,8 +1,9 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { readScoped, writeScoped } from './userStorage';
+import { consecutiveDayStreak } from './streaks';
 
 /**
  * Daily micro-tasks derived from an Adaptation Plan's top gap areas.
- * Completion is tracked per role, per day, on-device.
+ * Completion is tracked per user, per role, per local day, on-device.
  *
  * A "role key" is a slug of the role name so tasks for "Product Manager" and
  * "Data Analyst" track independently.
@@ -18,14 +19,16 @@ export interface DailyTask {
 export const roleKey = (roleName: string) =>
   roleName.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-');
 
-const dayStamp = () => new Date().toISOString().slice(0, 10);
+/** Local calendar day (YYYY-MM-DD). Not toISOString(), which is UTC and rolls the day over at the wrong hour. */
+export const dayStamp = (d: Date = new Date()) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 const completedKey = (rk: string) => `jotminds.adaptTasks.${rk}`;
 
 interface Store { [date: string]: string[] } // date -> completed task ids
 
 async function readStore(rk: string): Promise<Store> {
   try {
-    const raw = await AsyncStorage.getItem(completedKey(rk));
+    const raw = await readScoped(completedKey(rk));
     return raw ? (JSON.parse(raw) as Store) : {};
   } catch {
     return {};
@@ -37,7 +40,7 @@ async function writeStore(rk: string, store: Store): Promise<void> {
   const dates = Object.keys(store).sort().slice(-60);
   const trimmed: Store = {};
   dates.forEach((d) => { trimmed[d] = store[d]; });
-  await AsyncStorage.setItem(completedKey(rk), JSON.stringify(trimmed)).catch(() => {});
+  await writeScoped(completedKey(rk), JSON.stringify(trimmed)); // throws; callers tell the user
 }
 
 /** One rotating task per gap dimension — rotates by day so it doesn't feel stale. */
@@ -67,23 +70,14 @@ export async function toggleTaskDone(rk: string, taskId: string): Promise<Set<st
   return set;
 }
 
-/** Consecutive days (ending today or yesterday) with at least one task completed. */
+/** Consecutive local days (ending today or yesterday) with at least one task completed. */
 export async function getAdaptationStreak(rk: string): Promise<number> {
   const store = await readStore(rk);
-  const done = new Set(Object.entries(store).filter(([, ids]) => ids.length > 0).map(([d]) => d));
-  if (done.size === 0) return 0;
-
-  const today = new Date();
-  const iso = (d: Date) => d.toISOString().slice(0, 10);
-  if (!done.has(iso(today))) {
-    today.setDate(today.getDate() - 1);
-    if (!done.has(iso(today))) return 0;
-  }
-  let streak = 0;
-  const cursor = new Date(today);
-  while (done.has(iso(cursor))) {
-    streak++;
-    cursor.setDate(cursor.getDate() - 1);
-  }
-  return streak;
+  const days = Object.entries(store)
+    .filter(([, ids]) => ids.length > 0)
+    .map(([d]) => {
+      const [y, m, day] = d.split('-').map(Number);
+      return new Date(y, m - 1, day, 12).toISOString();
+    });
+  return consecutiveDayStreak(days);
 }

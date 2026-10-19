@@ -5,8 +5,9 @@
  * whole daily check-in flow is a real, device-local journal. Mirrors the
  * AsyncStorage pattern already established in coachingProgress.ts.
  */
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { focusTrend } from './scoring';
+import { consecutiveDayStreak } from './streaks';
+import { readScoped, writeScoped } from './userStorage';
 
 export interface Checkin {
   focus_score: number;
@@ -19,7 +20,7 @@ const STORAGE_KEY = 'jotminds.mind.checkins';
 
 async function readAll(): Promise<Checkin[]> {
   try {
-    const raw = await AsyncStorage.getItem(STORAGE_KEY);
+    const raw = await readScoped(STORAGE_KEY);
     const list: Checkin[] = raw ? JSON.parse(raw) : [];
     return list.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
   } catch {
@@ -33,14 +34,11 @@ function dateKey(iso: string): string {
 
 /** Saves a check-in, replacing any existing one from the same calendar day. */
 export async function saveCheckin(checkin: Checkin): Promise<void> {
-  try {
-    const existing = await readAll();
-    const today = dateKey(checkin.created_at);
-    const filtered = existing.filter((c) => dateKey(c.created_at) !== today);
-    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify([checkin, ...filtered]));
-  } catch {
-    // non-critical; local-only journal
-  }
+  // Throws on failure so the caller can tell the user instead of pretending it saved.
+  const existing = await readAll();
+  const today = dateKey(checkin.created_at);
+  const filtered = existing.filter((c) => dateKey(c.created_at) !== today);
+  await writeScoped(STORAGE_KEY, JSON.stringify([checkin, ...filtered]));
 }
 
 export async function getTodayCheckin(): Promise<Checkin | null> {
@@ -51,29 +49,7 @@ export async function getTodayCheckin(): Promise<Checkin | null> {
 
 /** Consecutive-day streak, counting back from today (or yesterday if today isn't done yet). */
 export async function getStreak(): Promise<number> {
-  const all = await readAll();
-  if (all.length === 0) return 0;
-
-  const dates = [...new Set(all.map((c) => dateKey(c.created_at)))]
-    .map((d) => new Date(d).getTime())
-    .sort((a, b) => b - a);
-
-  const dayMs = 86400000;
-  const today = new Date(); today.setHours(0, 0, 0, 0);
-  let cursor = today.getTime();
-
-  // If today has no check-in, streak can still be "alive" through yesterday.
-  if (dates[0] !== cursor) {
-    if (dates[0] === cursor - dayMs) cursor -= dayMs;
-    else return 0;
-  }
-
-  let streak = 0;
-  for (const d of dates) {
-    if (d === cursor) { streak += 1; cursor -= dayMs; }
-    else break;
-  }
-  return streak;
+  return consecutiveDayStreak((await readAll()).map((c) => c.created_at));
 }
 
 function lastNDays(all: Checkin[], n: number): Checkin[] {

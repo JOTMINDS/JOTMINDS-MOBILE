@@ -14,6 +14,7 @@ import SplashScreen from '../screens/auth/SplashScreen';
 import WelcomeScreen from '../screens/auth/WelcomeScreen';
 import LoginScreen from '../screens/auth/LoginScreen';
 import SignupScreen from '../screens/auth/SignupScreen';
+import SetNewPasswordScreen from '../screens/auth/SetNewPasswordScreen';
 import OtpVerificationScreen from '../screens/auth/OtpVerificationScreen';
 import FirstWinScreen from '../screens/onboarding/FirstWinScreen';
 
@@ -201,7 +202,7 @@ function MainTabs() {
 }
 
 export default function AppNavigator() {
-  const { user, loading } = useAuth();
+  const { user, loading, passwordRecovery } = useAuth();
   const t = useTheme();
   // First-Win onboarding gate: shown once per user before the main app.
   const [firstWinDone, setFirstWinDone] = useState<boolean | null>(null);
@@ -244,7 +245,9 @@ export default function AppNavigator() {
         }}
         initialRouteName={user ? (firstWinDone ? 'Main' : 'FirstWin') : 'Welcome'}
       >
-        {user ? (
+        {user && passwordRecovery ? (
+          <Stack.Screen name="SetNewPassword" component={SetNewPasswordScreen} options={{ gestureEnabled: false }} />
+        ) : user ? (
           // ── Authenticated Stack ────────────────────────────────────────────
           <>
             <Stack.Screen name="FirstWin" component={FirstWinScreen} />

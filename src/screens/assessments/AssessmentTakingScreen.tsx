@@ -93,8 +93,11 @@ export default function AssessmentTakingScreen({ navigation, route }: any) {
       );
       if (user?.id) recordAssessmentCompletion(user.id).catch(() => {});
       navigation.replace('AssessmentResults', { assessmentType });
-    } catch {
-      toast.error('Could not save your results. Please check your connection.');
+    } catch (e: any) {
+      toast.error(e?.message || 'Could not save your results. Please check your connection.');
+      // choose() latched `busy` on the final answer; release it so the user can
+      // tap an answer again to retry (answers are still held in state).
+      busy.current = false;
       setSubmitting(false);
     }
   };
