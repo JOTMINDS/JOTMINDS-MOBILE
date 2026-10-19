@@ -111,3 +111,19 @@ describe('completedCount', () => {
     expect(completedCount(null)).toBe(0);
   });
 });
+
+describe('scoreShares', () => {
+  const { scoreShares } = require('../classInsights');
+  it('sizes bars by share of the domain total, whatever the bank size', () => {
+    const small = scoreShares({ analytical: 6, creative: 3, practical: 3 });
+    const big = scoreShares({ analytical: 24, creative: 12, practical: 12 });
+    expect(small.map((r: any) => r.percent)).toEqual(big.map((r: any) => r.percent));
+    expect(small[0].percent).toBe(50);
+    expect(small.reduce((a: number, r: any) => a + r.percent, 0)).toBeCloseTo(100);
+  });
+  it('handles empty, zero-total and junk values', () => {
+    expect(scoreShares(undefined)).toEqual([]);
+    expect(scoreShares({ a: 0, b: 0 }).map((r: any) => r.percent)).toEqual([0, 0]);
+    expect(scoreShares({ a: 'x', b: -2, c: 4 }).map((r: any) => r.key)).toEqual(['c']);
+  });
+});

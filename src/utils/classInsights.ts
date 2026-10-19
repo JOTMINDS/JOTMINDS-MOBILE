@@ -179,3 +179,18 @@ export function completedCount(student: any): number {
   for (const a of student?.assessments ?? []) if (a?.type) types.add(String(a.type));
   return types.size;
 }
+
+/**
+ * Bar widths (0–100) for one domain's dimension scores. The server returns raw
+ * sums of 1–5 answers, so the possible maximum depends on the question bank
+ * (kids / teen / adult sizes differ). Each dimension is therefore sized by its
+ * share of the domain total, which is correct for any bank size. Non-numeric
+ * and negative values are dropped.
+ */
+export function scoreShares(scores: Record<string, unknown> | undefined): { key: string; value: number; percent: number }[] {
+  const rows = Object.entries(scores ?? {})
+    .map(([key, v]) => ({ key, value: Number(v) }))
+    .filter((r) => Number.isFinite(r.value) && r.value >= 0);
+  const total = rows.reduce((a, r) => a + r.value, 0);
+  return rows.map((r) => ({ ...r, percent: total > 0 ? (r.value / total) * 100 : 0 }));
+}
