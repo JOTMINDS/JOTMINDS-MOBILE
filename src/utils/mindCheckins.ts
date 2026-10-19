@@ -6,6 +6,7 @@
  * AsyncStorage pattern already established in coachingProgress.ts.
  */
 import { focusTrend } from './scoring';
+import { consecutiveDayStreak } from './streaks';
 import { readScoped, writeScoped } from './userStorage';
 
 export interface Checkin {
@@ -48,29 +49,7 @@ export async function getTodayCheckin(): Promise<Checkin | null> {
 
 /** Consecutive-day streak, counting back from today (or yesterday if today isn't done yet). */
 export async function getStreak(): Promise<number> {
-  const all = await readAll();
-  if (all.length === 0) return 0;
-
-  const dates = [...new Set(all.map((c) => dateKey(c.created_at)))]
-    .map((d) => new Date(d).getTime())
-    .sort((a, b) => b - a);
-
-  const dayMs = 86400000;
-  const today = new Date(); today.setHours(0, 0, 0, 0);
-  let cursor = today.getTime();
-
-  // If today has no check-in, streak can still be "alive" through yesterday.
-  if (dates[0] !== cursor) {
-    if (dates[0] === cursor - dayMs) cursor -= dayMs;
-    else return 0;
-  }
-
-  let streak = 0;
-  for (const d of dates) {
-    if (d === cursor) { streak += 1; cursor -= dayMs; }
-    else break;
-  }
-  return streak;
+  return consecutiveDayStreak((await readAll()).map((c) => c.created_at));
 }
 
 function lastNDays(all: Checkin[], n: number): Checkin[] {

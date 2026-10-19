@@ -5,6 +5,7 @@
  * route). Good enough for "plan it on the bus, teach it in class".
  */
 import { readScoped, writeScoped } from './userStorage';
+import { consecutiveDayStreak } from './streaks';
 import { callEdgeFn } from './supabase';
 
 export interface LessonPlanInput {
@@ -82,3 +83,7 @@ export async function deleteLessonPlan(id: string): Promise<void> {
   const all = await getLessonPlans();
   await writeScoped(KEY, JSON.stringify(all.filter((p) => p.id !== id)));
 }
+
+/** Consecutive days on which the teacher created a lesson plan. */
+export const planningStreak = (plans: LessonPlan[]): number =>
+  consecutiveDayStreak(plans.map((p) => p.createdAt));

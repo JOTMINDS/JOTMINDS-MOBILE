@@ -9,8 +9,9 @@ import LessonToolsPanel from '../../components/teacher/LessonToolsPanel';
 import { useToast } from '../../context/ToastContext';
 import {
   generateLessonPlan, getLessonPlans, saveLessonPlan, updateLessonPlan, deleteLessonPlan,
-  LessonPlan,
+  LessonPlan, planningStreak,
 } from '../../utils/lessonPlannerApi';
+import { shareStreak } from '../../utils/streakShare';
 import { rs } from '../../utils/responsive';
 import { radii, spacing, Palette } from '../../theme';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
@@ -31,6 +32,8 @@ export default function LessonPlannerScreen({ navigation }: any) {
   const [gradeClass, setGradeClass] = useState('');
   const [topic, setTopic] = useState('');
   const [duration, setDuration] = useState(45);
+
+  const streak = planningStreak(plans);
 
   useEffect(() => { getLessonPlans().then(setPlans); }, []);
 
@@ -190,6 +193,20 @@ export default function LessonPlannerScreen({ navigation }: any) {
         <TouchableOpacity onPress={() => navigation.navigate('CurriculumTracker')} accessibilityRole="button" style={{ alignItems: 'center', paddingVertical: 12 }}>
           <Text style={{ color: colors.purpleSoft, fontWeight: '800', fontSize: 13 }}>📚 Curriculum tracker →</Text>
         </TouchableOpacity>
+
+        {streak > 0 && (
+          <GlassCard variant="dark" padding={16} style={styles.card}>
+            <View style={styles.listRow}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.listTopic}>🔥 {streak}-day planning streak</Text>
+                <Text style={styles.listMeta}>Plan a lesson every day to keep it going.</Text>
+              </View>
+              <TouchableOpacity onPress={() => shareStreak(streak, 'planning')} hitSlop={10} accessibilityRole="button" accessibilityLabel="Share streak">
+                <Text style={{ color: colors.cyan, fontWeight: '800' }}>Share ↗</Text>
+              </TouchableOpacity>
+            </View>
+          </GlassCard>
+        )}
 
         {plans.length === 0 ? (
           <GlassCard variant="dark" padding={24} style={styles.card}>
