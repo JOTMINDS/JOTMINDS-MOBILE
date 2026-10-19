@@ -155,7 +155,7 @@ export default function LoginScreen({ navigation, route }: any) {
     setLoading(true);
     try {
       await requestPasswordReset(email);
-      toast.success('Password reset link sent — check your email.');
+      navigation.navigate('OtpVerification', { mode: 'reset', email });
     } catch (error: any) {
       toast.error(error.message || 'Could not send the reset link. Try again.');
     } finally {

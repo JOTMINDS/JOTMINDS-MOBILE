@@ -95,3 +95,10 @@ export async function biometricSignIn(): Promise<{ email: string; password: stri
     return null;
   }
 }
+
+/** Keep the keychain copy in sync after the user changes their password. */
+export async function updateBiometricPassword(email: string, password: string): Promise<void> {
+  await SecureStore.setItemAsync(CREDS_KEY, JSON.stringify({ email, password }), {
+    keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
+  });
+}
