@@ -15,6 +15,7 @@ import GradientButton from '../../components/GradientButton';
 import RadarChart from '../../components/RadarChart';
 import { SkeletonCard, Skeleton } from '../../components/Skeleton';
 import { STYLE_DESCRIPTIONS, normalizeAssessmentResult, assessmentLabel } from '../../utils/scoring';
+import { getFriendlyStyleDisplay } from '../../utils/styleWording';
 import { getGhanaMapping } from '../../utils/ghanaMapping';
 import { getStyleInsights } from '../../utils/styleInsights';
 import { missingCognitiveDomains, domainLabel, findResultForDomain } from '../../utils/profileCompleteness';
@@ -173,7 +174,7 @@ export default function AssessmentResultsScreen({ route, navigation }: any) {
           style={styles.heroCard}
         >
           <Text style={styles.heroLabel}>PRIMARY STYLE</Text>
-          <Text style={styles.heroValue}>{normalized?.primaryStyle || 'N/A'}</Text>
+          <Text style={styles.heroValue}>{normalized?.primaryStyle ? getFriendlyStyleDisplay(normalized.primaryStyle) : 'N/A'}</Text>
           {normalized?.primaryStyle && STYLE_DESCRIPTIONS[normalized.primaryStyle] ? (
             <Text style={styles.heroDesc}>{STYLE_DESCRIPTIONS[normalized.primaryStyle]}</Text>
           ) : null}
