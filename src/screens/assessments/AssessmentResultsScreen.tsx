@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -41,23 +41,28 @@ export default function AssessmentResultsScreen({ route, navigation }: any) {
   const [loading, setLoading] = useState(true);
   const [showCertificate, setShowCertificate] = useState(false);
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const [data, all] = await Promise.all([
-          getAssessmentResults(assessmentType),
-          getAllAssessmentResults().catch(() => ({ results: [] })),
-        ]);
-        // Backend returns the stored result object under `results` (plural).
-        setResults(data.results ?? data.result);
-        setAllResults(all?.results ?? []);
-      } catch (e) {
-        console.error('[AssessmentResults]', e);
-      } finally {
-        setLoading(false);
-      }
-    })();
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setLoadError(null);
+    try {
+      const [data, all] = await Promise.all([
+        getAssessmentResults(assessmentType),
+        getAllAssessmentResults().catch(() => ({ results: [] })),
+      ]);
+      // Backend returns the stored result object under `results` (plural);
+      // "no result yet" is a 200 with null, so a throw here is a real failure.
+      setResults(data.results ?? data.result);
+      setAllResults(all?.results ?? []);
+    } catch (e: any) {
+      setLoadError(e?.message || 'Could not load your results.');
+    } finally {
+      setLoading(false);
+    }
   }, [assessmentType]);
+
+  useEffect(() => { void load(); }, [load]);
 
   // Normalize once — the stored result may be mobile-shaped (primaryStyle/scores)
   // or webapp-shaped (style/percentages), depending on which client submitted it.
@@ -114,6 +119,19 @@ export default function AssessmentResultsScreen({ route, navigation }: any) {
           <Skeleton height={150} radius={20} style={{ marginBottom: 20 }} />
           <SkeletonCard lines={4} />
           <SkeletonCard lines={3} />
+        </View>
+      </ScreenBackground>
+    );
+  }
+
+  if (loadError && !results) {
+    // Don't claim "No results yet" (and push a retake) when we simply couldn't reach the server.
+    return (
+      <ScreenBackground>
+        <View style={styles.centered}>
+          <Text style={styles.emptyTitle}>Couldn't load your results</Text>
+          <Text style={styles.emptyText}>{loadError}</Text>
+          <GradientButton label="Try again" onPress={load} style={{ marginTop: spacing.lg }} />
         </View>
       </ScreenBackground>
     );
