@@ -236,3 +236,12 @@ Decisions: teachers keep **all** functions on mobile (class management, enrolmen
 | JM-PDAF preschool framework updates (`596b28e`, `deae4a2`) | ⏸ not re-diffed | Mobile preschool port predates these |
 
 Mobile-only fixes this round: in-app password recovery (OTP → set new password), assessment retry after failed save, N-Back practice round, per-user device storage (`utils/userStorage.ts`) for check-ins / lesson plans / trackers, lesson-planner streak, DST-safe streak helper.
+
+## Sync round 5 — 2026-10-19 (webapp `075741b`, 2 commits since `a743bf3`)
+
+| Webapp change | Mobile | Notes |
+|---|---|---|
+| Friendly style wording (`styleWording.ts`, new `STYLE_DESCRIPTIONS` text) | ✅ | `utils/styleWording.ts` copied verbatim; results hero shows friendly name; stored style keys unchanged |
+| "AI" removed from user-facing data text (JTIA items, career paths) | ✅ data strings | |
+| Friendly wording in reports / insights / AI prompts (`assessmentInsights`, `reportTextVariations`, `aiService`) | ⏸ not ported | mobile `styleInsights.ts` and `aiGenerators.ts` still use raw style names; "AI" labels in mobile UI not swept |
+| PDF export branding (`47c8ccb`) | ⛔ web-only | |
