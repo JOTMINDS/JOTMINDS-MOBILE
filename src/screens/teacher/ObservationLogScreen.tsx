@@ -43,13 +43,20 @@ export default function ObservationLogScreen() {
   const [share, setShare] = useState(true);
   const [busy, setBusy] = useState(false);
 
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [rosterError, setRosterError] = useState<string | null>(null);
+
   const load = useCallback(async () => {
-    const [obs, studs] = await Promise.all([
-      user?.id ? getTeacherObservations(user.id) : Promise.resolve([]),
-      getStudentsForTeacher().catch(() => ({ students: [] })),
+    const [obs, studs] = await Promise.allSettled([
+      user?.id ? getTeacherObservations(user.id) : Promise.resolve([] as TeacherObservation[]),
+      getStudentsForTeacher(),
     ]);
-    setObservations(obs);
-    setStudents(studs.students ?? []);
+    // On failure keep whatever is already on screen and say so, rather than
+    // presenting an empty list or roster as if it were the truth.
+    if (obs.status === 'fulfilled') { setObservations(obs.value); setLoadError(null); }
+    else setLoadError(obs.reason?.message || 'Could not load your observations.');
+    if (studs.status === 'fulfilled') { setStudents(studs.value.students ?? []); setRosterError(null); }
+    else setRosterError(studs.reason?.message || 'Could not load your students.');
     setLoading(false);
   }, [user?.id]);
 
@@ -83,7 +90,10 @@ export default function ObservationLogScreen() {
   const remove = (o: TeacherObservation) => {
     Alert.alert('Delete observation', `Delete your note about ${o.studentName}?`, [
       { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: async () => { await deleteTeacherObservation(o.id); load(); } },
+      { text: 'Delete', style: 'destructive', onPress: async () => {
+        if (await deleteTeacherObservation(o.id)) load();
+        else toast.error('Could not delete the observation. Check your connection and try again.');
+      } },
     ]);
   };
 
@@ -102,7 +112,11 @@ export default function ObservationLogScreen() {
           <Text style={styles.h1}>New observation</Text>
 
           <Text style={styles.label}>STUDENT</Text>
-          {students.length === 0 ? (
+          {students.length === 0 && rosterError ? (
+            <TouchableOpacity onPress={load} accessibilityRole="button">
+              <Text style={styles.emptyText}>Couldn't load your students ({rosterError}). Tap to retry.</Text>
+            </TouchableOpacity>
+          ) : students.length === 0 ? (
             <Text style={styles.emptyText}>No students on your roster yet.</Text>
           ) : (
             <View style={styles.chipWrap}>
@@ -173,10 +187,22 @@ export default function ObservationLogScreen() {
           <Text style={styles.primaryBtnText}>+ New observation</Text>
         </TouchableOpacity>
 
-        {observations.length === 0 ? (
-          <GlassCard variant="dark" padding={24} style={styles.card}>
-            <Text style={styles.emptyText}>No observations yet.</Text>
+        {!!loadError && (
+          <GlassCard variant="dark" padding={16} style={styles.card}>
+            <Text style={styles.obsStudent}>Couldn't load your observations</Text>
+            <Text style={styles.emptyText}>{loadError}</Text>
+            <TouchableOpacity onPress={load} accessibilityRole="button" hitSlop={8} style={{ marginTop: 8 }}>
+              <Text style={styles.deleteText}>Tap to retry</Text>
+            </TouchableOpacity>
           </GlassCard>
+        )}
+
+        {observations.length === 0 ? (
+          loadError ? null : (
+            <GlassCard variant="dark" padding={24} style={styles.card}>
+              <Text style={styles.emptyText}>No observations yet.</Text>
+            </GlassCard>
+          )
         ) : (
           observations.map((o) => (
             <GlassCard key={o.id} padding={16} style={styles.card}>

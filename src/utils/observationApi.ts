@@ -1,8 +1,10 @@
 /**
  * Teacher Observation client. Backed by the /teacher-observation/* edge
  * routes (see JOTMINDS-WEBAPP supabase/functions/server/teacher-observation-routes.tsx).
- * All calls resolve to a safe empty shape on failure so screens don't crash
- * if the route isn't deployed yet.
+ * Most calls resolve to a safe empty shape on failure so screens don't crash
+ * if the route isn't deployed yet. `getTeacherObservations` is the exception:
+ * it throws, so the teacher's own log can tell "failed to load" apart from
+ * "no observations yet".
  */
 import { callEdgeFn } from './supabase';
 
@@ -57,13 +59,10 @@ export async function createTeacherObservation(
   }
 }
 
+/** Throws on failure (see header). */
 export async function getTeacherObservations(teacherId: string): Promise<TeacherObservation[]> {
-  try {
-    const res = await callEdgeFn(`/teacher-observation/teacher/${teacherId}`);
-    return res?.observations ?? [];
-  } catch {
-    return [];
-  }
+  const res = await callEdgeFn(`/teacher-observation/teacher/${teacherId}`);
+  return res?.observations ?? [];
 }
 
 export async function getObservationsForChild(childId: string): Promise<TeacherObservation[]> {
@@ -75,10 +74,12 @@ export async function getObservationsForChild(childId: string): Promise<TeacherO
   }
 }
 
-export async function deleteTeacherObservation(id: string): Promise<void> {
+/** Resolves true on success; false (never throws) so callers can tell the teacher it failed. */
+export async function deleteTeacherObservation(id: string): Promise<boolean> {
   try {
     await callEdgeFn(`/teacher-observation/${id}`, { method: 'DELETE' });
+    return true;
   } catch {
-    // non-critical
+    return false;
   }
 }

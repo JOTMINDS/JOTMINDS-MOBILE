@@ -22,7 +22,7 @@ export default function OtpVerificationScreen({ route, navigation }: ScreenProps
   const styles = useThemedStyles(makeStyles);
   // mode: 'signup' (custom Resend OTP) | 'login' (Supabase native OTP)
   const { mode, email, signupData } = route.params;
-  const { signIn, signUp, verifyLoginOtp, requestLoginOtp } = useAuth();
+  const { signIn, signUp, verifyLoginOtp, verifyRecoveryOtp, requestLoginOtp } = useAuth();
   const toast = useToast();
 
   const [digits, setDigits] = useState<string[]>(Array(CODE_LENGTH).fill(''));
@@ -120,6 +120,9 @@ export default function OtpVerificationScreen({ route, navigation }: ScreenProps
           navigation.replace('Login', { email: signupData.email });
           return;
         }
+      } else if (mode === 'reset') {
+        // Establishes a session and flags recovery; the navigator then shows SetNewPassword.
+        await verifyRecoveryOtp(email, code);
       } else {
         // Supabase native OTP → establishes a session on success.
         await verifyLoginOtp(email, code);
@@ -170,7 +173,7 @@ export default function OtpVerificationScreen({ route, navigation }: ScreenProps
           >
             <AppIcon name="✉️" size={32} color="#FFFFFF" />
           </LinearGradient>
-          <Text style={styles.title}>Verify your email</Text>
+          <Text style={styles.title}>{mode === 'reset' ? 'Reset your password' : 'Verify your email'}</Text>
           <Text style={styles.subtitle}>
             We sent a 6-digit code to{'\n'}
             <Text style={styles.email}>{email}</Text>

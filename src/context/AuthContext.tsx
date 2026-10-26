@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase, callEdgeFn } from '../utils/supabase';
 import { signInWithCode } from '../utils/studentCodeAuth';
+import { isBiometricLoginEnabled, updateBiometricPassword } from '../utils/biometricAuth';
 import type { Session, User as SupabaseUser } from '@supabase/supabase-js';
 
 export interface AppUser {
@@ -38,6 +39,10 @@ interface AuthContextType {
   requestPasswordReset: (email: string) => Promise<void>;
   verifyLoginOtp: (email: string, token: string) => Promise<void>;
   signInWithStudentCode: (code: string) => Promise<void>;
+  /** True between verifying a password-recovery code and choosing a new password. */
+  passwordRecovery: boolean;
+  verifyRecoveryOtp: (email: string, token: string) => Promise<void>;
+  updatePassword: (newPassword: string) => Promise<void>;
 }
 
 export interface SignUpData {
@@ -112,6 +117,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<AppUser | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [passwordRecovery, setPasswordRecovery] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -200,14 +206,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (error) throw new Error(error.message);
   };
 
-  // Emails a password-reset link. The link opens jotminds.com's reset page
-  // (mobile has no reset deep-link route yet) — good enough as a recovery path.
-  const requestPasswordReset = async (email: string) => {
-    const { error } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
-      redirectTo: 'https://jotminds.com/auth/reset-password',
-    });
-    if (error) throw new Error(error.message);
-  };
+  // Password recovery is in-app: email a 6-digit code (same OTP channel as
+  // passwordless login), verify it, then force a "set new password" screen.
+  const requestPasswordReset = (email: string) => requestLoginOtp(email);
 
   const verifyLoginOtp = async (email: string, token: string) => {
     const { error } = await supabase.auth.verifyOtp({
@@ -218,6 +219,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (error) throw new Error(error.message);
   };
 
+  // Flag recovery *before* verifying so the navigator never flashes the main app
+  // between the session being established and the new-password screen.
+  const verifyRecoveryOtp = async (email: string, token: string) => {
+    setPasswordRecovery(true);
+    try {
+      await verifyLoginOtp(email, token);
+    } catch (e) {
+      setPasswordRecovery(false);
+      throw e;
+    }
+  };
+
+  const updatePassword = async (newPassword: string) => {
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    if (error) throw new Error(error.message);
+    // A stale keychain password would break Face ID sign-in after a change.
+    if (user?.email && (await isBiometricLoginEnabled())) {
+      await updateBiometricPassword(user.email, newPassword).catch(() => {});
+    }
+    setPasswordRecovery(false);
+  };
+
   // Institutional sign-in: exchange a school-issued student code for a session
   // (see utils/studentCodeAuth.ts).
   const signInWithStudentCode = (code: string) => signInWithCode(code);
@@ -226,6 +249,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await supabase.auth.signOut();
     setUser(null);
     setSession(null);
+    setPasswordRecovery(false);
   };
 
   const refreshUser = async () => {
@@ -237,7 +261,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, signIn, signUp, signOut, refreshUser, requestLoginOtp, requestPasswordReset, verifyLoginOtp, signInWithStudentCode }}>
+    <AuthContext.Provider value={{ user, session, loading, signIn, signUp, signOut, refreshUser, requestLoginOtp, requestPasswordReset, verifyLoginOtp, signInWithStudentCode, passwordRecovery, verifyRecoveryOtp, updatePassword }}>
       {children}
     </AuthContext.Provider>
   );

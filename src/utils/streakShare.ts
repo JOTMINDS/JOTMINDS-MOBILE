@@ -3,11 +3,11 @@ import { Share } from 'react-native';
 /**
  * Share the user's streak with a "start your own" nudge + app link.
  * Text-only (works everywhere, no capture). `kind` tags what the streak is:
- * 'check-in' for the Daily Mind Check, 'growth' for the Cognitive Growth streak.
+ * 'check-in' for the Daily Mind Check, 'planning' for teachers' lesson planning, 'growth' for the Cognitive Growth streak.
  */
-export async function shareStreak(days: number, kind: 'check-in' | 'growth' = 'growth'): Promise<void> {
+export async function shareStreak(days: number, kind: 'check-in' | 'growth' | 'planning' = 'growth'): Promise<void> {
   if (days <= 0) return;
-  const what = kind === 'check-in' ? 'daily mind check-in' : 'cognitive growth';
+  const what = kind === 'check-in' ? 'daily mind check-in' : kind === 'planning' ? 'lesson planning' : 'cognitive growth';
   const flames = '🔥'.repeat(Math.min(5, Math.max(1, Math.ceil(days / 7))));
   const message = [
     `${flames} ${days}-day ${what} streak on JotMinds ${flames}`,

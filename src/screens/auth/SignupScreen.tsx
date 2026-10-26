@@ -23,14 +23,8 @@ import AppIcon from '../../components/AppIcon';
 import Logo from '../../components/Logo';
 import { colors, radii, shadow, spacing, Palette } from '../../theme';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
+import { EDUCATION_LEVELS } from '../../utils/educationLevels';
 
-// Education levels — mirrors the jotminds.com web signup (students only).
-const EDUCATION_LEVELS = [
-  { value: 'Elementary', label: 'Primary' },
-  { value: 'JHS', label: 'JHS' },
-  { value: 'SHS', label: 'SHS' },
-  { value: 'Tertiary', label: 'Tertiary' },
-];
 
 export default function SignupScreen({ navigation, route }: any) {
   const colors = useTheme();

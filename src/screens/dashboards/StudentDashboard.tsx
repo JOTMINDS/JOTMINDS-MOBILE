@@ -23,6 +23,7 @@ import { FeatureVisible } from '../../components/FeatureGate';
 import { StudentRecommendationsCard, ExecutiveSummaryCard } from '../../components/ai/InsightCards';
 import { stylesFromResults, hasAllStyles } from '../../utils/profileStyles';
 import { isKidsAge } from '../../utils/kidsMode';
+import { isPreschoolLevel } from '../../utils/educationLevels';
 import ParentPinModal from '../../components/ParentPinModal';
 import { updateUserProfile } from '../../utils/api';
 import { colors, radii, shadow, spacing, Palette } from '../../theme';
@@ -67,6 +68,8 @@ export default function StudentDashboard({ navigation }: any) {
 
   // Kids mode = age 6–10, the same rule as the webapp (see utils/kidsMode.ts).
   const isKidsMode = isKidsAge(user?.age);
+  // Webapp: pre-school learners have no self-report assessments (teachers observe them instead).
+  const isPreschool = isPreschoolLevel(user?.educationLevel);
 
   // Kids accounts (6–10) get a parent PIN so they can't sign out or change privacy
   // settings alone. Prompted once per launch until set; "Set up later" dismisses it.
@@ -225,7 +228,7 @@ export default function StudentDashboard({ navigation }: any) {
           </>
         )}
 
-        {!isKidsMode && (
+        {!isKidsMode && !isPreschool && (
           <GlassCard padding={16} style={{ marginBottom: spacing.xl }} onPress={() => navigation.navigate('CognitiveReport')}>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <LinearGradient colors={['#6E4D9C', '#3D52C9']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.challengeIcon}>
@@ -242,7 +245,16 @@ export default function StudentDashboard({ navigation }: any) {
           </GlassCard>
         )}
 
-        <View style={styles.section}>
+        {isPreschool && (
+          <GlassCard style={styles.assessmentCard}>
+            <Text style={styles.cardTitle}>🧸 Learning through play</Text>
+            <Text style={styles.cardDescription}>
+              Your teacher records how you grow as you play and learn. There's nothing to take here yet.
+            </Text>
+          </GlassCard>
+        )}
+
+        {!isPreschool && <View style={styles.section}>
           <Text style={styles.sectionTitle}>Your Assessments</Text>
           <Text style={styles.sectionSubtitle}>
             Complete these to build your cognitive profile
@@ -288,7 +300,7 @@ export default function StudentDashboard({ navigation }: any) {
               </GlassCard>
             );
           })}
-        </View>
+        </View>}
 
         {assessments.length > 0 && (
           <View style={styles.section}>

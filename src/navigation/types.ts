@@ -14,7 +14,8 @@ export type RootStackParamList = {
   Welcome: undefined;
   Login: { email?: string; studentCode?: string } | undefined;
   Signup: { role?: string; organizationCode?: string } | undefined;
-  OtpVerification: { mode: 'signup' | 'login'; email: string; signupData?: any };
+  OtpVerification: { mode: 'signup' | 'login' | 'reset'; email: string; signupData?: any };
+  SetNewPassword: undefined;
   FirstWin: undefined;
   Main: undefined;
 
@@ -78,6 +79,12 @@ export type RootStackParamList = {
   ClassAnalytics: undefined;
   CurriculumTracker: undefined;
   StudentDetail: { student: any };
+  PreschoolChildren: undefined;
+  PreschoolChildProgress: { child: import('../types/preschoolDevelopmental').PreschoolUser & { classId?: string } };
+  PreschoolAssess: { child?: import('../types/preschoolDevelopmental').PreschoolUser & { classId?: string }; indicatorId?: string } | undefined;
+  PreschoolActivities: undefined;
+  PreschoolClassInsights: undefined;
+  PreschoolHomeActivities: { child: any };
 
   // Professional Intelligence V2
   ProfessionalV2Intro: undefined;

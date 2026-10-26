@@ -1,4 +1,4 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { readScoped, writeScoped } from './userStorage';
 
 /**
  * Curriculum tracker (scheme-of-work progress). On-device, like lesson plans:
@@ -33,7 +33,7 @@ export function progressPercent(topics: TrackerTopic[]): number {
 
 export async function getTrackers(): Promise<CurriculumTracker[]> {
   try {
-    const raw = await AsyncStorage.getItem(KEY);
+    const raw = await readScoped(KEY);
     const parsed = raw ? JSON.parse(raw) : [];
     return Array.isArray(parsed) ? parsed : [];
   } catch {
@@ -42,7 +42,7 @@ export async function getTrackers(): Promise<CurriculumTracker[]> {
 }
 
 async function write(all: CurriculumTracker[]) {
-  await AsyncStorage.setItem(KEY, JSON.stringify(all)).catch(() => {});
+  await writeScoped(KEY, JSON.stringify(all));
 }
 
 export async function saveTracker(t: CurriculumTracker): Promise<void> {

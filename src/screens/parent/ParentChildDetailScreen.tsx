@@ -12,6 +12,8 @@ import { completedDomains, REQUIRED_DOMAINS, domainLabel } from '../../utils/pro
 import { AdultResults } from '../../utils/adultScoring';
 import { ParentTipsCard, EducationalResourcesCard } from '../../components/ai/InsightCards';
 import { studentStyles, studentScores } from '../../utils/classInsights';
+import { isPreschoolChild } from '../../utils/preschoolEngine';
+import { toPreschoolChild } from '../preschool/shared';
 import { useAuth } from '../../context/AuthContext';
 import { colors, radii, shadow, spacing, Palette } from '../../theme';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
@@ -90,6 +92,16 @@ export default function ParentChildDetailScreen({ route, navigation }: any) {
             ))}
           </GlassCard>
         </View>
+
+        {isPreschoolChild(toPreschoolChild(child)) && (
+          <View style={styles.section}>
+            <GradientButton
+              label={`Play at home with ${child.name}`}
+              icon="🧸"
+              onPress={() => navigation.navigate('PreschoolHomeActivities', { child })}
+            />
+          </View>
+        )}
 
         {hasChildStyles && consentGranted && (
           <ParentTipsCard

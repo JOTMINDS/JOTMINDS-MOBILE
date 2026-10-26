@@ -2,7 +2,7 @@
   "expo": {
     "name": "JotMinds",
     "slug": "jotminds-mobile",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
     "scheme": "jotminds",
@@ -70,6 +70,7 @@
       ],
       "@react-native-community/datetimepicker",
       "./plugins/withFmtCxx17Fix",
+      "./plugins/withPodsDeploymentTargetFloor",
       "expo-secure-store",
       [
         "expo-image-picker",

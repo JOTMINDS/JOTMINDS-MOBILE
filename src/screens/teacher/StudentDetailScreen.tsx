@@ -3,7 +3,7 @@ import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-nati
 import ScreenBackground from '../../components/ScreenBackground';
 import GlassCard from '../../components/GlassCard';
 import { TeachingStrategiesCard, EducationalResourcesCard } from '../../components/ai/InsightCards';
-import { studentStyles, studentScores, DOMAINS, Domain } from '../../utils/classInsights';
+import { studentStyles, studentScores, scoreShares, DOMAINS, Domain } from '../../utils/classInsights';
 import { rs } from '../../utils/responsive';
 import { radii, spacing, Palette } from '../../theme';
 import { useThemedStyles } from '../../context/ThemeContext';
@@ -40,16 +40,13 @@ export default function StudentDetailScreen({ route, navigation }: ScreenProps<'
               <View key={d} style={styles.domain}>
                 <Text style={styles.domainLabel}>{LABEL[d]}</Text>
                 <Text style={styles.domainValue}>{st[d] ?? 'Not taken yet'}</Text>
-                {Object.entries((scores[d] ?? {}) as Record<string, number>).map(([k, v]) => {
-                  const n = Number(v);
-                  return Number.isFinite(n) ? (
-                    <View key={k} style={styles.dimRow}>
-                      <Text style={styles.dimLabel}>{k}</Text>
-                      <View style={styles.track}><View style={[styles.fill, { width: `${Math.max(2, Math.min(100, n))}%` }]} /></View>
-                      <Text style={styles.dimVal}>{Math.round(n)}</Text>
-                    </View>
-                  ) : null;
-                })}
+                {scoreShares(scores[d]).map(({ key, value, percent }) => (
+                  <View key={key} style={styles.dimRow}>
+                    <Text style={styles.dimLabel}>{key}</Text>
+                    <View style={styles.track}><View style={[styles.fill, { width: `${Math.max(2, percent)}%` }]} /></View>
+                    <Text style={styles.dimVal}>{Math.round(value)}</Text>
+                  </View>
+                ))}
               </View>
             ))
           )}

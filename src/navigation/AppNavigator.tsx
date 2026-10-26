@@ -14,6 +14,7 @@ import SplashScreen from '../screens/auth/SplashScreen';
 import WelcomeScreen from '../screens/auth/WelcomeScreen';
 import LoginScreen from '../screens/auth/LoginScreen';
 import SignupScreen from '../screens/auth/SignupScreen';
+import SetNewPasswordScreen from '../screens/auth/SetNewPasswordScreen';
 import OtpVerificationScreen from '../screens/auth/OtpVerificationScreen';
 import FirstWinScreen from '../screens/onboarding/FirstWinScreen';
 
@@ -116,6 +117,12 @@ import ProfessionalV2IntroScreen from '../screens/professional/ProfessionalV2Int
 import ProfessionalV2SessionScreen from '../screens/professional/ProfessionalV2SessionScreen';
 import ProfessionalV2ResultsScreen from '../screens/professional/ProfessionalV2ResultsScreen';
 import ClassManagementScreen from '../screens/teacher/ClassManagementScreen';
+import PreschoolChildrenScreen from '../screens/preschool/PreschoolChildrenScreen';
+import PreschoolChildProgressScreen from '../screens/preschool/PreschoolChildProgressScreen';
+import PreschoolAssessScreen from '../screens/preschool/PreschoolAssessScreen';
+import PreschoolActivitiesScreen from '../screens/preschool/PreschoolActivitiesScreen';
+import PreschoolClassInsightsScreen from '../screens/preschool/PreschoolClassInsightsScreen';
+import PreschoolHomeActivitiesScreen from '../screens/preschool/PreschoolHomeActivitiesScreen';
 import ObservationLogScreen from '../screens/teacher/ObservationLogScreen';
 
 // Server-driven kill switches (Super Admin → Feature Flags).
@@ -196,7 +203,7 @@ function MainTabs() {
 }
 
 export default function AppNavigator() {
-  const { user, loading } = useAuth();
+  const { user, loading, passwordRecovery } = useAuth();
   const t = useTheme();
   // First-Win onboarding gate: shown once per user before the main app.
   const [firstWinDone, setFirstWinDone] = useState<boolean | null>(null);
@@ -239,7 +246,9 @@ export default function AppNavigator() {
         }}
         initialRouteName={user ? (firstWinDone ? 'Main' : 'FirstWin') : 'Welcome'}
       >
-        {user ? (
+        {user && passwordRecovery ? (
+          <Stack.Screen name="SetNewPassword" component={SetNewPasswordScreen} options={{ gestureEnabled: false }} />
+        ) : user ? (
           // ── Authenticated Stack ────────────────────────────────────────────
           <>
             <Stack.Screen name="FirstWin" component={FirstWinScreen} />
@@ -344,6 +353,12 @@ export default function AppNavigator() {
             <Stack.Screen name="CurriculumTracker" component={CurriculumTrackerScreen} options={{ headerShown: true, title: 'Curriculum Tracker' }} />
             <Stack.Screen name="CognitiveReport" component={CognitiveReportScreen as React.ComponentType} options={{ headerShown: true, title: 'Cognitive Report' }} />
             <Stack.Screen name="ClassAnalytics" component={ClassAnalyticsScreen} options={{ headerShown: true, title: 'Class Analytics' }} />
+            <Stack.Screen name="PreschoolChildren" component={PreschoolChildrenScreen as React.ComponentType} options={{ headerShown: true, title: 'Early Years' }} />
+            <Stack.Screen name="PreschoolChildProgress" component={PreschoolChildProgressScreen as React.ComponentType} options={{ headerShown: true, title: 'Child progress' }} />
+            <Stack.Screen name="PreschoolAssess" component={PreschoolAssessScreen} options={{ headerShown: true, title: 'Record observation' }} />
+            <Stack.Screen name="PreschoolActivities" component={PreschoolActivitiesScreen as React.ComponentType} options={{ headerShown: true, title: 'Activities' }} />
+            <Stack.Screen name="PreschoolClassInsights" component={PreschoolClassInsightsScreen as React.ComponentType} options={{ headerShown: true, title: 'Class insights' }} />
+            <Stack.Screen name="PreschoolHomeActivities" component={PreschoolHomeActivitiesScreen as React.ComponentType} options={{ headerShown: true, title: 'Home activities' }} />
             <Stack.Screen name="StudentDetail" component={StudentDetailScreen as React.ComponentType} options={{ headerShown: true, title: 'Student' }} />
             {/* Cast: these screens type their props with ScreenProps (see OtpVerification below). */}
             <Stack.Screen name="ProfessionalCognitive" component={ProfessionalCognitiveScreen as React.ComponentType} options={{ headerShown: true, title: 'Professional Assessment' }} />

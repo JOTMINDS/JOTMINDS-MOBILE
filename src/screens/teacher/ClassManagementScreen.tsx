@@ -194,7 +194,7 @@ export default function ClassManagementScreen() {
             <Text style={styles.cardTitle}>Enrol a student</Text>
             <TextInput style={styles.input} value={enrollName} onChangeText={setEnrollName} placeholder="Full name" placeholderTextColor={colors.textSubtle} />
             <TextInput style={styles.input} value={enrollDob} onChangeText={setEnrollDob} placeholder="Date of birth (YYYY-MM-DD)" placeholderTextColor={colors.textSubtle} />
-            <TextInput style={styles.input} value={enrollLevel} onChangeText={setEnrollLevel} placeholder="Education level (optional)" placeholderTextColor={colors.textSubtle} />
+            <TextInput style={styles.input} value={enrollLevel} onChangeText={setEnrollLevel} placeholder="Level, e.g. Pre-school, Primary, JHS (optional)" placeholderTextColor={colors.textSubtle} />
             <View style={styles.btnRow}>
               <TouchableOpacity style={[styles.primaryBtn, { flex: 1 }, busy && { opacity: 0.5 }]} onPress={enrollOne} disabled={busy}>
                 <Text style={styles.primaryBtnText}>Enrol</Text>

@@ -15,7 +15,7 @@ import GlassCard from '../../components/GlassCard';
 import AppIcon from '../../components/AppIcon';
 import AskJottiCard from '../../components/AskJottiCard';
 import { ClassroomOverviewCard } from '../../components/ai/InsightCards';
-import { classStyles } from '../../utils/classInsights';
+import { classStyles, completedCount } from '../../utils/classInsights';
 import { colors, radii, shadow, spacing, Palette } from '../../theme';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 
@@ -26,13 +26,16 @@ export default function TeacherDashboard({ navigation }: any) {
   const [students, setStudents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchStudents = async () => {
     try {
       const data = await getStudentsForTeacher();
       setStudents(data.students || []);
-    } catch (e) {
-      console.error('[TeacherDashboard]', e);
+      setError(null);
+    } catch (e: any) {
+      // Keep any students already loaded; just tell the teacher the refresh failed.
+      setError(e?.message || 'Could not load your students.');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -44,7 +47,7 @@ export default function TeacherDashboard({ navigation }: any) {
   }, []);
 
   const cls = classStyles(students);
-  const totalAssessments = students.reduce((s, st) => s + (st.assessmentsCompleted?.length || 0), 0);
+  const totalAssessments = students.reduce((s, st) => s + completedCount(st), 0);
 
   if (loading) {
     return (
@@ -125,7 +128,15 @@ export default function TeacherDashboard({ navigation }: any) {
             {students.length} student{students.length !== 1 ? 's' : ''} in your class
           </Text>
 
-          {students.length === 0 ? (
+          {!!error && (
+            <GlassCard padding={16} style={styles.spacedCard}>
+              <Text style={styles.cardTitle}>Couldn't load your students</Text>
+              <Text style={styles.cardSubtle}>{error}</Text>
+              <Text style={[styles.cardSubtle, { marginTop: 8 }]} onPress={() => { setRefreshing(true); fetchStudents(); }} accessibilityRole="button">Tap to retry</Text>
+            </GlassCard>
+          )}
+
+          {students.length === 0 && !error ? (
             <GlassCard padding={32}>
               <View style={styles.empty}>
                 <AppIcon name="👥" size={40} color={colors.textSubtle} style={styles.emptyIcon} />
@@ -133,7 +144,7 @@ export default function TeacherDashboard({ navigation }: any) {
                 <Text style={styles.cardSubtle}>Students appear here once they join your class</Text>
               </View>
             </GlassCard>
-          ) : (
+          ) : students.length === 0 ? null : (
             students.map((student, i) => (
               <GlassCard key={student.id ?? i} padding={16} style={styles.spacedCard} onPress={() => navigation.navigate('StudentDetail', { student })}>
                 <View style={styles.row}>
@@ -145,7 +156,7 @@ export default function TeacherDashboard({ navigation }: any) {
                     <Text style={styles.cardSubtle}>{student.email}</Text>
                   </View>
                   <View style={styles.statBadge}>
-                    <Text style={styles.statBadgeText}>{student.assessmentsCompleted?.length || 0}</Text>
+                    <Text style={styles.statBadgeText}>{completedCount(student)}</Text>
                     <Text style={styles.statBadgeLabel}>tests</Text>
                   </View>
                 </View>
@@ -160,6 +171,7 @@ export default function TeacherDashboard({ navigation }: any) {
             { icon: '📊', title: 'View Class Analytics', desc: 'Style distributions, completion and alignment with your profile', g: ['#3B82F6', '#2563EB'] as [string, string], nav: 'ClassAnalytics' as const },
             { icon: '👥', title: 'My Classes', desc: 'Manage classes, enrol students, import a roster', g: ['#10B981', '#059669'] as [string, string], nav: 'ClassManagement' as const },
             { icon: '🗂️', title: 'Lesson Planner', desc: 'AI lesson plans with differentiation', g: ['#10B981', '#059669'] as [string, string], nav: 'LessonPlanner' as const },
+            { icon: '🧸', title: 'Early Years (Pre-school)', desc: 'Record developmental observations for ages 2–6', g: ['#F59E0B', '#D97706'] as [string, string], nav: 'PreschoolChildren' as const },
             { icon: '📋', title: 'Observation Log', desc: 'Note a student observation, share with parents', g: ['#EC4899', '#DB2777'] as [string, string], nav: 'ObservationLog' as const },
           ].map((a) => (
             <GlassCard
