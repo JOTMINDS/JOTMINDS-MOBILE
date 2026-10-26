@@ -60,6 +60,7 @@ export default function ProfessionalDashboard({ navigation }: any) {
 
   const actions: { icon: string; title: string; desc: string; g: [string, string]; onPress?: () => void }[] = [
     { icon: '🧭', title: 'Professional Intelligence (Pilot)', desc: 'Scenario-based profile of how you think and decide', g: ['#6E4D9C', '#3D52C9'], onPress: () => navigation.navigate('ProfessionalV2Intro') },
+    { icon: '📊', title: 'Full Cognitive Report', desc: 'Your learning, thinking and decision profile together', g: ['#6E4D9C', '#3D52C9'], onPress: () => navigation.navigate('CognitiveReport') },
     { icon: '🧩', title: 'Professional Cognitive Assessment', desc: 'Learning, thinking and decision-making at work', g: ['#F59E0B', '#D97706'], onPress: () => navigation.navigate('ProfessionalCognitive') },
     { icon: '📄', title: 'Assessment Report', desc: 'Your latest professional report', g: ['#3D52C9', '#2E3FA8'], onPress: () => navigation.navigate('ProfessionalReport') },
     { icon: '📈', title: 'Track Record', desc: 'Your assessments over time', g: ['#10B981', '#059669'], onPress: () => navigation.navigate('TrackRecord') },

@@ -4,6 +4,8 @@ import ScreenBackground from '../../components/ScreenBackground';
 import GlassCard from '../../components/GlassCard';
 import { ExecutiveSummaryCard, ProfessionalInsightsCard } from '../../components/ai/InsightCards';
 import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
+import { exportProfessionalReportPdf } from '../../utils/pdfReport';
 import { ProfessionalCognitiveEntry, loadEntries, buildReportText } from '../../utils/professionalCognitiveStore';
 import { rs } from '../../utils/responsive';
 import { radii, spacing, Palette } from '../../theme';
@@ -15,6 +17,8 @@ export default function ProfessionalReportScreen({ route, navigation }: ScreenPr
   const colors = useTheme();
   const styles = useThemedStyles(makeStyles);
   const { user } = useAuth();
+  const toast = useToast();
+  const [pdfBusy, setPdfBusy] = useState(false);
   const [entry, setEntry] = useState<ProfessionalCognitiveEntry | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -90,7 +94,21 @@ export default function ProfessionalReportScreen({ route, navigation }: ScreenPr
           }}
         />
 
-        <TouchableOpacity style={styles.btn} onPress={() => Share.share({ message: buildReportText(entry, who) }).catch(() => {})} accessibilityRole="button">
+        <TouchableOpacity
+          style={[styles.btn, pdfBusy && { opacity: 0.6 }]}
+          disabled={pdfBusy}
+          accessibilityRole="button"
+          accessibilityLabel="Download report as PDF"
+          onPress={async () => {
+            setPdfBusy(true);
+            const r = await exportProfessionalReportPdf(entry, who);
+            setPdfBusy(false);
+            if (!r.ok) toast.error(r.error);
+          }}
+        >
+          {pdfBusy ? <ActivityIndicator color="#fff" /> : <Text style={styles.btnText}>Download PDF report 📄</Text>}
+        </TouchableOpacity>
+        <TouchableOpacity style={[styles.btn, { backgroundColor: colors.purple }]} onPress={() => Share.share({ message: buildReportText(entry, who) }).catch(() => {})} accessibilityRole="button">
           <Text style={styles.btnText}>Share report 📤</Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={() => navigation.navigate('ProfessionalCognitive')} style={{ alignItems: 'center', padding: 14 }} accessibilityRole="button">

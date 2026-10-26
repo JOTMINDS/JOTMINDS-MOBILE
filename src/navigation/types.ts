@@ -53,6 +53,7 @@ export type RootStackParamList = {
   AssessmentList: undefined;
   AssessmentTaking: { assessmentType: string };
   AssessmentResults: { assessmentType: string };
+  CognitiveReport: undefined;
 
   // Teacher / Parent / Learning / Kids / Shared
   TeacherDevelopment: undefined;

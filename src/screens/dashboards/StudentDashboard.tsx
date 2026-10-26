@@ -228,6 +228,23 @@ export default function StudentDashboard({ navigation }: any) {
           </>
         )}
 
+        {!isKidsMode && !isPreschool && (
+          <GlassCard padding={16} style={{ marginBottom: spacing.xl }} onPress={() => navigation.navigate('CognitiveReport')}>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <LinearGradient colors={['#6E4D9C', '#3D52C9']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.challengeIcon}>
+                <Text style={styles.challengeIconText}>📊</Text>
+              </LinearGradient>
+              <View style={{ flex: 1, marginLeft: spacing.md }}>
+                <Text style={styles.challengeTitle}>Full Cognitive Report</Text>
+                <Text style={styles.challengeSub}>
+                  {hasAllStyles(profileStyles) ? 'Your learning, thinking and decision profile together' : `${completedTypes.length} of 3 assessments done — finish them to unlock`}
+                </Text>
+              </View>
+              <Text style={styles.challengeArrow}>→</Text>
+            </View>
+          </GlassCard>
+        )}
+
         {isPreschool && (
           <GlassCard style={styles.assessmentCard}>
             <Text style={styles.cardTitle}>🧸 Learning through play</Text>
