@@ -141,7 +141,7 @@ export default function AskJottiScreen({ route }: any) {
             <Text style={styles.name}>Ask Jotti</Text>
             <View style={styles.statusRow}>
               <View style={styles.statusDot} />
-              <Text style={styles.role}>JotMinds AI coach</Text>
+              <Text style={styles.role}>Your JotMinds coach</Text>
             </View>
           </View>
         </View>
@@ -211,7 +211,7 @@ export default function AskJottiScreen({ route }: any) {
               </LinearGradient>
             </TouchableOpacity>
           </GlassCard>
-          <Text style={styles.disclaimer}>Jotti is AI — double-check anything important.</Text>
+          <Text style={styles.disclaimer}>Jotti can make mistakes. Double-check anything important.</Text>
         </View>
       </KeyboardAvoidingView>
     </ScreenBackground>

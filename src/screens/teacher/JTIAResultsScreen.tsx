@@ -101,7 +101,6 @@ export default function JTIAResultsScreen({ route, navigation }: any) {
               <Text style={styles.archetype}>{recs.pedagogicalArchetype}</Text>
             )}
             {!!recs.executiveSummary && <Text style={styles.summary}>{recs.executiveSummary}</Text>}
-            {aiRecs && <Text style={styles.aiTag}>✦ Personalised with AI</Text>}
           </GlassCard>
         )}
 

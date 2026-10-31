@@ -72,7 +72,6 @@ export default function AICard({ title, icon = '✦', loading, empty, ai = true,
       ) : (
         <>
           {children}
-          {ai && <Text style={styles.tag}>✦ AI-generated · review before acting on it</Text>}
         </>
       )}
     </GlassCard>

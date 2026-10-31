@@ -133,7 +133,7 @@ export default function LessonPlannerScreen({ navigation }: any) {
               ? <ActivityIndicator color="#fff" />
               : <Text style={styles.primaryBtnText}>Generate plan</Text>}
           </TouchableOpacity>
-          <Text style={styles.aiNote}>AI-generated. Review before teaching.</Text>
+          <Text style={styles.aiNote}>Review before teaching.</Text>
         </ScrollView>
       </ScreenBackground>
     );
