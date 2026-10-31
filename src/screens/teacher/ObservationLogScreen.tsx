@@ -7,7 +7,7 @@ import GlassCard from '../../components/GlassCard';
 import AppIcon from '../../components/AppIcon';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
-import { getStudentsForTeacher } from '../../utils/api';
+import { loadTeacherStudents } from '../../utils/teacherStudents';
 import {
   createTeacherObservation, getTeacherObservations, deleteTeacherObservation,
   CONCERN_TYPES, ConcernType, Severity, TeacherObservation,
@@ -56,13 +56,13 @@ export default function ObservationLogScreen({ route }: ScreenProps<'Observation
   const load = useCallback(async () => {
     const [obs, studs] = await Promise.allSettled([
       user?.id ? getTeacherObservations(user.id) : Promise.resolve([] as TeacherObservation[]),
-      getStudentsForTeacher(),
+      loadTeacherStudents(),
     ]);
     // On failure keep whatever is already on screen and say so, rather than
     // presenting an empty list or roster as if it were the truth.
     if (obs.status === 'fulfilled') { setObservations(obs.value); setLoadError(null); }
     else setLoadError(obs.reason?.message || 'Could not load your observations.');
-    if (studs.status === 'fulfilled') { setStudents(studs.value.students ?? []); setRosterError(null); }
+    if (studs.status === 'fulfilled') { setStudents(studs.value.students); setRosterError(null); }
     else setRosterError(studs.reason?.message || 'Could not load your students.');
     setLoading(false);
   }, [user?.id]);

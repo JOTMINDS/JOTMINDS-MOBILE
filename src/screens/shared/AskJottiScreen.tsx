@@ -15,7 +15,7 @@ import ScreenBackground from '../../components/ScreenBackground';
 import AppIcon from '../../components/AppIcon';
 import GlassCard from '../../components/GlassCard';
 import { askJotti, ChatMessage } from '../../utils/aiService';
-import { getStudentsForTeacher } from '../../utils/api';
+import { loadTeacherStudents } from '../../utils/teacherStudents';
 import { jottiActionsFor, buildClassSummary, ClassSummary, JottiAction } from '../../utils/jottiActions';
 import { useAuth } from '../../context/AuthContext';
 import { rs } from '../../utils/responsive';
@@ -53,8 +53,8 @@ export default function AskJottiScreen({ route }: any) {
   useEffect(() => {
     if (role !== 'teacher') return;
     let alive = true;
-    getStudentsForTeacher()
-      .then((r) => { if (alive) setClassSummary(buildClassSummary(r?.students ?? [])); })
+    loadTeacherStudents()
+      .then((r) => { if (alive) setClassSummary(buildClassSummary(r.students)); })
       .catch(() => {})
       .finally(() => { if (alive) setContextReady(true); });
     return () => { alive = false; };

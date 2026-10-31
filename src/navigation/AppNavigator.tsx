@@ -7,7 +7,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import AppIcon from '../components/AppIcon';
-import { tabsForUser, TabKey } from './tabsForUser';
+import { tabsForUser, hiddenTabsForUser, TabKey } from './tabsForUser';
+import TeacherStudentsScreen from '../screens/teacher/TeacherStudentsScreen';
 import { colors } from '../theme';
 
 // ── Auth & Onboarding ─────────────────────────────────────────────────────────
@@ -154,71 +155,54 @@ function HomeTabScreen(props: any) {
 function MainTabs() {
   const t = useTheme();
   const { user } = useAuth();
-  const tabs = tabsForUser(user);
-  const has = (k: TabKey) => tabs.includes(k);
+  const visible = tabsForUser(user);
+  const hidden = hiddenTabsForUser(user);
   // Only professionals have the full Role Fit (with the role builder); students get "Careers".
   const roleFitTitle = user?.role === 'professional' ? 'Role Fit' : 'Careers';
+  // Short labels so six teacher tabs fit on one row.
+  const TABS: Record<TabKey, { component: React.ComponentType<any>; title: string; icon: string }> = {
+    Home: { component: HomeTabScreen, title: 'Home', icon: '🏠' },
+    Students: { component: TeacherStudentsScreen, title: 'Students', icon: '👥' },
+    PreSchool: { component: PreschoolChildrenScreen as React.ComponentType<any>, title: 'Pre School', icon: '🧸' },
+    Analytics: { component: ClassAnalyticsScreen, title: 'Analytics', icon: '📊' },
+    Planner: { component: LessonPlannerScreen, title: 'Planner', icon: '🗂️' },
+    Insights: { component: JTIAResultsScreen, title: 'Insights', icon: '🎓' },
+    Discover: { component: DiscoverScreen, title: 'Discover', icon: '💡' },
+    MindHome: { component: MindHomeScreen, title: 'Mind', icon: '🧠' },
+    RoleFit: { component: RoleFitHomeScreen, title: roleFitTitle, icon: '🎯' },
+    Profile: { component: ProfileScreen, title: 'Profile', icon: '👤' },
+  };
   return (
     <Tab.Navigator
       // A role change (e.g. sign-in as someone else) rebuilds the tab set cleanly.
-      key={tabs.join('|')}
+      key={`${visible.join('|')}#${hidden.join('|')}`}
       screenOptions={{
         headerShown: false,
         tabBarStyle: [styles.tabBar, { backgroundColor: t.bgSecondary, borderTopColor: t.borderLight }],
         tabBarActiveTintColor: t.purple,
         tabBarInactiveTintColor: t.textSubtle,
-        tabBarLabelStyle: styles.tabLabel,
+        tabBarLabelStyle: visible.length > 5 ? styles.tabLabelSmall : styles.tabLabel,
       }}
     >
-      <Tab.Screen
-        name="Home"
-        component={HomeTabScreen}
-        options={{
-          tabBarIcon: ({ color }) => <TabIcon icon="🏠" color={color} />,
-        }}
-      />
-      {has('Planner') && (
+      {visible.map((key) => (
         <Tab.Screen
-          name="Planner"
-          component={LessonPlannerScreen}
+          key={key}
+          name={key}
+          component={TABS[key].component}
           options={{
-            title: 'Planner',
-            tabBarIcon: ({ color }) => <TabIcon icon="🗂️" color={color} />,
+            title: TABS[key].title,
+            tabBarIcon: ({ color }) => <TabIcon icon={TABS[key].icon} color={color} />,
           }}
         />
-      )}
-      <Tab.Screen
-        name="Discover"
-        component={DiscoverScreen}
-        options={{
-          tabBarIcon: ({ color }) => <TabIcon icon="💡" color={color} />,
-        }}
-      />
-      <Tab.Screen
-        name="MindHome"
-        component={MindHomeScreen}
-        options={{
-          title: 'Mind',
-          tabBarIcon: ({ color }) => <TabIcon icon="🧠" color={color} />,
-        }}
-      />
-      {has('RoleFit') && (
+      ))}
+      {hidden.map((key) => (
         <Tab.Screen
-          name="RoleFit"
-          component={RoleFitHomeScreen}
-          options={{
-            title: roleFitTitle,
-            tabBarIcon: ({ color }) => <TabIcon icon="🎯" color={color} />,
-          }}
+          key={key}
+          name={key}
+          component={TABS[key].component}
+          options={{ title: TABS[key].title, tabBarButton: () => null, tabBarItemStyle: { display: 'none' } }}
         />
-      )}
-      <Tab.Screen
-        name="Profile"
-        component={ProfileScreen}
-        options={{
-          tabBarIcon: ({ color }) => <TabIcon icon="👤" color={color} />,
-        }}
-      />
+      ))}
     </Tab.Navigator>
   );
 }
@@ -427,6 +411,11 @@ const styles = StyleSheet.create({
   },
   tabLabel: {
     fontSize: 11,
+    fontWeight: '600',
+    marginTop: 2,
+  },
+  tabLabelSmall: {
+    fontSize: 9.5,
     fontWeight: '600',
     marginTop: 2,
   },

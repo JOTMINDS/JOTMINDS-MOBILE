@@ -1,4 +1,4 @@
-import { tabsForUser } from '../tabsForUser';
+import { tabsForUser, hiddenTabsForUser } from '../tabsForUser';
 
 describe('tabsForUser', () => {
   it('shows Role Fit only to professionals and older students', () => {
@@ -14,12 +14,19 @@ describe('tabsForUser', () => {
     expect(tabsForUser({ role: 'student', educationLevel: 'Pre-school' })).not.toContain('RoleFit');
   });
 
-  it('gives teachers the Lesson Planner, like the webapp portal', () => {
-    expect(tabsForUser({ role: 'teacher' })).toEqual(['Home', 'Planner', 'Discover', 'MindHome', 'Profile']);
+  it('gives teachers the webapp Educator Portal menu, in order', () => {
+    expect(tabsForUser({ role: 'teacher' })).toEqual(['Home', 'Students', 'PreSchool', 'Analytics', 'Planner', 'Insights']);
   });
 
-  it('always keeps Home and Profile, and treats an unknown role as a student', () => {
-    for (const role of ['teacher', 'parent', 'professional', 'student', undefined]) {
+  it('keeps Discover, Mind and Profile reachable for teachers without putting them on the bar', () => {
+    expect(hiddenTabsForUser({ role: 'teacher' })).toEqual(['Discover', 'MindHome', 'Profile']);
+    const visible = tabsForUser({ role: 'teacher' });
+    hiddenTabsForUser({ role: 'teacher' }).forEach((t) => expect(visible).not.toContain(t));
+  });
+
+  it('has no hidden tabs for other roles, which keep Home first and Profile last', () => {
+    for (const role of ['parent', 'professional', 'student', undefined]) {
+      expect(hiddenTabsForUser({ role })).toEqual([]);
       const tabs = tabsForUser({ role });
       expect(tabs[0]).toBe('Home');
       expect(tabs[tabs.length - 1]).toBe('Profile');

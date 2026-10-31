@@ -9,8 +9,9 @@ import AppIcon from '../../components/AppIcon';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import {
-  getClasses, saveClass, deleteClass, enrollStudent, getStudentsForTeacher, SchoolClass,
+  getClasses, saveClass, deleteClass, enrollStudent, SchoolClass,
 } from '../../utils/api';
+import { loadTeacherStudents } from '../../utils/teacherStudents';
 import { parseCSV, toRosterRows } from '../../utils/csv';
 import { rs } from '../../utils/responsive';
 import { radii, spacing, Palette } from '../../theme';
@@ -39,7 +40,7 @@ export default function ClassManagementScreen() {
   const load = useCallback(async () => {
     const [cls, studs] = await Promise.all([
       getClasses().catch(() => ({ classes: [] })),
-      getStudentsForTeacher().catch(() => ({ students: [] })),
+      loadTeacherStudents().catch(() => ({ students: [] as any[] })),
     ]);
     const mine = (cls.classes ?? []).filter(
       (c) => !c.classTeacherId || c.classTeacherId === user?.id,
