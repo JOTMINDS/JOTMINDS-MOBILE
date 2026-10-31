@@ -220,7 +220,7 @@ export default function LoginScreen({ navigation, route }: any) {
                 accessibilityRole="button"
                 accessibilityState={{ selected: orgPortal }}
               >
-                <Text style={[styles.modeOptionText, orgPortal && styles.modeOptionTextActive]}>School / Organization</Text>
+                <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75} style={[styles.modeOptionText, orgPortal && styles.modeOptionTextActive]}>School / Organization</Text>
               </TouchableOpacity>
             </View>
 
@@ -450,6 +450,7 @@ const makeStyles = (colors: Palette) => StyleSheet.create({
   modeOption: {
     flex: 1,
     paddingVertical: 10,
+    paddingHorizontal: 8,
     borderRadius: radii.sm,
     alignItems: 'center',
   },
