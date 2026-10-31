@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, Animated, ActivityIndicator,
 } from 'react-native';
@@ -14,7 +14,9 @@ import {
   calculateKolbScore, calculateSternbergScore, calculateDualProcessScore, WIRE_RESULT_KEY,
 } from '../../utils/scoring';
 import { QUESTION_BANK, AssessmentType } from '../../data/questionBank';
-import { bankForAge } from '../../data/questionBankByAge';
+import { bankForBand } from '../../data/questionBankByAge';
+import { assessmentBand } from '../../utils/assessmentBand';
+import { buildSessionBank } from '../../utils/questionSelection';
 import ScreenBackground from '../../components/ScreenBackground';
 import AppIcon from '../../components/AppIcon';
 import { colors, radii, spacing, Palette } from '../../theme';
@@ -38,11 +40,22 @@ export default function AssessmentTakingScreen({ navigation, route }: any) {
   const styles = useThemedStyles(makeStyles);
   const assessmentType: AssessmentType = route.params?.assessmentType ?? 'learning';
   const { user } = useAuth();
-  // Age-appropriate question wording: 15-18 → teen bank, 19-25 → tertiary,
-  // otherwise the default (adult) bank. Scoring is unchanged — same
-  // dimensions and per-dimension counts.
-  const ageBank = bankForAge(user?.age);
-  const bank = (ageBank ?? QUESTION_BANK)[assessmentType] ?? QUESTION_BANK.learning;
+  // Level-appropriate question wording: SHS → teen bank, Tertiary → tertiary,
+  // JHS and everyone else → the default bank; Elementary goes to the kids quiz.
+  // Scoring is unchanged — same dimensions and per-dimension counts.
+  const band = assessmentBand(user);
+  // A fresh random draw from the level's pool for each sitting (stable while the screen is open);
+  // levels without a pool use the fixed bank.
+  const bank = useMemo(
+    () => buildSessionBank(band, assessmentType)
+      ?? (bankForBand(band) ?? QUESTION_BANK)[assessmentType]
+      ?? QUESTION_BANK.learning,
+    [band, assessmentType],
+  );
+  // Elementary learners take the picture-friendly kids quiz, not the 5-point scale.
+  useEffect(() => {
+    if (band === 'kids') navigation.replace('KidsAssessment');
+  }, [band, navigation]);
   const toast = useToast();
   const { reduceMotion } = useAccessibility();
 

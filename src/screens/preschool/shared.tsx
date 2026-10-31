@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import { StyleSheet } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { getStudentsForTeacher } from '../../utils/api';
+import { loadTeacherStudents } from '../../utils/teacherStudents';
 import { getPreschoolStore } from '../../utils/preschoolStore';
 import { isPreschoolChild } from '../../utils/preschoolEngine';
 import { calculateAge } from '../../utils/dateUtils';
@@ -35,7 +35,7 @@ export function usePreschoolData() {
 
   const reload = useCallback(async () => {
     try {
-      const [res, all] = await Promise.all([getStudentsForTeacher(), getPreschoolStore().list()]);
+      const [res, all] = await Promise.all([loadTeacherStudents(), getPreschoolStore().list()]);
       const kids = ((res?.students ?? []) as any[]).map(toPreschoolChild).filter(isPreschoolChild);
       const ids = new Set(kids.map((c) => c.id));
       setChildren(kids);

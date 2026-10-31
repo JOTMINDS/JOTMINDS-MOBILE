@@ -1,10 +1,14 @@
-import React from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import * as Speech from 'expo-speech';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Linking } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import ScreenBackground from '../../components/ScreenBackground';
 import GlassCard from '../../components/GlassCard';
 import AppIcon from '../../components/AppIcon';
 import ReadingQuiz from '../../components/ReadingQuiz';
+import { articleSpeech } from '../../utils/articleSpeech';
+import { useParentGate } from '../../utils/useParentGate';
+import { useToast } from '../../context/ToastContext';
 import { colors, radii, spacing, Palette } from '../../theme';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 
@@ -12,8 +16,11 @@ export default function InsightDetailScreen({ route, navigation }: any) {
   const colors = useTheme();
   const styles = useThemedStyles(makeStyles);
   const { insight } = route.params;
+  const { gate, gateModal } = useParentGate();
+  const toast = useToast();
 
-  const sections = [
+  const isKids = insight.audience === 'kids';
+  const sections: { heading: string; body: string }[] = insight.sections ?? [
     {
       heading: 'The Science',
       body: `${insight.preview} This is a well-documented phenomenon in cognitive science, supported by decades of research across multiple disciplines.`,
@@ -28,8 +35,30 @@ export default function InsightDetailScreen({ route, navigation }: any) {
     },
   ];
 
+  // Audio version: the article read aloud, a little slower for younger readers.
+  const [speaking, setSpeaking] = useState(false);
+  useEffect(() => () => { Speech.stop(); }, []);
+  const toggleListen = () => {
+    if (speaking) { Speech.stop(); setSpeaking(false); return; }
+    setSpeaking(true);
+    Speech.speak(articleSpeech(insight.title, sections), {
+      rate: isKids ? 0.85 : 1,
+      onDone: () => setSpeaking(false),
+      onStopped: () => setSpeaking(false),
+      onError: () => setSpeaking(false),
+    });
+  };
+
+  // Videos open on YouTube, outside the app, so a child needs a parent's PIN first.
+  const watch = () => {
+    const url: string | undefined = insight.video?.url;
+    if (!url) return;
+    gate(() => { Linking.openURL(url).catch(() => toast.error('Could not open the video.')); }, 'Ask a parent to enter the PIN to watch this video');
+  };
+
   return (
     <ScreenBackground>
+      {gateModal}
       <ScrollView
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
@@ -52,6 +81,23 @@ export default function InsightDetailScreen({ route, navigation }: any) {
           <Text style={styles.heroMeta}>{insight.readTime} read</Text>
         </LinearGradient>
 
+        <TouchableOpacity style={styles.listenBtn} onPress={toggleListen} accessibilityRole="button" accessibilityLabel={speaking ? 'Stop listening' : 'Listen to this article'}>
+          <AppIcon name={speaking ? 'stop-circle' : 'volume-high'} size={20} color={colors.cyan} />
+          <Text style={styles.listenText}>{speaking ? 'Stop' : 'Listen'}</Text>
+        </TouchableOpacity>
+
+        {!!insight.video && (
+          <GlassCard padding={14} style={styles.videoCard} onPress={watch}>
+            <View style={styles.videoRow}>
+              <AppIcon name="play-circle" size={isKids ? 36 : 28} color={colors.cyan} />
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.videoTitle, isKids && styles.videoTitleKids]}>Watch the video</Text>
+                <Text style={styles.videoSource}>{insight.video.source} · opens YouTube</Text>
+              </View>
+            </View>
+          </GlassCard>
+        )}
+
         {/* Content sections */}
         <View style={styles.content}>
           {sections.map((s) => (
@@ -63,17 +109,31 @@ export default function InsightDetailScreen({ route, navigation }: any) {
         </View>
 
         {/* Comprehension quiz — earns Cognitive Growth XP, keeps you in the app */}
-        <ReadingQuiz
-          articleId={String(insight.id)}
-          title={insight.title}
-          body={sections.map((s) => `${s.heading}. ${s.body}`).join('\n\n')}
-        />
+        {/* Not for elementary learners: the quiz questions are AI-written. */}
+        {!isKids && (
+          <ReadingQuiz
+            articleId={String(insight.id)}
+            title={insight.title}
+            body={sections.map((s) => `${s.heading}. ${s.body}`).join('\n\n')}
+          />
+        )}
       </ScrollView>
     </ScreenBackground>
   );
 }
 
 const makeStyles = (colors: Palette) => StyleSheet.create({
+  listenBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, alignSelf: 'flex-start',
+    marginTop: 16, paddingVertical: 10, paddingHorizontal: 18, borderRadius: 999,
+    borderWidth: 1.5, borderColor: colors.cyan,
+  },
+  listenText: { fontSize: 14, fontWeight: '800', color: colors.cyan },
+  videoCard: { marginTop: spacing.lg },
+  videoRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  videoTitle: { fontSize: 15, fontWeight: '800', color: colors.text },
+  videoTitleKids: { fontSize: 20 },
+  videoSource: { fontSize: 12, color: colors.textMuted, marginTop: 2 },
   scroll: {
     paddingTop: 8,
     paddingHorizontal: spacing.xl,

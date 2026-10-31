@@ -60,8 +60,8 @@ export default function TeacherDevelopmentScreen({ navigation }: any) {
   const modules: DevelopmentModule[] = [
     {
       id: 'jtia',
-      title: 'Teacher Intelligence Assessment',
-      description: 'JTIA — cognitive, instructional, leadership, relationship & professional intelligence',
+      title: 'Teaching Insights',
+      description: 'Your strengths across 5 teaching domains',
       category: 'assessment',
       duration: '3–25 min',
       icon: '🎓',
@@ -328,10 +328,10 @@ export default function TeacherDevelopmentScreen({ navigation }: any) {
               </LinearGradient>
               <View style={styles.actionContent}>
                 <Text style={styles.actionTitle}>
-                  Take the JTIA
+                  Take Teaching Insights
                 </Text>
                 <Text style={styles.actionDescription}>
-                  Map your teacher intelligence across 5 domains
+                  Your strengths across 5 teaching domains
                 </Text>
               </View>
               <AppIcon name="→" size={18} style={styles.actionArrow} />

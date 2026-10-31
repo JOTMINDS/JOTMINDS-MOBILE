@@ -46,7 +46,7 @@ export default function PreschoolHomeActivitiesScreen({ route }: ScreenProps<'Pr
             ))}
           </View>
         ))}
-        <Text style={styles.notice}>Your child’s teacher observations will appear here once sharing between devices is available.</Text>
+        <Text style={styles.notice}>Teacher observations will appear here once sharing is available.</Text>
       </ScrollView>
     </ScreenBackground>
   );

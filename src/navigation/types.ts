@@ -28,6 +28,7 @@ export type RootStackParamList = {
   InstantFeedback: { checkin: any; feedback?: any };
   WeeklySnapshot: undefined;
   BehavioralDashboard: undefined;
+  TeacherReset: undefined;
 
   // Brain Gym
   BrainGym: undefined;
@@ -70,12 +71,14 @@ export type RootStackParamList = {
   PracticeResults: { score: number; total: number; moduleId: string };
   KidsAssessment: undefined;
   KidsAssessmentResults: undefined;
+  KidsPlay: undefined;
+  KidsStickers: undefined;
   ExpertChat: undefined;
-  AskJotti: { prompt?: string } | undefined;
+  AskJotti: { prompt?: string; autoSend?: boolean } | undefined;
   DailyChallenge: undefined;
   ClassManagement: undefined;
   LessonPlanner: undefined;
-  ObservationLog: undefined;
+  ObservationLog: { studentId?: string; studentName?: string; startNew?: boolean } | undefined;
   ClassAnalytics: undefined;
   CurriculumTracker: undefined;
   StudentDetail: { student: any };

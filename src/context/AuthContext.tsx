@@ -1,7 +1,8 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { supabase, callEdgeFn } from '../utils/supabase';
 import { signInWithCode } from '../utils/studentCodeAuth';
 import { isBiometricLoginEnabled, updateBiometricPassword } from '../utils/biometricAuth';
+import { accountKind } from '../utils/accountKind';
 import type { Session, User as SupabaseUser } from '@supabase/supabase-js';
 
 export interface AppUser {
@@ -14,6 +15,11 @@ export interface AppUser {
   educationLevel?: string;
   position?: string;
   organizationName?: string;
+  /** 'Educational Institution' marks a school account; other values are companies and the like. */
+  organizationType?: string;
+  industrySector?: string;
+  /** Code the account holder shares so people can join their school or organization. */
+  organizationCode?: string;
   dateOfBirth?: string;
   age?: number;
   assessmentsCompleted?: string[];
@@ -30,7 +36,8 @@ interface AuthContextType {
   user: AppUser | null;
   session: Session | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<void>;
+  /** `portal: 'organization'` is the school / organization sign-in: other accounts are turned away, as on the web. */
+  signIn: (email: string, password: string, opts?: { portal?: 'personal' | 'organization' }) => Promise<void>;
   /** Resolves to the /signup response — includes `studentCode` for institutional students. */
   signUp: (data: SignUpData) => Promise<{ studentCode?: string } & Record<string, any>>;
   signOut: () => Promise<void>;
@@ -88,6 +95,9 @@ async function fetchProfile(supabaseUser: SupabaseUser): Promise<AppUser> {
       educationLevel: profile.educationLevel,
       position: profile.position,
       organizationName: profile.organizationName ?? profile.organization,
+      organizationType: profile.organizationType,
+      industrySector: profile.industrySector,
+      organizationCode: profile.organizationCode,
       dateOfBirth: profile.dateOfBirth ?? profile.date_of_birth,
       age: profile.dateOfBirth ? calculateAge(profile.dateOfBirth) : profile.age,
       assessmentsCompleted: profile.assessmentsCompleted ?? [],
@@ -107,6 +117,9 @@ async function fetchProfile(supabaseUser: SupabaseUser): Promise<AppUser> {
       email: supabaseUser.email ?? '',
       name: meta.name ?? meta.full_name ?? '',
       role: meta.user_role ?? meta.role ?? 'student',
+      organizationName: meta.organizationName,
+      organizationType: meta.organizationType,
+      industrySector: meta.industrySector,
       subscriptionStatus: 'free',
       assessmentsCompleted: [],
     };
@@ -118,6 +131,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [passwordRecovery, setPasswordRecovery] = useState(false);
+  const latestUserId = useRef<string | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -142,11 +156,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, s) => {
       if (!mounted) return;
+      latestUserId.current = s?.user?.id ?? null;
       setSession(s);
       if (s?.user) {
         try {
           const profile = await fetchProfile(s.user);
-          if (mounted) setUser(profile);
+          // A slow profile must not bring back someone who has signed out (or been turned away) meanwhile.
+          if (mounted && latestUserId.current === s.user.id) setUser(profile);
         } catch { /* keep any existing user; profile fetch can retry later */ }
       } else {
         setUser(null);
@@ -157,9 +173,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => { mounted = false; clearTimeout(failSafe); subscription.unsubscribe(); };
   }, []);
 
-  const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+  const signIn = async (email: string, password: string, opts?: { portal?: 'personal' | 'organization' }) => {
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw new Error(error.message);
+    if (opts?.portal === 'organization' && data?.user) {
+      // Hold back the listener's own profile load so a personal account never flashes into the app.
+      latestUserId.current = null;
+      const profile = await fetchProfile(data.user);
+      if (accountKind(profile) === 'personal') {
+        // Same rule as the web portal: only school and organization accounts get in this way.
+        await supabase.auth.signOut();
+        setUser(null);
+        setSession(null);
+        throw new Error('This is a personal account, not a school or organization account. Choose "Personal" to sign in.');
+      }
+      latestUserId.current = data.user.id;
+      setUser(profile);
+    }
   };
 
   const signUp = async (data: SignUpData) => {
@@ -246,6 +276,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signInWithStudentCode = (code: string) => signInWithCode(code);
 
   const signOut = async () => {
+    latestUserId.current = null;
     await supabase.auth.signOut();
     setUser(null);
     setSession(null);

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, useNavigationContainerRef } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { ActivityIndicator, View, StyleSheet } from 'react-native';
@@ -7,6 +7,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import AppIcon from '../components/AppIcon';
+import { tabsForUser, hiddenTabsForUser, TabKey } from './tabsForUser';
+import { shouldShowJottiFab, TAB_ROUTES } from './jottiFab';
+import type { RootStackParamList } from './types';
+import JottiFab from '../components/JottiFab';
+import { useFeatureFlag } from '../utils/featureFlags';
+import TeacherStudentsScreen from '../screens/teacher/TeacherStudentsScreen';
 import { colors } from '../theme';
 
 // ── Auth & Onboarding ─────────────────────────────────────────────────────────
@@ -28,6 +34,8 @@ import LeaderboardScreen from '../screens/braingym/LeaderboardScreen';
 // ── Role-Based Home Dashboards ────────────────────────────────────────────────
 import StudentDashboard from '../screens/dashboards/StudentDashboard';
 import TeacherDashboard from '../screens/dashboards/TeacherDashboard';
+import OrganizationDashboard from '../screens/dashboards/OrganizationDashboard';
+import { isInstitutionAccount } from '../utils/accountKind';
 import ParentDashboard from '../screens/dashboards/ParentDashboard';
 import ProfessionalDashboard from '../screens/dashboards/ProfessionalDashboard';
 import TeamScreen from '../screens/dashboards/TeamScreen';
@@ -43,6 +51,7 @@ import DailyCheckQuestionsScreen from '../screens/mind/DailyCheckQuestionsScreen
 import InstantFeedbackScreen from '../screens/mind/InstantFeedbackScreen';
 import WeeklySnapshotScreen from '../screens/mind/WeeklySnapshotScreen';
 import BehavioralDashboardScreen from '../screens/mind/BehavioralDashboardScreen';
+import TeacherResetScreen from '../screens/mind/TeacherResetScreen';
 
 // ── Role Fit ──────────────────────────────────────────────────────────────────
 import RoleFitHomeScreen from '../screens/rolefit/RoleFitHomeScreen';
@@ -96,6 +105,8 @@ import PracticeResultsScreen from '../screens/learning/PracticeResultsScreen';
 // ── Kids ──────────────────────────────────────────────────────────────────────
 import KidsAssessmentScreen from '../screens/kids/KidsAssessmentScreen';
 import KidsAssessmentResultsScreen from '../screens/kids/KidsAssessmentResultsScreen';
+import KidsPlayScreen from '../screens/kids/KidsPlayScreen';
+import KidsStickersScreen from '../screens/kids/KidsStickersScreen';
 
 // ── Shared ────────────────────────────────────────────────────────────────────
 import ExpertChatScreen from '../screens/shared/ExpertChatScreen';
@@ -127,6 +138,7 @@ import ObservationLogScreen from '../screens/teacher/ObservationLogScreen';
 
 // Server-driven kill switches (Super Admin → Feature Flags).
 const GatedBrainGym = withFeature('brain-gym', 'Brain Gym', BrainGymScreen);
+const GatedKidsPlay = withFeature('brain-gym', 'Games', KidsPlayScreen);
 const GatedAskJotti = withFeature('ai-coach', 'Ask Jotti', AskJottiScreen);
 const GatedDailyChallenge = withFeature('daily-challenge', 'Daily Challenge', DailyChallengeScreen);
 
@@ -141,6 +153,7 @@ function HomeTabScreen(props: any) {
   const { user } = useAuth();
   // Forward navigation/route — without this the dashboards get an undefined
   // `navigation` prop and crash the moment a card's onPress calls .navigate().
+  if (isInstitutionAccount(user)) return <OrganizationDashboard {...props} />;
   switch (user?.role) {
     case 'teacher': return <TeacherDashboard {...props} />;
     case 'parent': return <ParentDashboard {...props} />;
@@ -151,53 +164,55 @@ function HomeTabScreen(props: any) {
 
 function MainTabs() {
   const t = useTheme();
+  const { user } = useAuth();
+  const visible = tabsForUser(user);
+  const hidden = hiddenTabsForUser(user);
+  // Only professionals have the full Role Fit (with the role builder); students get "Careers".
+  const roleFitTitle = user?.role === 'professional' ? 'Role Fit' : 'Careers';
+  // Short labels so six teacher tabs fit on one row.
+  const TABS: Record<TabKey, { component: React.ComponentType<any>; title: string; icon: string }> = {
+    Home: { component: HomeTabScreen, title: 'Home', icon: '🏠' },
+    Students: { component: TeacherStudentsScreen, title: 'Students', icon: '👥' },
+    PreSchool: { component: PreschoolChildrenScreen as React.ComponentType<any>, title: 'Pre School', icon: '🧸' },
+    Analytics: { component: ClassAnalyticsScreen, title: 'Analytics', icon: '📊' },
+    Planner: { component: LessonPlannerScreen, title: 'Planner', icon: '🗂️' },
+    Insights: { component: JTIAResultsScreen, title: 'Insights', icon: '🎓' },
+    Discover: { component: DiscoverScreen, title: 'Discover', icon: '💡' },
+    MindHome: { component: MindHomeScreen, title: 'Mind', icon: '🧠' },
+    RoleFit: { component: RoleFitHomeScreen, title: roleFitTitle, icon: '🎯' },
+    Profile: { component: ProfileScreen, title: 'Profile', icon: '👤' },
+  };
   return (
     <Tab.Navigator
+      // A role change (e.g. sign-in as someone else) rebuilds the tab set cleanly.
+      key={`${visible.join('|')}#${hidden.join('|')}`}
       screenOptions={{
         headerShown: false,
         tabBarStyle: [styles.tabBar, { backgroundColor: t.bgSecondary, borderTopColor: t.borderLight }],
         tabBarActiveTintColor: t.purple,
         tabBarInactiveTintColor: t.textSubtle,
-        tabBarLabelStyle: styles.tabLabel,
+        tabBarLabelStyle: visible.length > 5 ? styles.tabLabelSmall : styles.tabLabel,
       }}
     >
-      <Tab.Screen
-        name="Home"
-        component={HomeTabScreen}
-        options={{
-          tabBarIcon: ({ color }) => <TabIcon icon="🏠" color={color} />,
-        }}
-      />
-      <Tab.Screen
-        name="Discover"
-        component={DiscoverScreen}
-        options={{
-          tabBarIcon: ({ color }) => <TabIcon icon="💡" color={color} />,
-        }}
-      />
-      <Tab.Screen
-        name="MindHome"
-        component={MindHomeScreen}
-        options={{
-          title: 'Mind',
-          tabBarIcon: ({ color }) => <TabIcon icon="🧠" color={color} />,
-        }}
-      />
-      <Tab.Screen
-        name="RoleFit"
-        component={RoleFitHomeScreen}
-        options={{
-          title: 'Role Fit',
-          tabBarIcon: ({ color }) => <TabIcon icon="🎯" color={color} />,
-        }}
-      />
-      <Tab.Screen
-        name="Profile"
-        component={ProfileScreen}
-        options={{
-          tabBarIcon: ({ color }) => <TabIcon icon="👤" color={color} />,
-        }}
-      />
+      {visible.map((key) => (
+        <Tab.Screen
+          key={key}
+          name={key}
+          component={TABS[key].component}
+          options={{
+            title: TABS[key].title,
+            tabBarIcon: ({ color }) => <TabIcon icon={TABS[key].icon} color={color} />,
+          }}
+        />
+      ))}
+      {hidden.map((key) => (
+        <Tab.Screen
+          key={key}
+          name={key}
+          component={TABS[key].component}
+          options={{ title: TABS[key].title, tabBarButton: () => null, tabBarItemStyle: { display: 'none' } }}
+        />
+      ))}
     </Tab.Navigator>
   );
 }
@@ -207,12 +222,17 @@ export default function AppNavigator() {
   const t = useTheme();
   // First-Win onboarding gate: shown once per user before the main app.
   const [firstWinDone, setFirstWinDone] = useState<boolean | null>(null);
+  // Tracks the focused screen so the floating Jotti button knows where it is.
+  const navRef = useNavigationContainerRef<RootStackParamList>();
+  const [routeName, setRouteName] = useState<string | undefined>();
+  const jottiEnabled = useFeatureFlag('ai-coach', user?.id);
 
   useEffect(() => {
     if (!user) { setFirstWinDone(null); return; }
     // Backend flag is the source of truth (survives reinstall / new device);
     // fall back to the local cache when it isn't set on the profile yet.
-    if (user.firstWinCompleted) {
+    // School and organization accounts don't take the personal cognitive first assessment.
+    if (user.firstWinCompleted || isInstitutionAccount(user)) {
       setFirstWinDone(true);
       AsyncStorage.setItem(`jotminds.firstwin.${user.id}`, 'done').catch(() => {});
       return;
@@ -220,7 +240,7 @@ export default function AppNavigator() {
     AsyncStorage.getItem(`jotminds.firstwin.${user.id}`)
       .then((v) => setFirstWinDone(!!v))
       .catch(() => setFirstWinDone(true));
-  }, [user?.id, user?.firstWinCompleted]);
+  }, [user?.id, user?.firstWinCompleted, user?.role, user?.organizationType, user?.industrySector]);
 
   if (loading || (user && firstWinDone === null)) {
     return (
@@ -231,7 +251,11 @@ export default function AppNavigator() {
   }
 
   return (
-    <NavigationContainer>
+    <NavigationContainer
+      ref={navRef}
+      onReady={() => setRouteName(navRef.getCurrentRoute()?.name)}
+      onStateChange={() => setRouteName(navRef.getCurrentRoute()?.name)}
+    >
       <DeepLinkHandler />
       <Stack.Navigator
         screenOptions={{
@@ -262,6 +286,7 @@ export default function AppNavigator() {
             <Stack.Screen name="DailyCheckQuestions" component={DailyCheckQuestionsScreen} />
             <Stack.Screen name="InstantFeedback" component={InstantFeedbackScreen} />
             <Stack.Screen name="WeeklySnapshot" component={WeeklySnapshotScreen} options={{ headerShown: true, title: 'Weekly Snapshot' }} />
+            <Stack.Screen name="TeacherReset" component={TeacherResetScreen} />
             <Stack.Screen name="BehavioralDashboard" component={BehavioralDashboardScreen} options={{ headerShown: true, title: 'Behavioral Insights' }} />
 
             {/* Brain Gym */}
@@ -321,7 +346,7 @@ export default function AppNavigator() {
             <Stack.Screen name="TeachingStyleAssessment" component={TeachingStyleAssessmentScreen} options={{ headerShown: true, title: 'Teaching Style' }} />
             <Stack.Screen name="TeachingStyleResults" component={TeachingStyleResultsScreen} options={{ headerShown: true, title: 'Your Teaching Style' }} />
             <Stack.Screen name="JTIAAssessment" component={JTIAAssessmentScreen} options={{ headerShown: false }} />
-            <Stack.Screen name="JTIAResults" component={JTIAResultsScreen} options={{ headerShown: true, title: 'Your JTIA Profile' }} />
+            <Stack.Screen name="JTIAResults" component={JTIAResultsScreen} options={{ headerShown: true, title: 'Your Teaching Insights' }} />
             <Stack.Screen name="GrowthTracker" component={GrowthTrackerScreen} options={{ headerShown: true, title: 'Growth Tracker' }} />
 
             {/* Parent */}
@@ -342,6 +367,8 @@ export default function AppNavigator() {
             {/* Kids */}
             <Stack.Screen name="KidsAssessment" component={KidsAssessmentScreen} options={{ headerShown: true, title: 'Fun Quiz' }} />
             <Stack.Screen name="KidsAssessmentResults" component={KidsAssessmentResultsScreen} options={{ headerShown: true, title: 'Your Results' }} />
+            <Stack.Screen name="KidsPlay" component={GatedKidsPlay} options={{ headerShown: true, title: 'Play' }} />
+            <Stack.Screen name="KidsStickers" component={KidsStickersScreen} options={{ headerShown: true, title: 'My Stickers' }} />
 
             {/* Shared */}
             <Stack.Screen name="ExpertChat" component={ExpertChatScreen} options={{ headerShown: true, title: 'Chat with Expert' }} />
@@ -349,7 +376,7 @@ export default function AppNavigator() {
             <Stack.Screen name="AskJotti" component={GatedAskJotti} options={{ headerShown: true, title: 'Ask Jotti' }} />
             <Stack.Screen name="DailyChallenge" component={GatedDailyChallenge} options={{ headerShown: true, title: 'Daily Challenge' }} />
             <Stack.Screen name="ClassManagement" component={ClassManagementScreen} options={{ headerShown: true, title: 'My Classes' }} />
-            <Stack.Screen name="ObservationLog" component={ObservationLogScreen} options={{ headerShown: true, title: 'Observation Log' }} />
+            <Stack.Screen name="ObservationLog" component={ObservationLogScreen as React.ComponentType} options={{ headerShown: true, title: 'Observations' }} />
             <Stack.Screen name="CurriculumTracker" component={CurriculumTrackerScreen} options={{ headerShown: true, title: 'Curriculum Tracker' }} />
             <Stack.Screen name="CognitiveReport" component={CognitiveReportScreen as React.ComponentType} options={{ headerShown: true, title: 'Cognitive Report' }} />
             <Stack.Screen name="ClassAnalytics" component={ClassAnalyticsScreen} options={{ headerShown: true, title: 'Class Analytics' }} />
@@ -384,6 +411,9 @@ export default function AppNavigator() {
           </>
         )}
       </Stack.Navigator>
+      {jottiEnabled && !passwordRecovery && shouldShowJottiFab(routeName, user) && (
+        <JottiFab aboveTabBar={TAB_ROUTES.has(routeName ?? '')} onPress={() => navRef.navigate('AskJotti')} />
+      )}
     </NavigationContainer>
   );
 }
@@ -405,6 +435,11 @@ const styles = StyleSheet.create({
   },
   tabLabel: {
     fontSize: 11,
+    fontWeight: '600',
+    marginTop: 2,
+  },
+  tabLabelSmall: {
+    fontSize: 9.5,
     fontWeight: '600',
     marginTop: 2,
   },

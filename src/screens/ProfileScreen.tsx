@@ -20,10 +20,12 @@ import AppIcon from '../components/AppIcon';
 import { useParentGate } from '../utils/useParentGate';
 import { isKidsAge } from '../utils/kidsMode';
 import { isPreschoolLevel } from '../utils/educationLevels';
+import { accountKind, accountLabel, isInstitutionAccount } from '../utils/accountKind';
 import { colors, radii, shadow, spacing, Palette } from '../theme';
 
 export default function ProfileScreen({ navigation }: any) {
   const { user, signOut, refreshUser } = useAuth();
+  const institution = isInstitutionAccount(user);
   const { gate, gateModal } = useParentGate();
   const styles = useThemedStyles(makeStyles);
   const toast = useToast();
@@ -32,7 +34,8 @@ export default function ProfileScreen({ navigation }: any) {
   const changePhoto = async () => {
     if (user?.avatarUrl) {
       Alert.alert('Profile photo', undefined, [
-        { text: 'Choose new photo', onPress: () => runPick() },
+        // iOS can't present the photo picker while the alert is still dismissing.
+        { text: 'Choose new photo', onPress: () => { setTimeout(runPick, 400); } },
         { text: 'Remove photo', style: 'destructive', onPress: () => runRemove() },
         { text: 'Cancel', style: 'cancel' },
       ]);
@@ -78,7 +81,7 @@ export default function ProfileScreen({ navigation }: any) {
       items: [
         { label: 'Name', value: user?.name || 'Not set' },
         { label: 'Email', value: user?.email || 'Not set' },
-        { label: 'Role', value: user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : 'Not set' },
+        { label: institution ? 'Account type' : 'Role', value: institution ? accountLabel(user) : (user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : 'Not set') },
         ...(user?.age ? [{ label: 'Age', value: user.age.toString() }] : []),
         ...(user?.phone ? [{ label: 'Phone', value: user.phone }] : []),
       ],
@@ -94,6 +97,16 @@ export default function ProfileScreen({ navigation }: any) {
       ],
     });
   }
+  if (institution) {
+    sections.push({
+      title: accountKind(user) === 'school' ? 'School' : 'Organization',
+      items: [
+        { label: 'Name', value: user?.organizationName || user?.school || 'Not set' },
+        ...(user?.position ? [{ label: 'Position', value: user.position }] : []),
+        ...(user?.organizationCode ? [{ label: 'Code', value: user.organizationCode }] : []),
+      ],
+    });
+  }
   if (user?.role === 'professional') {
     sections.push({
       title: 'Work Information',
@@ -103,6 +116,34 @@ export default function ProfileScreen({ navigation }: any) {
       ],
     });
   }
+
+  // Notifications live on the bell in the Home header, and feedback is reached from
+  // Help & Feedback, so each row here has one distinct job.
+  const showReport = !(isKidsAge(user?.age) || isPreschoolLevel(user?.educationLevel));
+  const actionGroups: { title: string; items: { label: string; icon: string; screen: string }[] }[] = [
+    ...(institution ? [] : [{
+      title: 'My growth',
+      items: [
+        { label: 'Cognitive Growth', icon: '🌱', screen: 'Badges' },
+        ...(showReport ? [{ label: 'Full Cognitive Report', icon: '📊', screen: 'CognitiveReport' }] : []),
+        { label: 'Reflections & Notes', icon: '📓', screen: 'Reflections' },
+        ...(user?.role === 'professional' ? [{ label: 'Track Record', icon: '📈', screen: 'TrackRecord' }] : []),
+      ],
+    }]),
+    {
+      title: 'Account',
+      items: [
+        { label: 'Edit Profile', icon: '✏️', screen: 'EditProfile' },
+        ...(user?.role === 'student' ? [{ label: 'Family Sharing', icon: '🔗', screen: 'FamilySharing' }] : []),
+        { label: 'Accessibility', icon: '👁️', screen: 'Accessibility' },
+        { label: 'Privacy & Security', icon: '🔒', screen: 'PrivacySettings' },
+      ],
+    },
+    {
+      title: 'Support',
+      items: [{ label: 'Help & Feedback', icon: '💬', screen: 'HelpSupport' }],
+    },
+  ];
 
   return (
     <ScreenBackground>
@@ -124,9 +165,12 @@ export default function ProfileScreen({ navigation }: any) {
           </TouchableOpacity>
           <Text style={styles.name}>{user?.name}</Text>
           <Text style={styles.email}>{user?.email}</Text>
+          <TouchableOpacity onPress={changePhoto} disabled={photoBusy} hitSlop={8} accessibilityRole="button">
+            <Text style={styles.photoLink}>{user?.avatarUrl ? 'Change photo' : 'Add a photo'}</Text>
+          </TouchableOpacity>
           <View style={styles.rolePill}>
             <Text style={styles.rolePillText}>
-              {user?.role ? user.role.toUpperCase() : 'MEMBER'}
+              {institution ? accountLabel(user).toUpperCase() : user?.role ? user.role.toUpperCase() : 'MEMBER'}
             </Text>
           </View>
         </View>
@@ -155,36 +199,27 @@ export default function ProfileScreen({ navigation }: any) {
           </GlassCard>
         ))}
 
-        <View style={styles.actionsBlock}>
-          {[
-            { label: 'Cognitive Growth', icon: '🌱', screen: 'Badges' },
-            ...(user?.role === 'student' ? [{ label: 'Family Sharing', icon: '🔗', screen: 'FamilySharing' }] : []),
-            { label: 'Notifications', icon: '🔥', screen: 'Notifications' },
-            { label: 'Accessibility', icon: '👁️', screen: 'Accessibility' },
-            { label: 'Edit Profile', icon: '✏️', screen: 'EditProfile' },
-            { label: 'Privacy Settings', icon: '🔒', screen: 'PrivacySettings' },
-            ...(isKidsAge(user?.age) || isPreschoolLevel(user?.educationLevel) ? [] : [{ label: 'Full Cognitive Report', icon: '📊', screen: 'CognitiveReport' }]),
-            { label: 'Reflections & Notes', icon: '📓', screen: 'Reflections' },
-            ...(user?.role === 'professional' ? [{ label: 'Track Record', icon: '📈', screen: 'TrackRecord' }] : []),
-            { label: 'Send Feedback', icon: '⭐', screen: 'Feedback' },
-            { label: 'Help & Support', icon: '💬', screen: 'HelpSupport' },
-          ].map((a) => (
-            <GlassCard
-              key={a.label}
-              padding={16}
-              style={styles.actionCard}
-              onPress={a.screen ? () => (a.screen === 'PrivacySettings'
-                ? gate(() => navigation.navigate('PrivacySettings'), 'Ask a parent to enter the PIN to open privacy settings')
-                : navigation.navigate(a.screen!)) : undefined}
-            >
-              <View style={styles.actionRow}>
-                <AppIcon name={a.icon} size={20} color={colors.purpleSoft} style={styles.actionIcon} />
-                <Text style={styles.actionText}>{a.label}</Text>
-                <AppIcon name="arrow-forward" size={18} color={colors.purple} />
-              </View>
-            </GlassCard>
-          ))}
-        </View>
+        {actionGroups.map((group) => (
+          <View key={group.title} style={styles.actionsBlock}>
+            <Text style={styles.groupLabel}>{group.title}</Text>
+            {group.items.map((a) => (
+              <GlassCard
+                key={a.label}
+                padding={16}
+                style={styles.actionCard}
+                onPress={a.screen === 'PrivacySettings'
+                  ? () => gate(() => navigation.navigate('PrivacySettings'), 'Ask a parent to enter the PIN to open privacy settings')
+                  : () => navigation.navigate(a.screen)}
+              >
+                <View style={styles.actionRow}>
+                  <AppIcon name={a.icon} size={20} color={colors.purpleSoft} style={styles.actionIcon} />
+                  <Text style={styles.actionText}>{a.label}</Text>
+                  <AppIcon name="arrow-forward" size={18} color={colors.purple} />
+                </View>
+              </GlassCard>
+            ))}
+          </View>
+        ))}
 
         <TouchableOpacity style={styles.signOut} onPress={handleSignOut} activeOpacity={0.8}>
           <Text style={styles.signOutText}>Sign Out</Text>
@@ -215,6 +250,7 @@ const makeStyles = (c: Palette) => StyleSheet.create({
   avatarText: { fontSize: 38, fontWeight: '800', color: '#FFF' },
   name: { fontSize: 24, fontWeight: '700', color: c.textPrimary, letterSpacing: -0.4 },
   email: { fontSize: 14, color: c.textMuted, marginTop: 4 },
+  photoLink: { marginTop: 6, fontSize: 13, fontWeight: '700', color: c.cyan },
   rolePill: {
     marginTop: spacing.md,
     backgroundColor: c.cyanSoft,
@@ -232,6 +268,7 @@ const makeStyles = (c: Palette) => StyleSheet.create({
   infoLabel: { fontSize: 14, color: c.textMuted },
   infoValue: { fontSize: 14, fontWeight: '600', color: c.text },
   actionsBlock: { marginBottom: spacing.lg },
+  groupLabel: { fontSize: 12, fontWeight: '700', color: c.textSubtle, letterSpacing: 1.4, textTransform: 'uppercase', marginBottom: spacing.sm },
   actionCard: { marginBottom: spacing.sm },
   actionRow: { flexDirection: 'row', alignItems: 'center' },
   actionIcon: { fontSize: 20, marginRight: spacing.md },

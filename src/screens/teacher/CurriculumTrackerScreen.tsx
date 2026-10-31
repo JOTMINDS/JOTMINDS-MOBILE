@@ -83,7 +83,7 @@ export default function CurriculumTrackerScreen() {
           <TouchableOpacity style={[styles.btn, busy && { opacity: 0.6 }]} disabled={busy} onPress={create} accessibilityRole="button">
             {busy ? <ActivityIndicator color="#fff" /> : <Text style={styles.btnText}>Generate sub-topics</Text>}
           </TouchableOpacity>
-          <Text style={styles.note}>✦ Suggested by AI. Edit your scheme of work to match your school’s.</Text>
+          <Text style={styles.note}>Suggested topics. Edit your scheme of work to match your school’s.</Text>
         </ScrollView>
       </ScreenBackground>
     );

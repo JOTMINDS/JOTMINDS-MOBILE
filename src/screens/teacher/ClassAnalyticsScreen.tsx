@@ -4,7 +4,9 @@ import ScreenBackground from '../../components/ScreenBackground';
 import GlassCard from '../../components/GlassCard';
 import DistributionBars from '../../components/teacher/DistributionBars';
 import { ClassroomOverviewCard } from '../../components/ai/InsightCards';
-import { getStudentsForTeacher, getAllAssessmentResults } from '../../utils/api';
+import { getAllAssessmentResults } from '../../utils/api';
+import { loadTeacherStudents } from '../../utils/teacherStudents';
+import StaleNotice from '../../components/StaleNotice';
 import { stylesFromResults } from '../../utils/profileStyles';
 import {
   classStyles, styleDistribution, completionProgress, alignmentScore, alignmentInsight, DOMAINS, Domain,
@@ -24,15 +26,17 @@ export default function ClassAnalyticsScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [staleAt, setStaleAt] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setError(null);
     try {
       const [s, r] = await Promise.all([
-        getStudentsForTeacher(),
+        loadTeacherStudents(),
         getAllAssessmentResults().catch(() => ({ results: [] })),
       ]);
-      setStudents(s.students ?? []);
+      setStudents(s.students);
+      setStaleAt(s.stale ? (s.savedAt ?? '') : null);
       setMine(stylesFromResults(r?.results ?? []));
     } catch (e: any) {
       setError(e?.message ?? 'Could not load your class.');
@@ -65,6 +69,7 @@ export default function ClassAnalyticsScreen() {
         {!(error && students.length === 0) && (
           <Text style={styles.sub}>{students.length} student{students.length !== 1 ? 's' : ''} · {cls.profiled} with results</Text>
         )}
+        {staleAt !== null && <StaleNotice savedAt={staleAt} onRetry={() => { setRefreshing(true); void load(); }} />}
         {!!error && (
           <GlassCard padding={16} style={[styles.card, { marginTop: spacing.lg }]}>
             <Text style={styles.cardTitle}>Couldn't load your class</Text>
@@ -81,7 +86,7 @@ export default function ClassAnalyticsScreen() {
 
         {students.length === 0 ? (
           error ? null : (
-            <GlassCard padding={24}><Text style={styles.text}>Your class analytics appear here once students join your class and take their assessments.</Text></GlassCard>
+            <GlassCard padding={24}><Text style={styles.text}>Class analytics appear once students take assessments.</Text></GlassCard>
           )
         ) : (
           <>
@@ -107,7 +112,7 @@ export default function ClassAnalyticsScreen() {
 
             {total === 0 ? (
               <GlassCard padding={20} style={styles.card}>
-                <Text style={styles.text}>Your students haven't completed an assessment yet. Distributions will appear as results come in.</Text>
+                <Text style={styles.text}>No results yet. Charts appear as students finish assessments.</Text>
               </GlassCard>
             ) : (
               DOMAINS.map((d) => (

@@ -79,7 +79,6 @@ export default function ReflectionsScreen() {
             <Text style={styles.body}>💬 {feedback.encouragement}</Text>
             <Text style={styles.body}>🔍 {feedback.insight}</Text>
             <Text style={styles.body}>➡️ {feedback.actionableStep}</Text>
-            <Text style={styles.tag}>✦ AI-generated</Text>
           </GlassCard>
         )}
 

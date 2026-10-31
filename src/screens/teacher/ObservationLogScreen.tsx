@@ -7,7 +7,7 @@ import GlassCard from '../../components/GlassCard';
 import AppIcon from '../../components/AppIcon';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
-import { getStudentsForTeacher } from '../../utils/api';
+import { loadTeacherStudents } from '../../utils/teacherStudents';
 import {
   createTeacherObservation, getTeacherObservations, deleteTeacherObservation,
   CONCERN_TYPES, ConcernType, Severity, TeacherObservation,
@@ -15,6 +15,7 @@ import {
 import { rs } from '../../utils/responsive';
 import { radii, spacing, Palette } from '../../theme';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
+import type { ScreenProps } from '../../navigation/types';
 
 const SEVERITIES: { key: Severity; label: string; tint: string }[] = [
   { key: 'low', label: 'Low', tint: '#10B981' },
@@ -24,7 +25,13 @@ const SEVERITIES: { key: Severity; label: string; tint: string }[] = [
 
 const severityTint = (s: Severity) => SEVERITIES.find((x) => x.key === s)?.tint ?? '#8A97B2';
 
-export default function ObservationLogScreen() {
+/**
+ * A teacher's observation notes. Opened from a student's profile it is scoped to that
+ * student (list filtered, new notes pre-addressed); without a student it shows every note.
+ */
+export default function ObservationLogScreen({ route }: ScreenProps<'ObservationLog'>) {
+  const lockedId = route.params?.studentId;
+  const lockedName = route.params?.studentName;
   const colors = useTheme();
   const styles = useThemedStyles(makeStyles);
   const { user } = useAuth();
@@ -33,9 +40,9 @@ export default function ObservationLogScreen() {
   const [loading, setLoading] = useState(true);
   const [observations, setObservations] = useState<TeacherObservation[]>([]);
   const [students, setStudents] = useState<any[]>([]);
-  const [mode, setMode] = useState<'list' | 'new'>('list');
+  const [mode, setMode] = useState<'list' | 'new'>(route.params?.startNew ? 'new' : 'list');
 
-  const [studentId, setStudentId] = useState('');
+  const [studentId, setStudentId] = useState(lockedId ?? '');
   const [concernType, setConcernType] = useState<ConcernType>('Academic Focus');
   const [severity, setSeverity] = useState<Severity>('low');
   const [text, setText] = useState('');
@@ -49,13 +56,13 @@ export default function ObservationLogScreen() {
   const load = useCallback(async () => {
     const [obs, studs] = await Promise.allSettled([
       user?.id ? getTeacherObservations(user.id) : Promise.resolve([] as TeacherObservation[]),
-      getStudentsForTeacher(),
+      loadTeacherStudents(),
     ]);
     // On failure keep whatever is already on screen and say so, rather than
     // presenting an empty list or roster as if it were the truth.
     if (obs.status === 'fulfilled') { setObservations(obs.value); setLoadError(null); }
     else setLoadError(obs.reason?.message || 'Could not load your observations.');
-    if (studs.status === 'fulfilled') { setStudents(studs.value.students ?? []); setRosterError(null); }
+    if (studs.status === 'fulfilled') { setStudents(studs.value.students); setRosterError(null); }
     else setRosterError(studs.reason?.message || 'Could not load your students.');
     setLoading(false);
   }, [user?.id]);
@@ -63,7 +70,8 @@ export default function ObservationLogScreen() {
   useEffect(() => { load(); }, [load]);
 
   const save = async () => {
-    const student = students.find((s) => s.id === studentId);
+    // Opened from a profile, the student is known even if the roster hasn't loaded.
+    const student = students.find((s) => s.id === studentId) ?? (lockedId ? { id: lockedId, name: lockedName ?? 'Student' } : undefined);
     if (!studentId || !student) { toast.error('Pick a student.'); return; }
     if (text.trim().length < 5) { toast.error('Add a bit more detail to the observation.'); return; }
     setBusy(true);
@@ -82,7 +90,7 @@ export default function ObservationLogScreen() {
       return;
     }
     toast.success(share ? 'Saved and shared with parent' : 'Saved to your log');
-    setStudentId(''); setText(''); setAction(''); setConcernType('Academic Focus'); setSeverity('low'); setShare(true);
+    setStudentId(lockedId ?? ''); setText(''); setAction(''); setConcernType('Academic Focus'); setSeverity('low'); setShare(true);
     setMode('list');
     load();
   };
@@ -96,6 +104,8 @@ export default function ObservationLogScreen() {
       } },
     ]);
   };
+
+  const visible = lockedId ? observations.filter((o) => o.studentId === lockedId) : observations;
 
   if (loading) {
     return <ScreenBackground><View style={styles.centered}><ActivityIndicator size="large" color={colors.purple} /></View></ScreenBackground>;
@@ -112,7 +122,13 @@ export default function ObservationLogScreen() {
           <Text style={styles.h1}>New observation</Text>
 
           <Text style={styles.label}>STUDENT</Text>
-          {students.length === 0 && rosterError ? (
+          {lockedId ? (
+            <View style={styles.chipWrap}>
+              <View style={[styles.chip, styles.chipOn]}>
+                <Text style={[styles.chipText, styles.chipTextOn]}>{lockedName ?? students.find((s) => s.id === lockedId)?.name ?? 'Student'}</Text>
+              </View>
+            </View>
+          ) : students.length === 0 && rosterError ? (
             <TouchableOpacity onPress={load} accessibilityRole="button">
               <Text style={styles.emptyText}>Couldn't load your students ({rosterError}). Tap to retry.</Text>
             </TouchableOpacity>
@@ -180,8 +196,8 @@ export default function ObservationLogScreen() {
   return (
     <ScreenBackground>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        <Text style={styles.h1}>Observation Log</Text>
-        <Text style={styles.meta}>Short notes on individual students. Share to a parent, or keep private.</Text>
+        <Text style={styles.h1}>{lockedId ? 'Observations' : 'Observation Log'}</Text>
+        <Text style={styles.meta}>{lockedId ? (lockedName ?? '') : 'Private notes, or share with a parent.'}</Text>
 
         <TouchableOpacity style={styles.primaryBtn} onPress={() => setMode('new')}>
           <Text style={styles.primaryBtnText}>+ New observation</Text>
@@ -197,14 +213,14 @@ export default function ObservationLogScreen() {
           </GlassCard>
         )}
 
-        {observations.length === 0 ? (
+        {visible.length === 0 ? (
           loadError ? null : (
             <GlassCard variant="dark" padding={24} style={styles.card}>
               <Text style={styles.emptyText}>No observations yet.</Text>
             </GlassCard>
           )
         ) : (
-          observations.map((o) => (
+          visible.map((o) => (
             <GlassCard key={o.id} padding={16} style={styles.card}>
               <View style={styles.obsHead}>
                 <Text style={styles.obsStudent}>{o.studentName || 'Student'}</Text>

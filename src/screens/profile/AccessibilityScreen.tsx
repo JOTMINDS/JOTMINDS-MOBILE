@@ -135,7 +135,7 @@ export default function AccessibilityScreen({ navigation }: any) {
         <View style={styles.note}>
           <AppIcon name="💡" size={16} color={colors.textSubtle} />
           <Text style={styles.noteText}>
-            These settings are saved on this device. If you use VoiceOver or TalkBack, JotMinds works with them too.
+            Saved on this device. Works with VoiceOver and TalkBack.
           </Text>
         </View>
       </ScrollView>

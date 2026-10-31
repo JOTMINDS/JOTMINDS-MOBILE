@@ -40,9 +40,14 @@ export default function JTIAResultsScreen({ route, navigation }: any) {
 
   const [aiRecs, setAiRecs] = useState<JTIAAIRecommendations | null>(null);
 
+  // As a tab this screen stays mounted, so look for a report again each time it's shown
+  // (e.g. right after finishing the assessment).
   useEffect(() => {
-    if (!report) getLastJTIAReport().then((r) => r && setReport(r));
-  }, [report]);
+    if (route.params?.report) return;
+    const load = () => { getLastJTIAReport().then((r) => r && setReport(r)).catch(() => {}); };
+    load();
+    return navigation.addListener?.('focus', load);
+  }, [route.params?.report, navigation]);
 
   // Upgrade the baseline recommendations with AI-personalised ones when the
   // call succeeds; on any failure the on-device baseline stays in place.
@@ -60,9 +65,9 @@ export default function JTIAResultsScreen({ route, navigation }: any) {
       <ScreenBackground>
         <View style={styles.centered}>
           <Text style={styles.emptyTitle}>No results yet</Text>
-          <Text style={styles.emptyText}>Take the JTIA to see your teacher intelligence profile.</Text>
-          <TouchableOpacity onPress={() => navigation.replace('JTIAAssessment')} style={{ marginTop: spacing.lg }}>
-            <Text style={{ color: colors.success, fontWeight: '700' }}>Start JTIA</Text>
+          <Text style={styles.emptyText}>Take the Teaching Insights assessment to see your profile.</Text>
+          <TouchableOpacity onPress={() => (navigation.replace ?? navigation.navigate)('JTIAAssessment')} style={{ marginTop: spacing.lg }}>
+            <Text style={{ color: colors.success, fontWeight: '700' }}>Start Teaching Insights</Text>
           </TouchableOpacity>
         </View>
       </ScreenBackground>
@@ -77,7 +82,7 @@ export default function JTIAResultsScreen({ route, navigation }: any) {
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <Text style={styles.eyebrow}>ASSESSMENT COMPLETE</Text>
-          <Text style={styles.title}>Your Teacher Intelligence 🎓</Text>
+          <Text style={styles.title}>Your Teaching Insights 🎓</Text>
         </View>
 
         <LinearGradient
@@ -96,7 +101,6 @@ export default function JTIAResultsScreen({ route, navigation }: any) {
               <Text style={styles.archetype}>{recs.pedagogicalArchetype}</Text>
             )}
             {!!recs.executiveSummary && <Text style={styles.summary}>{recs.executiveSummary}</Text>}
-            {aiRecs && <Text style={styles.aiTag}>✦ Personalised with AI</Text>}
           </GlassCard>
         )}
 

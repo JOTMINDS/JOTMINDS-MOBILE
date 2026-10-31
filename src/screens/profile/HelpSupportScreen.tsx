@@ -10,7 +10,7 @@ const FAQS = [
   { q: 'How are my results calculated?', a: 'Each assessment uses a validated framework (Kolb, Sternberg, Dual-Process) and scores your answers across its dimensions.' },
   { q: 'Can I retake an assessment?', a: 'Yes. Open a completed assessment from your dashboard to view results, then tap Retake.' },
   { q: 'Why is my Role Fit locked?', a: 'Role Fit needs all three core assessments completed so its match is based on your full cognitive profile.' },
-  { q: 'Is my data private?', a: 'Yes — see Privacy Settings. Your results are tied to your account and never sold.' },
+  { q: 'Is my data private?', a: 'Yes. See Privacy & Security. Your results are tied to your account and never sold.' },
 ];
 
 export default function HelpSupportScreen({ navigation }: any) {
@@ -25,11 +25,20 @@ export default function HelpSupportScreen({ navigation }: any) {
         </TouchableOpacity>
 
         <View style={styles.header}>
-          <Text style={styles.title}>Help & Support</Text>
-          <Text style={styles.subtitle}>Answers and ways to reach us</Text>
+          <Text style={styles.title}>Help & Feedback</Text>
         </View>
 
-        <Text style={styles.sectionLabel}>CONTACT</Text>
+        <Text style={styles.sectionLabel}>GET IN TOUCH</Text>
+        <GlassCard style={styles.card} onPress={() => navigation.navigate('Feedback')}>
+          <View style={styles.row}>
+            <View style={styles.iconWrap}><AppIcon name="⭐" size={20} color={colors.cyan} /></View>
+            <View style={styles.rowText}>
+              <Text style={styles.rowTitle}>Send feedback</Text>
+              <Text style={styles.rowDesc}>Rate the app or suggest an improvement</Text>
+            </View>
+            <AppIcon name="arrow-forward" size={16} color={colors.purple} />
+          </View>
+        </GlassCard>
         <GlassCard style={styles.card} onPress={() => Linking.openURL('mailto:support@jotminds.com').catch(() => {})}>
           <View style={styles.row}>
             <View style={styles.iconWrap}><AppIcon name="✉️" size={20} color={colors.cyan} /></View>

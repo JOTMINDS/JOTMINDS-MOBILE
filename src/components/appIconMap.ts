@@ -149,6 +149,10 @@ export const MAP: Record<string, IconDef> = {
   '🏗': { lib: 'mci', name: 'crane' },
   '🏗️': { lib: 'mci', name: 'crane' },
   '🧸': { lib: 'mci', name: 'teddy-bear' },
+  '🌬️': { lib: 'mci', name: 'weather-windy' },
+  '🌬': { lib: 'mci', name: 'weather-windy' },
+  '🌿': { lib: 'mci', name: 'leaf' },
+  '😴': { lib: 'mci', name: 'sleep' },
   '🤝': { lib: 'mci', name: 'handshake' },
 
   // badges / gamification

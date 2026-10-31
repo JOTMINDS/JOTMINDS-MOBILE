@@ -137,7 +137,7 @@ export default function RoleDemandBuilderScreen({ navigation }: any) {
           >
             {aiFilling
               ? <ActivityIndicator size="small" color={colors.purple} />
-              : <Text style={styles.aiFillText}>{aiFilled ? '✓ Filled by AI — adjust below' : '✦ Auto-fill demands with AI'}</Text>}
+              : <Text style={styles.aiFillText}>{aiFilled ? '✓ Filled in — adjust below' : 'Auto-fill demands'}</Text>}
           </TouchableOpacity>
         </GlassCard>
 

@@ -222,7 +222,7 @@ export default function AssessmentListScreen({ navigation }: any) {
               </View>
               <Text style={styles.cardTitle}>Thinking Styles Adventure</Text>
               <Text style={styles.cardDesc}>
-                You've completed your Core Profile! Unlock a deeper look at your creative, analytical, practical, and reflective thinking — with program and career suggestions.
+                Core Profile done! Go deeper on how you think, with program and career ideas.
               </Text>
               <View style={styles.startRow}>
                 <Text style={styles.startText}>{thinkingStylesDone ? 'View Results' : 'Start Assessment'}</Text>

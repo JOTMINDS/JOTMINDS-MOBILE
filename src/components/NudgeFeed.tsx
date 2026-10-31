@@ -4,10 +4,8 @@ import GlassCard from './GlassCard';
 import AppIcon from './AppIcon';
 import { useAuth } from '../context/AuthContext';
 import { useAppNavigation } from '../navigation/types';
-import { getGamificationProfile } from '../utils/gamificationApi';
-import { getAllAssessmentResults } from '../utils/api';
-import { getDailyChallengeProgress } from '../utils/dailyChallengeApi';
-import { getActiveNudges, dismissNudge, Nudge } from '../utils/nudges';
+import { dismissNudge, Nudge } from '../utils/nudges';
+import { loadActiveNudges, invalidateNudges } from '../utils/nudgeLoader';
 import { rs } from '../utils/responsive';
 import { radii, spacing, Palette } from '../theme';
 import { useThemedStyles } from '../context/ThemeContext';
@@ -25,19 +23,7 @@ export default function NudgeFeed({ limit = 2 }: { limit?: number }) {
 
   const load = useCallback(async () => {
     if (!user?.id) return;
-    const [profile, assessments, challenge] = await Promise.all([
-      getGamificationProfile(user.id),
-      getAllAssessmentResults().catch(() => ({ results: [] })),
-      getDailyChallengeProgress(user.id).catch(() => null),
-    ]);
-    const completedTypes = (assessments?.results ?? []).map((r: any) => r.assessmentType);
-    const list = await getActiveNudges({
-      profile,
-      completedTypes,
-      dailyChallengeDoneToday: challenge ? challenge.todayCompleted : undefined,
-      lastActiveISO: profile.lastActiveDate,
-    });
-    setNudges(list);
+    setNudges(await loadActiveNudges(user.id));
   }, [user?.id]);
 
   useEffect(() => {
@@ -49,6 +35,7 @@ export default function NudgeFeed({ limit = 2 }: { limit?: number }) {
   const handleDismiss = async (id: string) => {
     setNudges((cur) => cur.filter((n) => n.id !== id));
     await dismissNudge(id);
+    invalidateNudges();
   };
 
   if (nudges.length === 0) return null;

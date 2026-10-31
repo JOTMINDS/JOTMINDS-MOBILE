@@ -12,6 +12,7 @@ import { useAuth } from '../../context/AuthContext';
 import { getOrganizationMembers, getAllAssessmentResults } from '../../utils/api';
 import { assessmentLabel } from '../../utils/scoring';
 import ScreenBackground from '../../components/ScreenBackground';
+import NotificationBell from '../../components/NotificationBell';
 import GlassCard from '../../components/GlassCard';
 import AppIcon from '../../components/AppIcon';
 import AskJottiCard from '../../components/AskJottiCard';
@@ -79,6 +80,7 @@ export default function ProfessionalDashboard({ navigation }: any) {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.header}>
+          <NotificationBell style={styles.bell} />
           <Text style={styles.greeting}>WELCOME</Text>
           <Text style={styles.name}>{user?.name || 'Professional'}</Text>
           {user?.organizationName ? <Text style={styles.tagline}>{user.organizationName}</Text> : null}
@@ -183,7 +185,8 @@ export default function ProfessionalDashboard({ navigation }: any) {
 const makeStyles = (colors: Palette) => StyleSheet.create({
   scroll: { paddingTop: 8, paddingHorizontal: spacing.xl, paddingBottom: 120 },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  header: { marginBottom: spacing.xxl },
+  header: { marginBottom: spacing.xxl, paddingRight: 56 },
+  bell: { position: 'absolute', top: 0, right: 0 },
   greeting: { fontSize: 12, color: colors.textSubtle, letterSpacing: 1.4, fontWeight: '700' },
   name: { fontSize: 30, fontWeight: '700', color: colors.textPrimary, marginTop: 4, letterSpacing: -0.6 },
   tagline: { fontSize: 15, color: colors.textMuted, marginTop: 6 },

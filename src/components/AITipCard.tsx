@@ -83,7 +83,6 @@ export default function AITipCard({ context, fallbacks, title = "Today's tip", i
         <Text style={styles.icon}>{icon}</Text>
         <Text style={styles.title}>{title}</Text>
         {aiLoading && <ActivityIndicator size="small" style={{ marginLeft: 'auto' }} />}
-        {isAI && !aiLoading && <Text style={styles.aiTag}>✦ AI</Text>}
       </View>
       <Text style={styles.tip}>{tip}</Text>
     </GlassCard>

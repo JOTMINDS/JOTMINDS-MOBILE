@@ -13,9 +13,8 @@ import { radii, spacing, Palette } from '../../theme';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 
 const POINTS = [
-  { icon: '🔒', title: 'Your data is private', desc: 'Your assessment results and check-ins are tied to your account and are never shared without your consent.' },
-  { icon: '👤', title: 'You control your account', desc: 'Edit your profile any time, and sign out from any device. Email is used only to sign in and send important notices.' },
-  { icon: '📊', title: 'How we use your results', desc: 'Cognitive results power your personal insights and role-fit matches. They are not sold to third parties.' },
+  { icon: '🔒', title: 'Your data is private', desc: 'Results and check-ins stay with your account unless you share them.' },
+  { icon: '📊', title: 'How we use your results', desc: 'They power your insights and matches. We never sell them.' },
 ];
 
 export default function PrivacySettingsScreen({ navigation }: any) {
@@ -89,8 +88,7 @@ export default function PrivacySettingsScreen({ navigation }: any) {
         </TouchableOpacity>
 
         <View style={styles.header}>
-          <Text style={styles.title}>Privacy Settings</Text>
-          <Text style={styles.subtitle}>How JotMinds handles your information</Text>
+          <Text style={styles.title}>Privacy & Security</Text>
         </View>
 
         {POINTS.map((p) => (
