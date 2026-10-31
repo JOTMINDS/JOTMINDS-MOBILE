@@ -24,6 +24,13 @@ describe('tabsForUser', () => {
     hiddenTabsForUser({ role: 'teacher' }).forEach((t) => expect(visible).not.toContain(t));
   });
 
+  it('gives school and organization accounts only Home and Profile, so there is no mood check', () => {
+    expect(tabsForUser({ role: 'school_admin' })).toEqual(['Home', 'Profile']);
+    expect(tabsForUser({ role: 'organization' })).toEqual(['Home', 'Profile']);
+    expect(tabsForUser({ role: 'professional', organizationType: 'Educational Institution' })).toEqual(['Home', 'Profile']);
+    expect(hiddenTabsForUser({ role: 'school_admin' })).toEqual([]);
+  });
+
   it('has no hidden tabs for other roles, which keep Home first and Profile last', () => {
     for (const role of ['parent', 'professional', 'student', undefined]) {
       expect(hiddenTabsForUser({ role })).toEqual([]);

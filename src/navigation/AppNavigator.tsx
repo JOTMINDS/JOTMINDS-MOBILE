@@ -34,6 +34,8 @@ import LeaderboardScreen from '../screens/braingym/LeaderboardScreen';
 // ── Role-Based Home Dashboards ────────────────────────────────────────────────
 import StudentDashboard from '../screens/dashboards/StudentDashboard';
 import TeacherDashboard from '../screens/dashboards/TeacherDashboard';
+import OrganizationDashboard from '../screens/dashboards/OrganizationDashboard';
+import { isInstitutionAccount } from '../utils/accountKind';
 import ParentDashboard from '../screens/dashboards/ParentDashboard';
 import ProfessionalDashboard from '../screens/dashboards/ProfessionalDashboard';
 import TeamScreen from '../screens/dashboards/TeamScreen';
@@ -103,6 +105,8 @@ import PracticeResultsScreen from '../screens/learning/PracticeResultsScreen';
 // ── Kids ──────────────────────────────────────────────────────────────────────
 import KidsAssessmentScreen from '../screens/kids/KidsAssessmentScreen';
 import KidsAssessmentResultsScreen from '../screens/kids/KidsAssessmentResultsScreen';
+import KidsPlayScreen from '../screens/kids/KidsPlayScreen';
+import KidsStickersScreen from '../screens/kids/KidsStickersScreen';
 
 // ── Shared ────────────────────────────────────────────────────────────────────
 import ExpertChatScreen from '../screens/shared/ExpertChatScreen';
@@ -134,6 +138,7 @@ import ObservationLogScreen from '../screens/teacher/ObservationLogScreen';
 
 // Server-driven kill switches (Super Admin → Feature Flags).
 const GatedBrainGym = withFeature('brain-gym', 'Brain Gym', BrainGymScreen);
+const GatedKidsPlay = withFeature('brain-gym', 'Games', KidsPlayScreen);
 const GatedAskJotti = withFeature('ai-coach', 'Ask Jotti', AskJottiScreen);
 const GatedDailyChallenge = withFeature('daily-challenge', 'Daily Challenge', DailyChallengeScreen);
 
@@ -148,6 +153,7 @@ function HomeTabScreen(props: any) {
   const { user } = useAuth();
   // Forward navigation/route — without this the dashboards get an undefined
   // `navigation` prop and crash the moment a card's onPress calls .navigate().
+  if (isInstitutionAccount(user)) return <OrganizationDashboard {...props} />;
   switch (user?.role) {
     case 'teacher': return <TeacherDashboard {...props} />;
     case 'parent': return <ParentDashboard {...props} />;
@@ -225,7 +231,8 @@ export default function AppNavigator() {
     if (!user) { setFirstWinDone(null); return; }
     // Backend flag is the source of truth (survives reinstall / new device);
     // fall back to the local cache when it isn't set on the profile yet.
-    if (user.firstWinCompleted) {
+    // School and organization accounts don't take the personal cognitive first assessment.
+    if (user.firstWinCompleted || isInstitutionAccount(user)) {
       setFirstWinDone(true);
       AsyncStorage.setItem(`jotminds.firstwin.${user.id}`, 'done').catch(() => {});
       return;
@@ -233,7 +240,7 @@ export default function AppNavigator() {
     AsyncStorage.getItem(`jotminds.firstwin.${user.id}`)
       .then((v) => setFirstWinDone(!!v))
       .catch(() => setFirstWinDone(true));
-  }, [user?.id, user?.firstWinCompleted]);
+  }, [user?.id, user?.firstWinCompleted, user?.role, user?.organizationType, user?.industrySector]);
 
   if (loading || (user && firstWinDone === null)) {
     return (
@@ -360,6 +367,8 @@ export default function AppNavigator() {
             {/* Kids */}
             <Stack.Screen name="KidsAssessment" component={KidsAssessmentScreen} options={{ headerShown: true, title: 'Fun Quiz' }} />
             <Stack.Screen name="KidsAssessmentResults" component={KidsAssessmentResultsScreen} options={{ headerShown: true, title: 'Your Results' }} />
+            <Stack.Screen name="KidsPlay" component={GatedKidsPlay} options={{ headerShown: true, title: 'Play' }} />
+            <Stack.Screen name="KidsStickers" component={KidsStickersScreen} options={{ headerShown: true, title: 'My Stickers' }} />
 
             {/* Shared */}
             <Stack.Screen name="ExpertChat" component={ExpertChatScreen} options={{ headerShown: true, title: 'Chat with Expert' }} />

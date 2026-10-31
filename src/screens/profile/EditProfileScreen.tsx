@@ -11,6 +11,7 @@ import AppIcon from '../../components/AppIcon';
 import { radii, spacing, Palette } from '../../theme';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import { EDUCATION_LEVELS } from '../../utils/educationLevels';
+import { accountKind, isInstitutionAccount } from '../../utils/accountKind';
 
 
 interface Field {
@@ -39,8 +40,8 @@ export default function EditProfileScreen({ navigation }: any) {
   if (user?.role === 'student') {
     fields.push({ key: 'educationLevel', label: 'Education Level', placeholder: '', type: 'level' });
   }
-  if (user?.role === 'professional') {
-    fields.push({ key: 'organizationName', label: 'Organization', placeholder: 'Your organization', autoCapitalize: 'words' });
+  if (user?.role === 'professional' || isInstitutionAccount(user)) {
+    fields.push({ key: 'organizationName', label: isInstitutionAccount(user) && accountKind(user) === 'school' ? 'School name' : 'Organization', placeholder: 'Your organization', autoCapitalize: 'words' });
     fields.push({ key: 'position', label: 'Position', placeholder: 'Your role / title', autoCapitalize: 'words' });
   }
 

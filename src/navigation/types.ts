@@ -71,6 +71,8 @@ export type RootStackParamList = {
   PracticeResults: { score: number; total: number; moduleId: string };
   KidsAssessment: undefined;
   KidsAssessmentResults: undefined;
+  KidsPlay: undefined;
+  KidsStickers: undefined;
   ExpertChat: undefined;
   AskJotti: { prompt?: string; autoSend?: boolean } | undefined;
   DailyChallenge: undefined;

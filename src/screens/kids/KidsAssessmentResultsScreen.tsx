@@ -10,6 +10,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import ScreenBackground from '../../components/ScreenBackground';
 import AppIcon from '../../components/AppIcon';
 import GlassCard from '../../components/GlassCard';
+import KidsConfetti from '../../components/kids/KidsConfetti';
 import { colors, radii, shadow, spacing, Palette } from '../../theme';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 
@@ -65,6 +66,7 @@ export default function KidsAssessmentResultsScreen({ route, navigation }: any) 
 
   return (
     <ScreenBackground>
+      <KidsConfetti />
       <ScrollView
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}

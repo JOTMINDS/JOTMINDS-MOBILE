@@ -32,6 +32,11 @@ describe('shouldShowJottiFab', () => {
     expect(shouldShowJottiFab('Home', { role: 'student', educationLevel: 'Pre-school' })).toBe(false);
   });
 
+  it('is hidden for school and organization accounts', () => {
+    expect(shouldShowJottiFab('Home', { role: 'school_admin' })).toBe(false);
+    expect(shouldShowJottiFab('Profile', { role: 'organization' })).toBe(false);
+  });
+
   it('knows every bottom-menu tab so the button clears the bar', () => {
     for (const role of ['teacher', 'parent', 'professional', 'student']) {
       tabsForUser({ role }).forEach((t) => expect(TAB_ROUTES.has(t)).toBe(true));

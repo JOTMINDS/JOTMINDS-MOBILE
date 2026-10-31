@@ -194,7 +194,8 @@ export default function DiscoverScreen({ navigation }: any) {
                   {!isKids && <Text style={styles.insightTag}>{insight.tag}</Text>}
                   <Text style={[styles.insightTitle, isKids && styles.insightTitleKids]}>{insight.title}</Text>
                   {isKids && <Text style={styles.insightPreviewKids}>{insight.preview}</Text>}
-                  {!isKids && <Text style={styles.insightReadTime}>{insight.readTime} read</Text>}
+                  {!isKids && <Text style={styles.insightReadTime}>{insight.readTime} read{insight.video ? ' · ▶ Video' : ''}</Text>}
+                  {isKids && !!insight.video && <Text style={styles.insightPreviewKids}>▶ Has a video</Text>}
                   {isTeacher && !!recs.find((r) => r.id === insight.id) && (
                     <Text style={styles.reason}>★ {recs.find((r) => r.id === insight.id)!.reason}</Text>
                   )}

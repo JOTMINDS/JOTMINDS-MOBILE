@@ -20,9 +20,29 @@ export interface DiscoverInsight {
   domain: CognitiveDomain;
   /** When present, the detail screen shows these instead of its generic sections. */
   sections?: { heading: string; body: string }[];
+  /** A video on the same idea. It opens on YouTube, from an official channel. */
+  video?: DiscoverVideo;
 }
 
-const GENERAL: DiscoverInsight[] = [
+export interface DiscoverVideo {
+  url: string;
+  /** The channel, shown on the button. */
+  source: string;
+}
+
+/** Official-channel videos only, each checked against YouTube before it was added. */
+const VIDEOS = {
+  powerOfYet: { url: 'https://www.youtube.com/watch?v=_y5jkSQDC5E', source: 'Sesame Street' },
+  zoeAndElmo: { url: 'https://www.youtube.com/watch?v=46UhAtPyXw4', source: 'Khan Academy' },
+  studyTips: { url: 'https://www.youtube.com/watch?v=TjPFZaMe2yw', source: 'TED-Ed' },
+  practice: { url: 'https://www.youtube.com/watch?v=f2O6mQkFiiw', source: 'TED-Ed' },
+  dweck: { url: 'https://www.youtube.com/watch?v=_X0mgOOSpLU', source: 'TED' },
+} satisfies Record<string, DiscoverVideo>;
+
+const withVideo = (list: DiscoverInsight[], videos: Record<string, DiscoverVideo>): DiscoverInsight[] =>
+  list.map((i) => (videos[i.id] ? { ...i, video: videos[i.id] } : i));
+
+const GENERAL: DiscoverInsight[] = withVideo([
   {
     id: '1', audience: 'general', tag: 'COGNITIVE SCIENCE', title: 'Why You Think Differently Under Pressure',
     preview: 'Stress activates System 1 thinking — fast, intuitive, and prone to errors. Understanding this can help you slow down when it matters most.',
@@ -48,9 +68,9 @@ const GENERAL: DiscoverInsight[] = [
     preview: 'Your brain naturally cycles between high and low focus every 90 minutes. Working with this rhythm can meaningfully boost your output and focus.',
     icon: '⏱️', gradient: ['#10B981', '#059669'], readTime: '3 min', category: 'snapshot', domain: 'learning',
   },
-];
+], { '2': VIDEOS.studyTips, '5': VIDEOS.practice });
 
-const TEACHER: DiscoverInsight[] = [
+const TEACHER: DiscoverInsight[] = withVideo([
   {
     id: 't1', audience: 'teacher', tag: 'QUESTIONING', title: 'The 3-Second Pause',
     preview: 'Waiting a few seconds after you ask a question changes who answers and how well.',
@@ -111,9 +131,9 @@ const TEACHER: DiscoverInsight[] = [
       { heading: 'Try it tomorrow', body: 'Open Mind and try the Teacher Reset between two lessons. It takes about two minutes.' },
     ],
   },
-];
+], { t2: VIDEOS.studyTips, t3: VIDEOS.dweck });
 
-const KIDS: DiscoverInsight[] = [
+const KIDS: DiscoverInsight[] = withVideo([
   {
     id: 'k1', audience: 'kids', tag: 'BRAIN FACT', title: 'Your Brain Is Like a Muscle',
     preview: 'The more you practise, the stronger your brain gets!',
@@ -174,7 +194,7 @@ const KIDS: DiscoverInsight[] = [
       { heading: 'Try it!', body: 'Breathe in for 4 counts. Breathe out for 4 counts. Do it 3 times.' },
     ],
   },
-];
+], { k1: VIDEOS.zoeAndElmo, k2: VIDEOS.powerOfYet });
 
 export const insightsFor = (audience: DiscoverAudience): DiscoverInsight[] =>
   audience === 'teacher' ? TEACHER : audience === 'kids' ? KIDS : GENERAL;

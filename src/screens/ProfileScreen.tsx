@@ -20,10 +20,12 @@ import AppIcon from '../components/AppIcon';
 import { useParentGate } from '../utils/useParentGate';
 import { isKidsAge } from '../utils/kidsMode';
 import { isPreschoolLevel } from '../utils/educationLevels';
+import { accountKind, accountLabel, isInstitutionAccount } from '../utils/accountKind';
 import { colors, radii, shadow, spacing, Palette } from '../theme';
 
 export default function ProfileScreen({ navigation }: any) {
   const { user, signOut, refreshUser } = useAuth();
+  const institution = isInstitutionAccount(user);
   const { gate, gateModal } = useParentGate();
   const styles = useThemedStyles(makeStyles);
   const toast = useToast();
@@ -79,7 +81,7 @@ export default function ProfileScreen({ navigation }: any) {
       items: [
         { label: 'Name', value: user?.name || 'Not set' },
         { label: 'Email', value: user?.email || 'Not set' },
-        { label: 'Role', value: user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : 'Not set' },
+        { label: institution ? 'Account type' : 'Role', value: institution ? accountLabel(user) : (user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : 'Not set') },
         ...(user?.age ? [{ label: 'Age', value: user.age.toString() }] : []),
         ...(user?.phone ? [{ label: 'Phone', value: user.phone }] : []),
       ],
@@ -92,6 +94,16 @@ export default function ProfileScreen({ navigation }: any) {
       items: [
         { label: 'School', value: user?.school || 'Not set' },
         ...(user?.studentCode ? [{ label: 'Student code', value: user.studentCode }] : []),
+      ],
+    });
+  }
+  if (institution) {
+    sections.push({
+      title: accountKind(user) === 'school' ? 'School' : 'Organization',
+      items: [
+        { label: 'Name', value: user?.organizationName || user?.school || 'Not set' },
+        ...(user?.position ? [{ label: 'Position', value: user.position }] : []),
+        ...(user?.organizationCode ? [{ label: 'Code', value: user.organizationCode }] : []),
       ],
     });
   }
@@ -109,7 +121,7 @@ export default function ProfileScreen({ navigation }: any) {
   // Help & Feedback, so each row here has one distinct job.
   const showReport = !(isKidsAge(user?.age) || isPreschoolLevel(user?.educationLevel));
   const actionGroups: { title: string; items: { label: string; icon: string; screen: string }[] }[] = [
-    {
+    ...(institution ? [] : [{
       title: 'My growth',
       items: [
         { label: 'Cognitive Growth', icon: '🌱', screen: 'Badges' },
@@ -117,7 +129,7 @@ export default function ProfileScreen({ navigation }: any) {
         { label: 'Reflections & Notes', icon: '📓', screen: 'Reflections' },
         ...(user?.role === 'professional' ? [{ label: 'Track Record', icon: '📈', screen: 'TrackRecord' }] : []),
       ],
-    },
+    }]),
     {
       title: 'Account',
       items: [
@@ -158,7 +170,7 @@ export default function ProfileScreen({ navigation }: any) {
           </TouchableOpacity>
           <View style={styles.rolePill}>
             <Text style={styles.rolePillText}>
-              {user?.role ? user.role.toUpperCase() : 'MEMBER'}
+              {institution ? accountLabel(user).toUpperCase() : user?.role ? user.role.toUpperCase() : 'MEMBER'}
             </Text>
           </View>
         </View>

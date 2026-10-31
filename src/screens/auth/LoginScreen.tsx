@@ -33,6 +33,9 @@ export default function LoginScreen({ navigation, route }: any) {
   const toast = useToast();
   const linkedCode: string | undefined = route?.params?.studentCode;
   const [mode, setMode] = useState<'email' | 'code'>(linkedCode ? 'code' : 'email');
+  // Schools and organizations sign in through their own portal, as on the web.
+  const [portal, setPortal] = useState<'personal' | 'organization'>('personal');
+  const orgPortal = portal === 'organization';
   const [email, setEmail] = useState(route?.params?.email ?? '');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -101,7 +104,7 @@ export default function LoginScreen({ navigation, route }: any) {
 
     setLoading(true);
     try {
-      await signIn(email, password);
+      await signIn(email, password, { portal });
       offerBiometric(email, password); // fire-and-forget; Alert survives the nav swap
     } catch (error: any) {
       console.error('[Login] Error:', error);
@@ -197,9 +200,31 @@ export default function LoginScreen({ navigation, route }: any) {
           </View>
 
           <GlassCard variant="dark" padding={28} style={styles.card} glowColor="purple">
-            <Text style={styles.title}>Welcome Back</Text>
-            <Text style={styles.subtitle}>Sign in to your account</Text>
+            <Text style={styles.title}>{orgPortal ? 'School or organization' : 'Welcome Back'}</Text>
+            <Text style={styles.subtitle}>
+              {orgPortal ? 'Sign in to your school or organization account' : 'Sign in to your account'}
+            </Text>
 
+            <View style={styles.modeToggle}>
+              <TouchableOpacity
+                style={[styles.modeOption, !orgPortal && styles.modeOptionActive]}
+                onPress={() => setPortal('personal')}
+                accessibilityRole="button"
+                accessibilityState={{ selected: !orgPortal }}
+              >
+                <Text style={[styles.modeOptionText, !orgPortal && styles.modeOptionTextActive]}>Personal</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modeOption, orgPortal && styles.modeOptionActive]}
+                onPress={() => { setPortal('organization'); setMode('email'); }}
+                accessibilityRole="button"
+                accessibilityState={{ selected: orgPortal }}
+              >
+                <Text style={[styles.modeOptionText, orgPortal && styles.modeOptionTextActive]}>School / Organization</Text>
+              </TouchableOpacity>
+            </View>
+
+            {!orgPortal && (
             <View style={styles.modeToggle}>
               <TouchableOpacity
                 style={[styles.modeOption, mode === 'email' && styles.modeOptionActive]}
@@ -218,6 +243,7 @@ export default function LoginScreen({ navigation, route }: any) {
                 <Text style={[styles.modeOptionText, mode === 'code' && styles.modeOptionTextActive]}>Student code</Text>
               </TouchableOpacity>
             </View>
+            )}
 
             {mode === 'code' ? (
               <>
@@ -356,12 +382,18 @@ export default function LoginScreen({ navigation, route }: any) {
             </>
             )}
 
-            <View style={styles.signupContainer}>
-              <Text style={styles.signupText}>Don't have an account? </Text>
-              <TouchableOpacity onPress={() => navigation.navigate('Signup')}>
-                <Text style={styles.signupLink}>Sign Up</Text>
-              </TouchableOpacity>
-            </View>
+            {orgPortal ? (
+              <Text style={styles.helperText}>
+                New school or organization? Register it on the JotMinds web app, then sign in here.
+              </Text>
+            ) : (
+              <View style={styles.signupContainer}>
+                <Text style={styles.signupText}>Don't have an account? </Text>
+                <TouchableOpacity onPress={() => navigation.navigate('Signup')}>
+                  <Text style={styles.signupLink}>Sign Up</Text>
+                </TouchableOpacity>
+              </View>
+            )}
           </GlassCard>
         </ScrollView>
       </KeyboardAvoidingView>

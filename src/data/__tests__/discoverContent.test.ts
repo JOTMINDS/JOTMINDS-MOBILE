@@ -10,6 +10,28 @@ describe('discoverAudience', () => {
   });
 });
 
+describe('videos', () => {
+  const all = (['general', 'teacher', 'kids'] as const).flatMap((a) => insightsFor(a));
+  const withVideo = all.filter((i) => i.video);
+
+  it('attaches videos to a few articles in every set', () => {
+    for (const a of ['general', 'teacher', 'kids'] as const) expect(insightsFor(a).some((i) => i.video)).toBe(true);
+  });
+
+  it('only links public YouTube watch pages, with a named source', () => {
+    for (const i of withVideo) {
+      expect(i.video!.url).toMatch(/^https:\/\/www\.youtube\.com\/watch\?v=[\w-]{11}$/);
+      expect(i.video!.source.length).toBeGreaterThan(0);
+    }
+  });
+
+  it('keeps elementary videos to the Sesame Street and Khan Academy channels', () => {
+    for (const i of insightsFor('kids').filter((x) => x.video)) {
+      expect(['Sesame Street', 'Khan Academy']).toContain(i.video!.source);
+    }
+  });
+});
+
 describe('insightsFor', () => {
   it('has unique ids across all sets, so quiz progress is never shared between articles', () => {
     const ids = (['general', 'teacher', 'kids'] as const).flatMap((a) => insightsFor(a).map((i) => i.id));

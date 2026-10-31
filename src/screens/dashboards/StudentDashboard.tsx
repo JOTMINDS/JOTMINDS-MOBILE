@@ -20,6 +20,7 @@ import AskJottiCard from '../../components/AskJottiCard';
 import AITipCard from '../../components/AITipCard';
 import NudgeFeed from '../../components/NudgeFeed';
 import KidsHero from '../../components/kids/KidsHero';
+import KidsTile from '../../components/kids/KidsTile';
 import { Skeleton, SkeletonCard } from '../../components/Skeleton';
 import { FeatureVisible } from '../../components/FeatureGate';
 import { StudentRecommendationsCard, ExecutiveSummaryCard } from '../../components/ai/InsightCards';
@@ -154,6 +155,10 @@ export default function StudentDashboard({ navigation }: any) {
           <>
             <View style={styles.kidsBell}><NotificationBell /></View>
             <KidsHero name={user?.name} done={completedTypes.length} total={assessmentCards.length} />
+            <View style={styles.kidsTiles}>
+              <KidsTile emoji="🎮" label="Play" colors={['#EC4899', '#DB2777']} onPress={() => navigation.navigate('KidsPlay')} />
+              <KidsTile emoji="🏅" label="My Stickers" colors={['#10B981', '#059669']} onPress={() => navigation.navigate('KidsStickers')} />
+            </View>
           </>
         ) : (
           <>
@@ -456,6 +461,7 @@ const makeStyles = (colors: Palette) => StyleSheet.create({
     borderRadius: 4,
   },
   kidsBell: { alignItems: 'flex-end', marginBottom: spacing.sm },
+  kidsTiles: { flexDirection: 'row', gap: spacing.md, marginBottom: spacing.xl },
   jottiCard: { marginBottom: spacing.xl },
   challengeCard: { marginBottom: spacing.xl },
   challengeRow: { flexDirection: 'row', alignItems: 'center' },

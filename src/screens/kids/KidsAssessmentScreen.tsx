@@ -10,6 +10,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import ScreenBackground from '../../components/ScreenBackground';
 import AppIcon from '../../components/AppIcon';
 import GlassCard from '../../components/GlassCard';
+import ListenButton from '../../components/kids/ListenButton';
 import { colors, radii, shadow, spacing, Palette } from '../../theme';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 
@@ -106,6 +107,10 @@ export default function KidsAssessmentScreen({ navigation }: any) {
         <GlassCard padding={28} style={styles.questionCard}>
           <Text style={styles.questionText}>{currentQuestion.question}</Text>
         </GlassCard>
+        <ListenButton
+          text={`${currentQuestion.question} ${currentQuestion.options.map((o) => o.text).join('. Or, ')}.`}
+          style={styles.listen}
+        />
 
         <View style={styles.optionsContainer}>
           {currentQuestion.options.map((option, index) => {
@@ -188,9 +193,10 @@ const makeStyles = (colors: Palette) => StyleSheet.create({
     backgroundColor: colors.success,
   },
   questionCard: {
-    marginBottom: spacing.xxl,
+    marginBottom: spacing.lg,
     alignItems: 'center',
   },
+  listen: { marginBottom: spacing.xl, backgroundColor: colors.purple },
   questionText: {
     fontSize: 22,
     fontWeight: '700',

@@ -1,5 +1,6 @@
 import { assessmentBand } from '../utils/assessmentBand';
 import { isPreschoolLevel } from '../utils/educationLevels';
+import { isInstitutionAccount } from '../utils/accountKind';
 
 /**
  * Where the floating "Ask Jotti" button shows. It is on every signed-in page except:
@@ -21,10 +22,11 @@ export const TAB_ROUTES = new Set([
 
 export function shouldShowJottiFab(
   routeName: string | undefined,
-  user: { role?: string; age?: number | null; educationLevel?: string | null } | null | undefined,
+  user: { role?: string; age?: number | null; educationLevel?: string | null; organizationType?: string | null; industrySector?: string | null } | null | undefined,
 ): boolean {
   if (!user || !routeName) return false;
   if (HIDDEN_ROUTES.has(routeName)) return false;
+  if (isInstitutionAccount(user)) return false;
   if (user.role === 'student' && (assessmentBand(user) === 'kids' || isPreschoolLevel(user.educationLevel))) return false;
   return true;
 }
