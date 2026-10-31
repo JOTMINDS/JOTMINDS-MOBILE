@@ -13,6 +13,8 @@ import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import { FeatureVisible } from '../../components/FeatureGate';
 import { useAuth } from '../../context/AuthContext';
 import { getResets, resetStreak, didResetToday } from '../../utils/teacherReset';
+import { getLastJTIAReport } from '../../utils/jtiaStatus';
+import { teachingFocus, TeachingFocus } from '../../utils/teachingFocus';
 
 export default function MindHomeScreen({ navigation }: any) {
   const colors = useTheme();
@@ -24,6 +26,7 @@ export default function MindHomeScreen({ navigation }: any) {
   const { user } = useAuth();
   const isTeacher = user?.role === 'teacher';
   const [resets, setResets] = useState<string[]>([]);
+  const [focus, setFocus] = useState<TeachingFocus | null>(null);
 
   useEffect(() => {
     loadCheckinStatus();
@@ -32,7 +35,10 @@ export default function MindHomeScreen({ navigation }: any) {
   // Teachers' reset streak refreshes when they return from the activity.
   useEffect(() => {
     if (!isTeacher) return;
-    const load = () => { getResets().then(setResets).catch(() => {}); };
+    const load = () => {
+      getResets().then(setResets).catch(() => {});
+      getLastJTIAReport().then((r) => setFocus(teachingFocus(r))).catch(() => {});
+    };
     load();
     return navigation?.addListener?.('focus', load);
   }, [isTeacher, navigation]);
@@ -82,6 +88,26 @@ export default function MindHomeScreen({ navigation }: any) {
               </View>
               <Text style={styles.snapshotArrow}>→</Text>
             </View>
+          </GlassCard>
+        )}
+
+        {/* Teaching Insights alongside the mood check: strengths to lean on and a growth edge */}
+        {isTeacher && (
+          <GlassCard style={styles.resetCard} onPress={() => navigation.navigate('Insights')}>
+            <Text style={styles.snapshotTitle}>Your teaching focus</Text>
+            {focus ? (
+              <>
+                <Text style={styles.snapshotSub}>Lean on {focus.strength.label}. Grow {focus.growth.label}.</Text>
+                {focus.domains.map((d) => (
+                  <View key={d.key} style={styles.focusRow}>
+                    <Text style={styles.focusLabel}>{d.label}</Text>
+                    <View style={styles.focusTrack}><View style={[styles.focusFill, { width: `${Math.max(4, Math.min(100, d.score))}%` }]} /></View>
+                  </View>
+                ))}
+              </>
+            ) : (
+              <Text style={styles.snapshotSub}>Take Teaching Insights to personalise your Mind activities.</Text>
+            )}
           </GlassCard>
         )}
 
@@ -278,6 +304,10 @@ const makeStyles = (colors: Palette) => StyleSheet.create({
   checkinBtnText: { fontSize: 15, fontWeight: '700', color: '#FFFFFF' },
   checkinBtnTextDone: { color: colors.textMuted },
   resetCard: { marginBottom: 20 },
+  focusRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 10 },
+  focusLabel: { width: 122, fontSize: 12, color: colors.textSecondary, fontWeight: '600' },
+  focusTrack: { flex: 1, height: 8, borderRadius: 4, backgroundColor: colors.bgTertiary, overflow: 'hidden' },
+  focusFill: { height: 8, borderRadius: 4, backgroundColor: colors.cyan },
   resetStreak: { fontSize: 12, fontWeight: '700', color: colors.warning, marginTop: 4 },
   snapshotCard: { marginBottom: 14 },
   snapshotRow: { flexDirection: 'row', alignItems: 'center', gap: 14 },

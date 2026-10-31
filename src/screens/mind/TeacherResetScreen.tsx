@@ -6,6 +6,8 @@ import AppIcon from '../../components/AppIcon';
 import { useToast } from '../../context/ToastContext';
 import { useAccessibility } from '../../context/AccessibilityContext';
 import { saveReflection } from '../../utils/reflectionsApi';
+import { getLastJTIAReport } from '../../utils/jtiaStatus';
+import { teachingFocus, TeachingFocus } from '../../utils/teachingFocus';
 import {
   BREATH_SECONDS, BREATH_ROUNDS, INTENTIONS, breathAt, promptForDay, recordReset, resetStreak,
 } from '../../utils/teacherReset';
@@ -29,7 +31,12 @@ export default function TeacherResetScreen({ navigation }: any) {
   const [note, setNote] = useState('');
   const [intention, setIntention] = useState<string | null>(null);
   const [streak, setStreak] = useState(0);
-  const prompt = useRef(promptForDay()).current;
+  // With a Teaching Insights report, the question and suggested intention target the growth edge.
+  const [focus, setFocus] = useState<TeachingFocus | null>(null);
+  useEffect(() => { getLastJTIAReport().then((r) => setFocus(teachingFocus(r))).catch(() => {}); }, []);
+  const dayPrompt = useRef(promptForDay()).current;
+  const prompt = focus?.prompt ?? dayPrompt;
+  const intentions = focus ? [focus.intention, ...INTENTIONS.filter((i) => i !== focus.intention)] : INTENTIONS;
   const scale = useRef(new Animated.Value(MIN_SCALE)).current;
 
   // One tick a second while breathing; the circle follows the current phase.
@@ -141,7 +148,7 @@ export default function TeacherResetScreen({ navigation }: any) {
             <Text style={styles.title}>Your intention</Text>
             <Text style={styles.sub}>Pick one for your next lesson.</Text>
             <View style={styles.chips}>
-              {INTENTIONS.map((i) => (
+              {intentions.map((i) => (
                 <TouchableOpacity
                   key={i}
                   style={[styles.chip, intention === i && styles.chipOn]}
@@ -149,7 +156,7 @@ export default function TeacherResetScreen({ navigation }: any) {
                   accessibilityRole="button"
                   accessibilityState={{ selected: intention === i }}
                 >
-                  <Text style={[styles.chipText, intention === i && styles.chipTextOn]}>{i}</Text>
+                  <Text style={[styles.chipText, intention === i && styles.chipTextOn]}>{focus && i === focus.intention ? `★ ${i}` : i}</Text>
                 </TouchableOpacity>
               ))}
             </View>

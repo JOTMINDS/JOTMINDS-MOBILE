@@ -11,6 +11,13 @@ import ScreenBackground from '../../components/ScreenBackground';
 import GlassCard from '../../components/GlassCard';
 import AppIcon from '../../components/AppIcon';
 import NudgeFeed from '../../components/NudgeFeed';
+import { useAuth } from '../../context/AuthContext';
+import { getGamificationProfile } from '../../utils/gamificationApi';
+import { getStreak } from '../../utils/mindCheckins';
+import { accountNotices, resourcePicks } from '../../utils/notificationPanel';
+import { discoverAudience } from '../../data/discoverContent';
+import { assessmentBand } from '../../utils/assessmentBand';
+import { TAB_ROUTES } from '../../navigation/jottiFab';
 import { colors, radii, spacing, Palette } from '../../theme';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 
@@ -27,8 +34,23 @@ export default function NotificationsScreen({ navigation }: any) {
   const [pref, setPref] = useState<ReminderPref>(DEFAULT_REMINDER);
   const [showTime, setShowTime] = useState(false);
   const [saving, setSaving] = useState(false);
+  const { user } = useAuth();
+  const [week, setWeek] = useState<{ streak: number; mind: number; assessments: number } | null>(null);
 
   useEffect(() => { getReminderPref().then(setPref); }, []);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    Promise.all([getGamificationProfile(user.id), getStreak()])
+      .then(([p, mind]) => setWeek({ streak: p.currentStreak, mind, assessments: p.totalAssessments }))
+      .catch(() => {});
+  }, [user?.id]);
+
+  const notices = accountNotices(user);
+  const reads = resourcePicks(discoverAudience(user?.role, assessmentBand(user)), 2);
+  // Tabs live inside Main, so a notice that points at one has to go through it.
+  const open = (route: string, params?: Record<string, any>) =>
+    TAB_ROUTES.has(route) ? navigation.navigate('Main', { screen: route }) : navigation.navigate(route, params);
 
   const apply = async (next: ReminderPref) => {
     setSaving(true);
@@ -58,10 +80,65 @@ export default function NotificationsScreen({ navigation }: any) {
 
         <View style={styles.header}>
           <Text style={styles.title}>Notifications</Text>
-          <Text style={styles.subtitle}>Gentle nudges to keep you growing</Text>
+          <Text style={styles.subtitle}>Your updates in one place</Text>
         </View>
 
         <NudgeFeed limit={6} />
+
+        {week && (
+          <>
+            <Text style={styles.sectionLabel}>YOUR WEEK</Text>
+            <GlassCard padding={16} style={styles.row}>
+              <View style={styles.weekRow}>
+                {[
+                  { n: week.streak, l: 'Day streak' },
+                  { n: week.mind, l: 'Mind streak' },
+                  { n: week.assessments, l: 'Assessments' },
+                ].map((w) => (
+                  <View key={w.l} style={styles.weekStat}>
+                    <Text style={styles.weekNum}>{w.n}</Text>
+                    <Text style={styles.weekLabel}>{w.l}</Text>
+                  </View>
+                ))}
+              </View>
+            </GlassCard>
+          </>
+        )}
+
+        {notices.length > 0 && (
+          <>
+            <Text style={styles.sectionLabel}>ACCOUNT</Text>
+            {notices.map((n) => (
+              <GlassCard key={n.id} padding={14} style={styles.row} onPress={() => open(n.route, n.params)}>
+                <View style={styles.rowInner}>
+                  <AppIcon name={n.icon} size={20} color={colors.purpleSoft} />
+                  <Text style={[styles.rowTitle, { flex: 1, marginBottom: 0 }]}>{n.title}</Text>
+                  <AppIcon name="arrow-forward" size={16} color={colors.purple} />
+                </View>
+              </GlassCard>
+            ))}
+          </>
+        )}
+
+        {reads.length > 0 && (
+          <>
+            <Text style={styles.sectionLabel}>WORTH A READ</Text>
+            {reads.map((r) => (
+              <GlassCard key={r.id} padding={14} style={styles.row} onPress={() => navigation.navigate('InsightDetail', { insight: r })}>
+                <View style={styles.rowInner}>
+                  <AppIcon name={r.icon} size={20} color={colors.purpleSoft} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.rowTitle, { marginBottom: 0 }]}>{r.title}</Text>
+                    <Text style={styles.rowDesc}>{r.readTime} read</Text>
+                  </View>
+                  <AppIcon name="arrow-forward" size={16} color={colors.purple} />
+                </View>
+              </GlassCard>
+            ))}
+          </>
+        )}
+
+        <Text style={styles.sectionLabel}>REMINDERS</Text>
 
         <GlassCard style={styles.row}>
           <View style={styles.rowInner}>
@@ -129,6 +206,11 @@ const makeStyles = (colors: Palette) => StyleSheet.create({
   header: { marginBottom: 24 },
   title: { fontSize: 30, fontWeight: '800', color: colors.textPrimary, letterSpacing: -1 },
   subtitle: { fontSize: 15, color: colors.textMuted, marginTop: 4 },
+  sectionLabel: { fontSize: 12, fontWeight: '700', color: colors.textSubtle, letterSpacing: 1.4, marginTop: 12, marginBottom: 10 },
+  weekRow: { flexDirection: 'row', justifyContent: 'space-between' },
+  weekStat: { flex: 1, alignItems: 'center' },
+  weekNum: { fontSize: 26, fontWeight: '800', color: colors.purpleSoft },
+  weekLabel: { fontSize: 12, color: colors.textMuted, marginTop: 2 },
   row: { marginBottom: 12 },
   rowInner: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   iconWrap: { width: 44, height: 44, borderRadius: 13, justifyContent: 'center', alignItems: 'center' },
