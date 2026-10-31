@@ -275,7 +275,7 @@ export default function StudentDashboard({ navigation }: any) {
           <GlassCard style={styles.assessmentCard}>
             <Text style={styles.cardTitle}>🧸 Learning through play</Text>
             <Text style={styles.cardDescription}>
-              Your teacher records how you grow as you play and learn. There's nothing to take here yet.
+              Your teacher notes how you grow as you play.
             </Text>
           </GlassCard>
         )}

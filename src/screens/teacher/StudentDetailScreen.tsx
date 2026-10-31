@@ -54,7 +54,7 @@ export default function StudentDetailScreen({ route, navigation }: ScreenProps<'
         <GlassCard variant="dark" padding={16} style={styles.card}>
           <Text style={styles.cardTitle}>Cognitive profile</Text>
           {!has ? (
-            <Text style={styles.text}>No assessment data yet. Once this student completes an assessment, their profile appears here.</Text>
+            <Text style={styles.text}>No assessments yet. Their profile appears here once they finish one.</Text>
           ) : (
             DOMAINS.map((d) => (
               <View key={d} style={styles.domain}>

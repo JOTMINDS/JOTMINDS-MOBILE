@@ -32,7 +32,7 @@ export default function PreschoolChildrenScreen({ navigation }: ScreenProps<'Pre
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <Text style={styles.h1}>Early Years</Text>
         <Text style={styles.meta}>
-          Record what you see children do, then watch their development build up across 8 domains. Ages 2–6.
+          Record what children do and watch 8 domains grow. Ages 2–6.
         </Text>
 
         <TouchableOpacity style={styles.secondaryBtn} onPress={() => navigation.navigate('PreschoolActivities')} accessibilityRole="button">
@@ -51,7 +51,7 @@ export default function PreschoolChildrenScreen({ navigation }: ScreenProps<'Pre
           <GlassCard padding={20} style={styles.card}>
             <Text style={styles.cardTitle}>No Pre-school children yet</Text>
             <Text style={styles.text}>
-              Children appear here once they are in one of your classes with the level “Pre-school” (or a Nursery / KG class name, or an age of 6½ or under).
+              Pre-school children from your classes appear here.
             </Text>
           </GlassCard>
         ) : (
@@ -85,7 +85,7 @@ export default function PreschoolChildrenScreen({ navigation }: ScreenProps<'Pre
           </>
         )}
 
-        <Text style={styles.notice}>Observations are saved on this device only for now. They are not yet shared with the web app or other devices.</Text>
+        <Text style={styles.notice}>Observations are saved on this device only for now.</Text>
       </ScrollView>
     </ScreenBackground>
   );

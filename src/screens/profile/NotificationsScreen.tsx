@@ -192,7 +192,7 @@ export default function NotificationsScreen({ navigation }: any) {
         <View style={styles.note}>
           <AppIcon name="💡" size={16} color={colors.textSubtle} />
           <Text style={styles.noteText}>
-            Also covers streak, profile and badge reminders. Manage permissions in your device settings.
+            Also covers streak and badge reminders. Change permissions in device settings.
           </Text>
         </View>
       </ScrollView>

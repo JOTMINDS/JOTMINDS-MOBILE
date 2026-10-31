@@ -86,7 +86,7 @@ export default function ClassAnalyticsScreen() {
 
         {students.length === 0 ? (
           error ? null : (
-            <GlassCard padding={24}><Text style={styles.text}>Your class analytics appear here once students join your class and take their assessments.</Text></GlassCard>
+            <GlassCard padding={24}><Text style={styles.text}>Class analytics appear once students take assessments.</Text></GlassCard>
           )
         ) : (
           <>
@@ -112,7 +112,7 @@ export default function ClassAnalyticsScreen() {
 
             {total === 0 ? (
               <GlassCard padding={20} style={styles.card}>
-                <Text style={styles.text}>Your students haven't completed an assessment yet. Distributions will appear as results come in.</Text>
+                <Text style={styles.text}>No results yet. Charts appear as students finish assessments.</Text>
               </GlassCard>
             ) : (
               DOMAINS.map((d) => (

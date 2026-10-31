@@ -150,7 +150,7 @@ export default function JTIAAssessmentScreen({ navigation }: any) {
           <View style={styles.notice}>
             <AppIcon name="🛡️" size={14} color={colors.success} />
             <Text style={styles.noticeText}>
-              Designed for development, not ranking. Your answers generate personalized growth pathways.
+              For growth, not ranking. Your answers shape your growth pathways.
             </Text>
           </View>
         </ScrollView>

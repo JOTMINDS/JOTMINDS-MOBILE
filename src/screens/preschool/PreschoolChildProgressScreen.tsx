@@ -50,7 +50,7 @@ export default function PreschoolChildProgressScreen({ route, navigation }: Scre
 
         {profile.totalEvidenceEvents === 0 ? (
           <GlassCard padding={16} style={styles.card}>
-            <Text style={styles.text}>No evidence yet. Record a few observations and this child’s profile will build up here.</Text>
+            <Text style={styles.text}>No observations yet. Record a few to build this profile.</Text>
           </GlassCard>
         ) : (
           <>

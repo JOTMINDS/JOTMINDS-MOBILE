@@ -66,7 +66,7 @@ export default function TrackRecordScreen({ navigation }: ScreenProps<'TrackReco
         <Text style={styles.title}>Track Record</Text>
         <Text style={styles.sub}>Your assessments over time</Text>
         {items.length === 0 ? (
-          <GlassCard variant="dark" padding={24}><Text style={styles.text}>Nothing here yet. Complete an assessment and it will appear in your track record.</Text></GlassCard>
+          <GlassCard variant="dark" padding={24}><Text style={styles.text}>Nothing yet. Finish an assessment to start your record.</Text></GlassCard>
         ) : (
           items.map((it) => (
             <GlassCard

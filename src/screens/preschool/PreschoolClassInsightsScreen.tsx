@@ -41,7 +41,7 @@ export default function PreschoolClassInsightsScreen(_props: ScreenProps<'Presch
 
         {!insights ? (
           <GlassCard padding={20} style={styles.card}>
-            <Text style={styles.text}>No Pre-school children yet. Insights appear once children are in your classes and you have recorded observations.</Text>
+            <Text style={styles.text}>No insights yet. Record observations and they will appear here.</Text>
           </GlassCard>
         ) : (
           <>

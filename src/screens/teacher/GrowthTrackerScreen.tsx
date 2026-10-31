@@ -120,7 +120,7 @@ export default function GrowthTrackerScreen({ navigation }: any) {
           {timeline.length === 0 ? (
             <GlassCard padding={24}>
               <Text style={styles.emptyText}>
-                Complete an assessment or earn a badge to start building your growth timeline.
+                Finish an assessment or earn a badge to start your timeline.
               </Text>
             </GlassCard>
           ) : (
