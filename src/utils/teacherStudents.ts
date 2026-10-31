@@ -7,8 +7,9 @@ import { readScoped, writeScoped } from './userStorage';
  * GET /teacher/students returns each student's full answer history (and, for older accounts, the
  * whole stored profile), so on a big class it can be several megabytes and the phone's connection
  * sometimes drops mid-download ("Network request failed"). The app only reads names, class, codes and
- * each assessment's type/date/style scores, so the list is slimmed on arrival, kept on the device,
- * and shown from that copy when a refresh fails instead of leaving the screen empty.
+ * each assessment's type/date/style scores, so it asks for the slim form (?slim=1), trims again on
+ * arrival in case the server is older, keeps a copy on the device, and shows that copy when a
+ * refresh fails instead of leaving the screen empty.
  */
 const KEY = 'jotminds.teacherStudents';
 // Large rosters are slow to build on the server, so allow longer than the default 20s.
@@ -46,7 +47,8 @@ export function slimStudent(s: any): any {
 
 export async function loadTeacherStudents(): Promise<RosterResult> {
   try {
-    const res = await callEdgeFn('/teacher/students', {}, TIMEOUT_MS);
+    // slim=1 asks the server to leave out answer histories; older servers ignore it and slimStudent still trims.
+    const res = await callEdgeFn('/teacher/students?slim=1', {}, TIMEOUT_MS);
     const students = (Array.isArray(res?.students) ? res.students : []).map(slimStudent);
     try { await writeScoped(KEY, JSON.stringify({ savedAt: new Date().toISOString(), students })); } catch { /* cache is best effort */ }
     return { students, stale: false };
