@@ -1,6 +1,7 @@
 /**
  * Local-only completion flag + last-report cache for the JTIA (JotMinds
- * Teacher Intelligence Assessment). Mirrors teachingStyleStatus.ts.
+ * Teacher Intelligence Assessment). The UI calls it "Teaching Insights", as the
+ * webapp does. Mirrors teachingStyleStatus.ts.
  *
  * JTIA results are also synced to the backend (see JTIAAssessmentScreen's
  * finish()), stored under the webapp's `teaching-style` assessment key with

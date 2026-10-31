@@ -18,11 +18,24 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
 // Edge Function base URL (same as webapp backend — verified live via deployed functions list)
 export const EDGE_FN_URL = `${SUPABASE_URL}/functions/v1/make-server-fc8eb847`;
 
+/**
+ * React Native's fetch rejects with `TypeError: Network request failed` for any
+ * transport-level failure (offline, dropped/stale pooled connection, DNS, TLS).
+ * It carries no detail, so callers would otherwise show that bare string.
+ */
+const isTransportFailure = (e: any): boolean =>
+  e instanceof TypeError || /network request failed|failed to fetch/i.test(String(e?.message ?? ''));
+
+const RETRY_DELAY_MS = 600;
+// Keeps the word "Network": utils/outbox.ts recognises queue-able failures by it.
+export const NETWORK_ERROR_MESSAGE = "Network problem: can't reach JotMinds. Check your connection and try again.";
+
 export async function callEdgeFn(
   endpoint: string,
   options: RequestInit = {},
   timeoutMs = 20000,
   _retried = false,
+  _netRetried = false,
 ): Promise<any> {
   // Getting the session shouldn't hang, but guard it so a stalled auth read
   // can't freeze the whole request forever.
@@ -61,7 +74,7 @@ export async function callEdgeFn(
     // behind a refresh. Refresh the session and retry once before failing.
     if (res.status === 401 && hadSession && !_retried) {
       const refreshed = await supabase.auth.refreshSession().then((r) => !r.error, () => false);
-      if (refreshed) return callEdgeFn(endpoint, options, timeoutMs, true);
+      if (refreshed) return callEdgeFn(endpoint, options, timeoutMs, true, _netRetried);
     }
     if (!res.ok) {
       throw new Error((json && json.error) || `Request failed (${res.status})`);
@@ -70,6 +83,16 @@ export async function callEdgeFn(
   } catch (e: any) {
     if (e?.name === 'AbortError') {
       throw new Error('Request timed out. Check your connection and try again.');
+    }
+    if (isTransportFailure(e)) {
+      // A read is safe to repeat; a write might already have reached the server,
+      // so it is left to the caller (the outbox queues it with an idempotency key).
+      const method = (options.method ?? 'GET').toUpperCase();
+      if (method === 'GET' && !_netRetried) {
+        await new Promise((r) => setTimeout(r, RETRY_DELAY_MS));
+        return callEdgeFn(endpoint, options, timeoutMs, _retried, true);
+      }
+      throw new Error(NETWORK_ERROR_MESSAGE);
     }
     throw e;
   } finally {

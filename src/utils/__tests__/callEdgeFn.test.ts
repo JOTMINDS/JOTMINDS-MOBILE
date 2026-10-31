@@ -13,7 +13,7 @@ jest.mock('@supabase/supabase-js', () => ({
     } }),
 }));
 
-import { callEdgeFn } from '../supabase';
+import { callEdgeFn, NETWORK_ERROR_MESSAGE } from '../supabase';
 
 const res = (status: number, body: any) => ({
   ok: status >= 200 && status < 300,
@@ -76,6 +76,32 @@ describe('callEdgeFn auth', () => {
     mockRefreshSession.mockResolvedValue({ error: new Error('refresh failed') });
     fetchMock.mockResolvedValue(res(401, { error: 'Unauthorized' }));
     await expect(callEdgeFn('/session')).rejects.toThrow('Unauthorized');
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('retries a GET once when the network drops (RN throws TypeError: Network request failed)', async () => {
+    mockGetSession.mockResolvedValue({ data: { session: { access_token: 'user-jwt' } } });
+    fetchMock
+      .mockRejectedValueOnce(new TypeError('Network request failed'))
+      .mockResolvedValueOnce(res(200, { students: [] }));
+    await expect(callEdgeFn('/teacher/students')).resolves.toEqual({ students: [] });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('gives up after one retry with a readable message that the outbox still treats as a network error', async () => {
+    mockGetSession.mockResolvedValue({ data: { session: { access_token: 'user-jwt' } } });
+    fetchMock.mockRejectedValue(new TypeError('Network request failed'));
+    const err = await callEdgeFn('/teacher/students').catch((e) => e);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(err.message).toBe(NETWORK_ERROR_MESSAGE);
+    expect(err.message).toContain('Network');
+    expect(err.message).not.toContain('Network request failed');
+  });
+
+  it('never replays a write on a network failure (it may already have reached the server)', async () => {
+    mockGetSession.mockResolvedValue({ data: { session: { access_token: 'user-jwt' } } });
+    fetchMock.mockRejectedValue(new TypeError('Network request failed'));
+    await expect(callEdgeFn('/teacher-observation', { method: 'POST', body: '{}' })).rejects.toThrow(NETWORK_ERROR_MESSAGE);
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 

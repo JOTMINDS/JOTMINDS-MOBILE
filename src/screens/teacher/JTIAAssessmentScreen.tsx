@@ -109,11 +109,11 @@ export default function JTIAAssessmentScreen({ navigation }: any) {
             <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={12} accessibilityRole="button" accessibilityLabel="Back">
               <AppIcon name="✕" size={22} color={colors.textMuted} />
             </TouchableOpacity>
-            <Text style={styles.framework}>JTIA</Text>
+            <Text style={styles.framework}>TEACHING INSIGHTS</Text>
             <View style={{ width: 22 }} />
           </View>
 
-          <Text style={styles.selectTitle}>Teacher Intelligence Assessment</Text>
+          <Text style={styles.selectTitle}>Teaching Insights</Text>
           <Text style={styles.selectBlurb}>
             Choose the depth that fits your schedule. Every option samples evenly across the
             five core teacher domains.
@@ -173,7 +173,7 @@ export default function JTIAAssessmentScreen({ navigation }: any) {
           <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={12} accessibilityRole="button" accessibilityLabel="Exit assessment">
             <AppIcon name="✕" size={22} color={colors.textMuted} />
           </TouchableOpacity>
-          <Text style={styles.framework}>JTIA · {answered}/{total}</Text>
+          <Text style={styles.framework}>Teaching Insights · {answered}/{total}</Text>
           <View style={{ width: 22 }} />
         </View>
         <View style={styles.progressTrack}>

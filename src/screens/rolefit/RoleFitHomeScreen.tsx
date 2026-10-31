@@ -39,6 +39,8 @@ export default function RoleFitHomeScreen({ navigation }: any) {
   const [topMatches, setTopMatches] = useState<{ career: GlobalCareer; result: CognitiveRoleFitScore }[]>([]);
   const missing = missingCognitiveDomains(completedTypes);
   const hasProfile = missing.length === 0;
+  // The role builder is a professional tool; students get matches and dream careers only.
+  const isPro = user?.role === 'professional';
 
   useEffect(() => {
     (async () => {
@@ -62,8 +64,8 @@ export default function RoleFitHomeScreen({ navigation }: any) {
     <ScreenBackground>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <Text style={styles.title}>Role Fit</Text>
-          <Text style={styles.subtitle}>Match your cognitive profile to roles</Text>
+          <Text style={styles.title}>{isPro ? 'Role Fit' : 'Careers'}</Text>
+          <Text style={styles.subtitle}>{isPro ? 'Match your cognitive profile to roles' : 'Careers that fit how you think'}</Text>
         </View>
 
         {/* Profile completeness banner */}
@@ -80,7 +82,8 @@ export default function RoleFitHomeScreen({ navigation }: any) {
           </GlassCard>
         )}
 
-        {/* Primary CTA */}
+        {/* Primary CTA — professionals only */}
+        {isPro && (
         <TouchableOpacity
           style={styles.ctaWrap}
           onPress={() => navigation.navigate('RoleDemandBuilder')}
@@ -102,6 +105,7 @@ export default function RoleFitHomeScreen({ navigation }: any) {
             </View>
           </LinearGradient>
         </TouchableOpacity>
+        )}
 
         {/* Career matches */}
         <GlassCard style={styles.careerCard} onPress={() => navigation.navigate('CareerMatches')}>

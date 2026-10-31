@@ -147,7 +147,7 @@ export function assessmentLabel(type: string): string {
     'dual-process': 'Decision Style',
     dualprocess: 'Decision Style',
     'teaching-style': 'Teaching Style',
-    jtia: 'Teacher Intelligence',
+    jtia: 'Teaching Insights',
     'shs-thinking': 'Thinking Styles',
     'jhs-thinking': 'Thinking Styles',
     'adult-thinking': 'Thinking Styles',

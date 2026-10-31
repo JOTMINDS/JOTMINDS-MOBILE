@@ -126,3 +126,10 @@ export function bankForAge(age: number | undefined): Record<AssessmentType, Asse
   if (age >= 19 && age <= 25) return TERTIARY_QUESTION_BANK;
   return null;
 }
+
+/** Same idea keyed by the student's band (see utils/assessmentBand.ts): SHS → teen set, Tertiary → tertiary set, otherwise the default bank. */
+export function bankForBand(band: 'kids' | 'jhs' | 'shs' | 'tertiary' | 'adult'): Record<AssessmentType, AssessmentBank> | null {
+  if (band === 'shs') return TEEN_QUESTION_BANK;
+  if (band === 'tertiary') return TERTIARY_QUESTION_BANK;
+  return null;
+}

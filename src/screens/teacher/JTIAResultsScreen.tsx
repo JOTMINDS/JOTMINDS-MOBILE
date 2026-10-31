@@ -60,9 +60,9 @@ export default function JTIAResultsScreen({ route, navigation }: any) {
       <ScreenBackground>
         <View style={styles.centered}>
           <Text style={styles.emptyTitle}>No results yet</Text>
-          <Text style={styles.emptyText}>Take the JTIA to see your teacher intelligence profile.</Text>
+          <Text style={styles.emptyText}>Take the Teaching Insights assessment to see your profile.</Text>
           <TouchableOpacity onPress={() => navigation.replace('JTIAAssessment')} style={{ marginTop: spacing.lg }}>
-            <Text style={{ color: colors.success, fontWeight: '700' }}>Start JTIA</Text>
+            <Text style={{ color: colors.success, fontWeight: '700' }}>Start Teaching Insights</Text>
           </TouchableOpacity>
         </View>
       </ScreenBackground>
@@ -77,7 +77,7 @@ export default function JTIAResultsScreen({ route, navigation }: any) {
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <Text style={styles.eyebrow}>ASSESSMENT COMPLETE</Text>
-          <Text style={styles.title}>Your Teacher Intelligence 🎓</Text>
+          <Text style={styles.title}>Your Teaching Insights 🎓</Text>
         </View>
 
         <LinearGradient

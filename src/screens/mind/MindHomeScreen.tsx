@@ -11,6 +11,8 @@ import AppIcon from '../../components/AppIcon';
 import { colors, radii, spacing, Palette } from '../../theme';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import { FeatureVisible } from '../../components/FeatureGate';
+import { useAuth } from '../../context/AuthContext';
+import { getResets, resetStreak, didResetToday } from '../../utils/teacherReset';
 
 export default function MindHomeScreen({ navigation }: any) {
   const colors = useTheme();
@@ -19,10 +21,21 @@ export default function MindHomeScreen({ navigation }: any) {
   const [streak, setStreak] = useState(0);
   const [loading, setLoading] = useState(true);
   const [lastCheckin, setLastCheckin] = useState<any>(null);
+  const { user } = useAuth();
+  const isTeacher = user?.role === 'teacher';
+  const [resets, setResets] = useState<string[]>([]);
 
   useEffect(() => {
     loadCheckinStatus();
   }, []);
+
+  // Teachers' reset streak refreshes when they return from the activity.
+  useEffect(() => {
+    if (!isTeacher) return;
+    const load = () => { getResets().then(setResets).catch(() => {}); };
+    load();
+    return navigation?.addListener?.('focus', load);
+  }, [isTeacher, navigation]);
 
   const loadCheckinStatus = async () => {
     try {
@@ -50,8 +63,27 @@ export default function MindHomeScreen({ navigation }: any) {
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <Text style={styles.title}>Mind</Text>
-          <Text style={styles.subtitle}>Track your daily cognitive state</Text>
+          <Text style={styles.subtitle}>{isTeacher ? 'Look after your energy and focus' : 'Track your daily cognitive state'}</Text>
         </View>
+
+        {/* Teacher Reset: a two-minute activity made for the school day */}
+        {isTeacher && (
+          <GlassCard glowColor="purple" style={styles.resetCard} onPress={() => navigation.navigate('TeacherReset')}>
+            <View style={styles.snapshotRow}>
+              <LinearGradient colors={['#10B981', '#3D52C9']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.snapshotIconGradient}>
+                <AppIcon name="🌬️" size={22} color="#FFFFFF" />
+              </LinearGradient>
+              <View style={styles.snapshotText}>
+                <Text style={styles.snapshotTitle}>Teacher Reset</Text>
+                <Text style={styles.snapshotSub}>
+                  {didResetToday(resets) ? 'Done today. Go again anytime' : 'Breathe, reflect, set an intention · 2 min'}
+                </Text>
+                {resetStreak(resets) > 1 && <Text style={styles.resetStreak}>🔥 {resetStreak(resets)}-day streak</Text>}
+              </View>
+              <Text style={styles.snapshotArrow}>→</Text>
+            </View>
+          </GlassCard>
+        )}
 
         {/* Streak card */}
         <LinearGradient
@@ -67,7 +99,7 @@ export default function MindHomeScreen({ navigation }: any) {
                 <Text style={styles.streakValue}>{streak} days</Text>
                 <AppIcon name="🔥" size={22} color="#FF9F43" />
               </View>
-              <Text style={styles.streakSub}>Keep checking in daily!</Text>
+              <Text style={styles.streakSub}>Check in daily</Text>
             </View>
             {streak > 0 ? (
               <TouchableOpacity
@@ -98,7 +130,7 @@ export default function MindHomeScreen({ navigation }: any) {
               </View>
             )}
           </View>
-          <Text style={styles.checkinSub}>3 questions · Less than 1 minute</Text>
+          <Text style={styles.checkinSub}>3 questions · under a minute</Text>
 
           {lastCheckin && todayDone && (
             <View style={styles.lastCheckin}>
@@ -151,7 +183,7 @@ export default function MindHomeScreen({ navigation }: any) {
             </View>
             <View style={styles.snapshotText}>
               <Text style={styles.snapshotTitle}>Weekly Cognitive Snapshot</Text>
-              <Text style={styles.snapshotSub}>7-day behavioral trends & insights</Text>
+              <Text style={styles.snapshotSub}>Your week at a glance</Text>
             </View>
             <Text style={styles.snapshotArrow}>→</Text>
           </View>
@@ -175,7 +207,7 @@ export default function MindHomeScreen({ navigation }: any) {
             </View>
             <View style={styles.snapshotText}>
               <Text style={styles.snapshotTitle}>7-Day Dashboard</Text>
-              <Text style={styles.snapshotSub}>Focus trends & emotion distribution</Text>
+              <Text style={styles.snapshotSub}>Focus and mood trends</Text>
             </View>
             <Text style={styles.snapshotArrow}>→</Text>
           </View>
@@ -200,7 +232,7 @@ export default function MindHomeScreen({ navigation }: any) {
               </View>
               <View style={styles.snapshotText}>
                 <Text style={styles.snapshotTitle}>Brain Gym</Text>
-                <Text style={styles.snapshotSub}>Memory, attention & focus mini-games</Text>
+                <Text style={styles.snapshotSub}>Quick mini-games</Text>
               </View>
               <Text style={styles.snapshotArrow}>→</Text>
             </View>
@@ -245,6 +277,8 @@ const makeStyles = (colors: Palette) => StyleSheet.create({
   checkinBtnGradient: { paddingVertical: 14, alignItems: 'center' },
   checkinBtnText: { fontSize: 15, fontWeight: '700', color: '#FFFFFF' },
   checkinBtnTextDone: { color: colors.textMuted },
+  resetCard: { marginBottom: 20 },
+  resetStreak: { fontSize: 12, fontWeight: '700', color: colors.warning, marginTop: 4 },
   snapshotCard: { marginBottom: 14 },
   snapshotRow: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   snapshotIconWrap: {},

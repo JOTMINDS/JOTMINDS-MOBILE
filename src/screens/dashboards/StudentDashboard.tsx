@@ -13,16 +13,19 @@ import { useAuth } from '../../context/AuthContext';
 import { getAllAssessmentResults } from '../../utils/api';
 import { assessmentLabel } from '../../utils/scoring';
 import ScreenBackground from '../../components/ScreenBackground';
+import NotificationBell from '../../components/NotificationBell';
 import GlassCard from '../../components/GlassCard';
 import AppIcon from '../../components/AppIcon';
 import AskJottiCard from '../../components/AskJottiCard';
 import AITipCard from '../../components/AITipCard';
 import NudgeFeed from '../../components/NudgeFeed';
+import KidsHero from '../../components/kids/KidsHero';
 import { Skeleton, SkeletonCard } from '../../components/Skeleton';
 import { FeatureVisible } from '../../components/FeatureGate';
 import { StudentRecommendationsCard, ExecutiveSummaryCard } from '../../components/ai/InsightCards';
 import { stylesFromResults, hasAllStyles } from '../../utils/profileStyles';
 import { isKidsAge } from '../../utils/kidsMode';
+import { assessmentBand } from '../../utils/assessmentBand';
 import { isPreschoolLevel } from '../../utils/educationLevels';
 import ParentPinModal from '../../components/ParentPinModal';
 import { updateUserProfile } from '../../utils/api';
@@ -70,6 +73,8 @@ export default function StudentDashboard({ navigation }: any) {
   const isKidsMode = isKidsAge(user?.age);
   // Webapp: pre-school learners have no self-report assessments (teachers observe them instead).
   const isPreschool = isPreschoolLevel(user?.educationLevel);
+  // Elementary learners get the webapp's kids look: the Jot robot, big words, stars.
+  const kidsBand = assessmentBand(user) === 'kids' && !isPreschool;
 
   // Kids accounts (6–10) get a parent PIN so they can't sign out or change privacy
   // settings alone. Prompted once per launch until set; "Set up later" dismisses it.
@@ -111,6 +116,13 @@ export default function StudentDashboard({ navigation }: any) {
     },
   ];
 
+  const KID_COPY: Record<string, { title: string; description: string }> = {
+    learning: { title: 'How I Learn', description: 'Find out how you learn best' },
+    thinking: { title: 'How I Think', description: 'Find out how your brain works' },
+    decision: { title: 'How I Choose', description: 'Find out how you pick things' },
+  };
+  const cards = kidsBand ? assessmentCards.map((c) => ({ ...c, ...KID_COPY[c.type] })) : assessmentCards;
+
   const progressPct = Math.min(100, Math.round(
     (completedTypes.length / assessmentCards.length) * 100,
   ));
@@ -138,7 +150,15 @@ export default function StudentDashboard({ navigation }: any) {
         }
         showsVerticalScrollIndicator={false}
       >
+        {kidsBand ? (
+          <>
+            <View style={styles.kidsBell}><NotificationBell /></View>
+            <KidsHero name={user?.name} done={completedTypes.length} total={assessmentCards.length} />
+          </>
+        ) : (
+          <>
         <View style={styles.header}>
+          <NotificationBell style={styles.bell} />
           <Text style={styles.greeting}>Welcome back,</Text>
           <Text style={styles.name}>{user?.name || 'Student'}</Text>
           <Text style={styles.tagline}>Your weekly cognitive snapshot</Text>
@@ -172,6 +192,8 @@ export default function StudentDashboard({ navigation }: any) {
             <View style={[styles.progressFill, { width: `${progressPct}%` }]} />
           </View>
         </LinearGradient>
+          </>
+        )}
 
         <AskJottiCard style={styles.jottiCard} />
         <NudgeFeed />
@@ -200,7 +222,7 @@ export default function StudentDashboard({ navigation }: any) {
           </GlassCard>
         </FeatureVisible>
 
-        <AITipCard
+        {!kidsBand && <AITipCard
           cacheKey="student-home"
           context="learning strategy, study habits, or metacognition for a student"
           fallbacks={[
@@ -209,7 +231,7 @@ export default function StudentDashboard({ navigation }: any) {
             'Before re-reading notes, close them and write what you remember. Retrieval builds memory; re-reading mostly builds familiarity.',
             'Match the task to your energy: hard analytical work early, review and organising later.',
           ]}
-        />
+        />}
 
         {hasAllStyles(profileStyles) && !isKidsMode && (
           <>
@@ -255,18 +277,16 @@ export default function StudentDashboard({ navigation }: any) {
         )}
 
         {!isPreschool && <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Your Assessments</Text>
-          <Text style={styles.sectionSubtitle}>
-            Complete these to build your cognitive profile
-          </Text>
+          <Text style={styles.sectionTitle}>{kidsBand ? 'Fun Quizzes' : 'Your Assessments'}</Text>
+          {!kidsBand && <Text style={styles.sectionSubtitle}>Complete these to build your profile</Text>}
 
-          {assessmentCards.map((card) => {
+          {cards.map((card) => {
             const isCompleted = completedTypes.includes(card.type);
             return (
               <GlassCard
                 key={card.type}
                 onPress={() => {
-                  if (isKidsMode) { navigation.navigate('KidsAssessment'); return; }
+                  if (assessmentBand(user) === 'kids') { navigation.navigate('KidsAssessment'); return; }
                   // A completed assessment opens its saved results instead of
                   // restarting — results persist on the backend per user+type.
                   navigation.navigate(
@@ -360,7 +380,9 @@ const makeStyles = (colors: Palette) => StyleSheet.create({
   },
   header: {
     marginBottom: spacing.xxl,
+    paddingRight: 56,
   },
+  bell: { position: 'absolute', top: 0, right: 0 },
   greeting: {
     fontSize: 14,
     color: colors.textSubtle,
@@ -435,6 +457,7 @@ const makeStyles = (colors: Palette) => StyleSheet.create({
     backgroundColor: colors.cyan,
     borderRadius: 4,
   },
+  kidsBell: { alignItems: 'flex-end', marginBottom: spacing.sm },
   jottiCard: { marginBottom: spacing.xl },
   challengeCard: { marginBottom: spacing.xl },
   challengeRow: { flexDirection: 'row', alignItems: 'center' },

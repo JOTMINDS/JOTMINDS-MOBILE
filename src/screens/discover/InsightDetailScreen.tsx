@@ -13,7 +13,8 @@ export default function InsightDetailScreen({ route, navigation }: any) {
   const styles = useThemedStyles(makeStyles);
   const { insight } = route.params;
 
-  const sections = [
+  const isKids = insight.audience === 'kids';
+  const sections: { heading: string; body: string }[] = insight.sections ?? [
     {
       heading: 'The Science',
       body: `${insight.preview} This is a well-documented phenomenon in cognitive science, supported by decades of research across multiple disciplines.`,
@@ -63,11 +64,14 @@ export default function InsightDetailScreen({ route, navigation }: any) {
         </View>
 
         {/* Comprehension quiz — earns Cognitive Growth XP, keeps you in the app */}
-        <ReadingQuiz
-          articleId={String(insight.id)}
-          title={insight.title}
-          body={sections.map((s) => `${s.heading}. ${s.body}`).join('\n\n')}
-        />
+        {/* Not for elementary learners: the quiz questions are AI-written. */}
+        {!isKids && (
+          <ReadingQuiz
+            articleId={String(insight.id)}
+            title={insight.title}
+            body={sections.map((s) => `${s.heading}. ${s.body}`).join('\n\n')}
+          />
+        )}
       </ScrollView>
     </ScreenBackground>
   );

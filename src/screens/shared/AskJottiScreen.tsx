@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -15,6 +15,8 @@ import ScreenBackground from '../../components/ScreenBackground';
 import AppIcon from '../../components/AppIcon';
 import GlassCard from '../../components/GlassCard';
 import { askJotti, ChatMessage } from '../../utils/aiService';
+import { getStudentsForTeacher } from '../../utils/api';
+import { jottiActionsFor, buildClassSummary, ClassSummary, JottiAction } from '../../utils/jottiActions';
 import { useAuth } from '../../context/AuthContext';
 import { rs } from '../../utils/responsive';
 import { radii, shadow, spacing, Palette } from '../../theme';
@@ -26,23 +28,11 @@ interface Bubble {
   text: string;
 }
 
-const STARTERS_BY_ROLE: Record<string, string[]> = {
-  student: [
-    'How can I study more effectively for my exams?',
-    'What learning strategies fit my thinking style?',
-  ],
-  teacher: [
-    'How do I adapt a lesson for different learner types?',
-    'Give me a classroom routine to boost engagement.',
-  ],
-  parent: [
-    'How can I support my child’s learning at home?',
-    'What does my child’s cognitive profile mean for homework?',
-  ],
-  professional: [
-    'How do I play to my cognitive strengths at work?',
-    'Help me prepare for a high-stakes decision.',
-  ],
+const WELCOME_BY_ROLE: Record<string, string> = {
+  teacher: 'I can explain your class, differentiate a lesson, draft parent messages, write quizzes and plan lessons. Pick one below or ask me anything.',
+  student: 'I can build study plans, explain topics simply and quiz you. Pick one below or ask me anything.',
+  parent: 'I can help you support your child at home and talk with their teacher. Pick one below or ask me anything.',
+  professional: 'I can help with decisions, growth and working to your strengths. Pick one below or ask me anything.',
 };
 
 export default function AskJottiScreen({ route }: any) {
@@ -52,20 +42,36 @@ export default function AskJottiScreen({ route }: any) {
   const scrollRef = useRef<ScrollView>(null);
 
   const role = user?.role ?? 'student';
-  const starters = STARTERS_BY_ROLE[role] ?? STARTERS_BY_ROLE.student;
+  const actions = jottiActionsFor(role);
+  const inputRef = useRef<TextInput>(null);
+  const autoSend = !!route?.params?.autoSend && !!route?.params?.prompt;
+
+  // Teachers get answers about their real class: an anonymous summary (counts and
+  // style shares, no names) is sent as context. Everyone else is ready at once.
+  const [classSummary, setClassSummary] = useState<ClassSummary | undefined>();
+  const [contextReady, setContextReady] = useState(role !== 'teacher');
+  useEffect(() => {
+    if (role !== 'teacher') return;
+    let alive = true;
+    getStudentsForTeacher()
+      .then((r) => { if (alive) setClassSummary(buildClassSummary(r?.students ?? [])); })
+      .catch(() => {})
+      .finally(() => { if (alive) setContextReady(true); });
+    return () => { alive = false; };
+  }, [role]);
 
   const [messages, setMessages] = useState<Bubble[]>([
     {
       id: 'welcome',
       role: 'assistant',
-      text: `Hi${user?.name ? ` ${user.name.split(' ')[0]}` : ''}! I'm Jotti, your JotMinds coach. Ask me anything about how you think, learn, or work.`,
+      text: `Hi${user?.name ? ` ${user.name.split(' ')[0]}` : ''}! I'm Jotti, your JotMinds coach. ${WELCOME_BY_ROLE[role] ?? WELCOME_BY_ROLE.student}`,
     },
   ]);
-  const [input, setInput] = useState(route?.params?.prompt ?? '');
+  const [input, setInput] = useState(autoSend ? '' : route?.params?.prompt ?? '');
   const [sending, setSending] = useState(false);
 
   const profileContext = user
-    ? { name: user.name, role: user.role, educationLevel: user.educationLevel, school: user.school }
+    ? { name: user.name, role: user.role, educationLevel: user.educationLevel, school: user.school, ...(classSummary ? { classSummary } : {}) }
     : undefined;
 
   const send = async (text: string) => {
@@ -98,7 +104,22 @@ export default function AskJottiScreen({ route }: any) {
     setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 50);
   };
 
-  const showStarters = messages.length === 1 && !sending;
+  // A chip on the Home card opens Jotti with its question already asked.
+  const autoSent = useRef(false);
+  useEffect(() => {
+    if (autoSend && contextReady && !autoSent.current) {
+      autoSent.current = true;
+      void send(route.params.prompt);
+    }
+  }, [autoSend, contextReady]);
+
+  const runAction = (a: JottiAction) => {
+    if (a.mode === 'send') { void send(a.prompt); return; }
+    setInput(a.prompt);
+    setTimeout(() => inputRef.current?.focus(), 50);
+  };
+
+  const showStarters = messages.length === 1 && !sending && !autoSend;
 
   return (
     <ScreenBackground>
@@ -151,15 +172,16 @@ export default function AskJottiScreen({ route }: any) {
 
           {showStarters && (
             <View style={styles.starters}>
-              {starters.map((s) => (
+              {actions.map((a) => (
                 <TouchableOpacity
-                  key={s}
+                  key={a.id}
                   style={styles.starterChip}
-                  onPress={() => send(s)}
+                  onPress={() => runAction(a)}
                   accessibilityRole="button"
-                  accessibilityLabel={s}
+                  accessibilityLabel={a.label}
                 >
-                  <Text style={styles.starterText}>{s}</Text>
+                  <AppIcon name={a.icon} size={18} color={colors.purpleSoft} />
+                  <Text style={styles.starterText}>{a.label}</Text>
                 </TouchableOpacity>
               ))}
             </View>
@@ -169,6 +191,7 @@ export default function AskJottiScreen({ route }: any) {
         <View style={styles.inputWrap}>
           <GlassCard padding={0} style={styles.inputCard}>
             <TextInput
+              ref={inputRef}
               style={styles.input}
               placeholder="Ask Jotti anything…"
               placeholderTextColor={colors.textSubtle}
@@ -221,10 +244,11 @@ const makeStyles = (colors: Palette) => StyleSheet.create({
   text: { fontSize: rs(14), color: colors.textSecondary, lineHeight: rs(21) },
   textUser: { color: '#fff' },
 
-  starters: { gap: 8, marginTop: 4 },
+  starters: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 },
   starterChip: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
     borderWidth: 1, borderColor: colors.borderLight, borderRadius: radii.md,
-    paddingVertical: 12, paddingHorizontal: 14, backgroundColor: colors.glassMedium,
+    paddingVertical: 10, paddingHorizontal: 12, backgroundColor: colors.glassMedium,
   },
   starterText: { fontSize: rs(13), color: colors.textSecondary, fontWeight: '600' },
 

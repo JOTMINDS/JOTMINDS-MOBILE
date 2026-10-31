@@ -115,9 +115,7 @@ export default function NotificationsScreen({ navigation }: any) {
         <View style={styles.note}>
           <AppIcon name="💡" size={16} color={colors.textSubtle} />
           <Text style={styles.noteText}>
-            This also controls streak reminders, profile-completion nudges, and level-up
-            & badge alerts — all scheduled on this device. Turn it off to silence every
-            nudge, or fine-tune permissions anytime in your device settings.
+            Also covers streak, profile and badge reminders. Manage permissions in your device settings.
           </Text>
         </View>
       </ScrollView>

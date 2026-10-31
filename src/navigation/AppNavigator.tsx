@@ -7,6 +7,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import AppIcon from '../components/AppIcon';
+import { tabsForUser, TabKey } from './tabsForUser';
 import { colors } from '../theme';
 
 // ── Auth & Onboarding ─────────────────────────────────────────────────────────
@@ -43,6 +44,7 @@ import DailyCheckQuestionsScreen from '../screens/mind/DailyCheckQuestionsScreen
 import InstantFeedbackScreen from '../screens/mind/InstantFeedbackScreen';
 import WeeklySnapshotScreen from '../screens/mind/WeeklySnapshotScreen';
 import BehavioralDashboardScreen from '../screens/mind/BehavioralDashboardScreen';
+import TeacherResetScreen from '../screens/mind/TeacherResetScreen';
 
 // ── Role Fit ──────────────────────────────────────────────────────────────────
 import RoleFitHomeScreen from '../screens/rolefit/RoleFitHomeScreen';
@@ -151,8 +153,15 @@ function HomeTabScreen(props: any) {
 
 function MainTabs() {
   const t = useTheme();
+  const { user } = useAuth();
+  const tabs = tabsForUser(user);
+  const has = (k: TabKey) => tabs.includes(k);
+  // Only professionals have the full Role Fit (with the role builder); students get "Careers".
+  const roleFitTitle = user?.role === 'professional' ? 'Role Fit' : 'Careers';
   return (
     <Tab.Navigator
+      // A role change (e.g. sign-in as someone else) rebuilds the tab set cleanly.
+      key={tabs.join('|')}
       screenOptions={{
         headerShown: false,
         tabBarStyle: [styles.tabBar, { backgroundColor: t.bgSecondary, borderTopColor: t.borderLight }],
@@ -168,6 +177,16 @@ function MainTabs() {
           tabBarIcon: ({ color }) => <TabIcon icon="🏠" color={color} />,
         }}
       />
+      {has('Planner') && (
+        <Tab.Screen
+          name="Planner"
+          component={LessonPlannerScreen}
+          options={{
+            title: 'Planner',
+            tabBarIcon: ({ color }) => <TabIcon icon="🗂️" color={color} />,
+          }}
+        />
+      )}
       <Tab.Screen
         name="Discover"
         component={DiscoverScreen}
@@ -183,14 +202,16 @@ function MainTabs() {
           tabBarIcon: ({ color }) => <TabIcon icon="🧠" color={color} />,
         }}
       />
-      <Tab.Screen
-        name="RoleFit"
-        component={RoleFitHomeScreen}
-        options={{
-          title: 'Role Fit',
-          tabBarIcon: ({ color }) => <TabIcon icon="🎯" color={color} />,
-        }}
-      />
+      {has('RoleFit') && (
+        <Tab.Screen
+          name="RoleFit"
+          component={RoleFitHomeScreen}
+          options={{
+            title: roleFitTitle,
+            tabBarIcon: ({ color }) => <TabIcon icon="🎯" color={color} />,
+          }}
+        />
+      )}
       <Tab.Screen
         name="Profile"
         component={ProfileScreen}
@@ -262,6 +283,7 @@ export default function AppNavigator() {
             <Stack.Screen name="DailyCheckQuestions" component={DailyCheckQuestionsScreen} />
             <Stack.Screen name="InstantFeedback" component={InstantFeedbackScreen} />
             <Stack.Screen name="WeeklySnapshot" component={WeeklySnapshotScreen} options={{ headerShown: true, title: 'Weekly Snapshot' }} />
+            <Stack.Screen name="TeacherReset" component={TeacherResetScreen} />
             <Stack.Screen name="BehavioralDashboard" component={BehavioralDashboardScreen} options={{ headerShown: true, title: 'Behavioral Insights' }} />
 
             {/* Brain Gym */}
@@ -321,7 +343,7 @@ export default function AppNavigator() {
             <Stack.Screen name="TeachingStyleAssessment" component={TeachingStyleAssessmentScreen} options={{ headerShown: true, title: 'Teaching Style' }} />
             <Stack.Screen name="TeachingStyleResults" component={TeachingStyleResultsScreen} options={{ headerShown: true, title: 'Your Teaching Style' }} />
             <Stack.Screen name="JTIAAssessment" component={JTIAAssessmentScreen} options={{ headerShown: false }} />
-            <Stack.Screen name="JTIAResults" component={JTIAResultsScreen} options={{ headerShown: true, title: 'Your JTIA Profile' }} />
+            <Stack.Screen name="JTIAResults" component={JTIAResultsScreen} options={{ headerShown: true, title: 'Your Teaching Insights' }} />
             <Stack.Screen name="GrowthTracker" component={GrowthTrackerScreen} options={{ headerShown: true, title: 'Growth Tracker' }} />
 
             {/* Parent */}
@@ -349,7 +371,7 @@ export default function AppNavigator() {
             <Stack.Screen name="AskJotti" component={GatedAskJotti} options={{ headerShown: true, title: 'Ask Jotti' }} />
             <Stack.Screen name="DailyChallenge" component={GatedDailyChallenge} options={{ headerShown: true, title: 'Daily Challenge' }} />
             <Stack.Screen name="ClassManagement" component={ClassManagementScreen} options={{ headerShown: true, title: 'My Classes' }} />
-            <Stack.Screen name="ObservationLog" component={ObservationLogScreen} options={{ headerShown: true, title: 'Observation Log' }} />
+            <Stack.Screen name="ObservationLog" component={ObservationLogScreen as React.ComponentType} options={{ headerShown: true, title: 'Observations' }} />
             <Stack.Screen name="CurriculumTracker" component={CurriculumTrackerScreen} options={{ headerShown: true, title: 'Curriculum Tracker' }} />
             <Stack.Screen name="CognitiveReport" component={CognitiveReportScreen as React.ComponentType} options={{ headerShown: true, title: 'Cognitive Report' }} />
             <Stack.Screen name="ClassAnalytics" component={ClassAnalyticsScreen} options={{ headerShown: true, title: 'Class Analytics' }} />

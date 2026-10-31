@@ -14,8 +14,10 @@ import ScreenBackground from '../../components/ScreenBackground';
 import GlassCard from '../../components/GlassCard';
 import AppIcon from '../../components/AppIcon';
 import AskJottiCard from '../../components/AskJottiCard';
+import NotificationBell from '../../components/NotificationBell';
 import { ClassroomOverviewCard } from '../../components/ai/InsightCards';
 import { classStyles, completedCount } from '../../utils/classInsights';
+import { isJTIADone } from '../../utils/jtiaStatus';
 import { colors, radii, shadow, spacing, Palette } from '../../theme';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 
@@ -27,6 +29,7 @@ export default function TeacherDashboard({ navigation }: any) {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [jtiaDone, setJtiaDone] = useState(false);
 
   const fetchStudents = async () => {
     try {
@@ -45,6 +48,23 @@ export default function TeacherDashboard({ navigation }: any) {
   useEffect(() => {
     fetchStudents();
   }, []);
+
+  // Teaching Insights opens the saved report once the assessment is done.
+  useEffect(() => {
+    const refresh = () => { isJTIADone().then(setJtiaDone).catch(() => {}); };
+    refresh();
+    return navigation?.addListener?.('focus', refresh);
+  }, [navigation]);
+
+  // Same groupings as the webapp's Educator Portal. Observations are reached from a
+  // student's own profile, and growth content lives under Discover.
+  const tools: { icon: string; title: string; g: [string, string]; onPress: () => void }[] = [
+    { icon: '👥', title: 'Classes', g: ['#10B981', '#059669'], onPress: () => navigation.navigate('ClassManagement') },
+    { icon: '📊', title: 'Analytics', g: ['#3B82F6', '#2563EB'], onPress: () => navigation.navigate('ClassAnalytics') },
+    { icon: '🗂️', title: 'Lesson Planner', g: ['#6E4D9C', '#4F46E5'], onPress: () => navigation.navigate('Planner') },
+    { icon: '🧸', title: 'Early Years', g: ['#F59E0B', '#D97706'], onPress: () => navigation.navigate('PreschoolChildren') },
+    { icon: '🎓', title: 'Teaching Insights', g: ['#EC4899', '#DB2777'], onPress: () => navigation.navigate(jtiaDone ? 'JTIAResults' : 'JTIAAssessment') },
+  ];
 
   const cls = classStyles(students);
   const totalAssessments = students.reduce((s, st) => s + completedCount(st), 0);
@@ -76,6 +96,7 @@ export default function TeacherDashboard({ navigation }: any) {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.header}>
+          <NotificationBell style={styles.bell} />
           <Text style={styles.greeting}>WELCOME</Text>
           <Text style={styles.name}>{user?.name || 'Teacher'}</Text>
           {user?.school ? <Text style={styles.tagline}>{user.school}</Text> : null}
@@ -123,9 +144,28 @@ export default function TeacherDashboard({ navigation }: any) {
         )}
 
         <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Your tools</Text>
+          <View style={styles.grid}>
+            {tools.map((tool, i) => (
+              <GlassCard
+                key={tool.title}
+                padding={14}
+                style={[styles.tile, tools.length % 2 === 1 && i === tools.length - 1 && styles.tileWide]}
+                onPress={tool.onPress}
+              >
+                <LinearGradient colors={tool.g} style={styles.iconWrap} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+                  <AppIcon name={tool.icon} size={22} color="#FFFFFF" />
+                </LinearGradient>
+                <Text style={styles.tileTitle}>{tool.title}</Text>
+              </GlassCard>
+            ))}
+          </View>
+        </View>
+
+        <View style={styles.section}>
           <Text style={styles.sectionTitle}>My Students</Text>
           <Text style={styles.sectionSubtitle}>
-            {students.length} student{students.length !== 1 ? 's' : ''} in your class
+            {students.length} student{students.length !== 1 ? 's' : ''} · tap one for their profile and observations
           </Text>
 
           {!!error && (
@@ -141,7 +181,7 @@ export default function TeacherDashboard({ navigation }: any) {
               <View style={styles.empty}>
                 <AppIcon name="👥" size={40} color={colors.textSubtle} style={styles.emptyIcon} />
                 <Text style={styles.cardTitle}>No students yet</Text>
-                <Text style={styles.cardSubtle}>Students appear here once they join your class</Text>
+                <Text style={styles.cardSubtle}>They appear here once they join your class</Text>
               </View>
             </GlassCard>
           ) : students.length === 0 ? null : (
@@ -153,7 +193,7 @@ export default function TeacherDashboard({ navigation }: any) {
                   </LinearGradient>
                   <View style={{ flex: 1, marginLeft: spacing.md }}>
                     <Text style={styles.cardTitle}>{student.name}</Text>
-                    <Text style={styles.cardSubtle}>{student.email}</Text>
+                    {!!student.className && <Text style={styles.cardSubtle}>{student.className}</Text>}
                   </View>
                   <View style={styles.statBadge}>
                     <Text style={styles.statBadgeText}>{completedCount(student)}</Text>
@@ -164,72 +204,6 @@ export default function TeacherDashboard({ navigation }: any) {
             ))
           )}
         </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Quick Actions</Text>
-          {[
-            { icon: '📊', title: 'View Class Analytics', desc: 'Style distributions, completion and alignment with your profile', g: ['#3B82F6', '#2563EB'] as [string, string], nav: 'ClassAnalytics' as const },
-            { icon: '👥', title: 'My Classes', desc: 'Manage classes, enrol students, import a roster', g: ['#10B981', '#059669'] as [string, string], nav: 'ClassManagement' as const },
-            { icon: '🗂️', title: 'Lesson Planner', desc: 'AI lesson plans with differentiation', g: ['#10B981', '#059669'] as [string, string], nav: 'LessonPlanner' as const },
-            { icon: '🧸', title: 'Early Years (Pre-school)', desc: 'Record developmental observations for ages 2–6', g: ['#F59E0B', '#D97706'] as [string, string], nav: 'PreschoolChildren' as const },
-            { icon: '📋', title: 'Observation Log', desc: 'Note a student observation, share with parents', g: ['#EC4899', '#DB2777'] as [string, string], nav: 'ObservationLog' as const },
-          ].map((a) => (
-            <GlassCard
-              key={a.title}
-              padding={16}
-              style={styles.spacedCard}
-              onPress={() => navigation.navigate(a.nav)}
-            >
-              <View style={styles.row}>
-                <LinearGradient colors={a.g} style={styles.iconWrap} start={{x:0,y:0}} end={{x:1,y:1}}>
-                  <AppIcon name={a.icon} size={22} color="#FFFFFF" />
-                </LinearGradient>
-                <View style={{ flex: 1, marginLeft: spacing.md }}>
-                  <Text style={styles.cardTitle}>{a.title}</Text>
-                  <Text style={styles.cardSubtle}>{a.desc}</Text>
-                </View>
-                <Text style={styles.arrow}>→</Text>
-              </View>
-            </GlassCard>
-          ))}
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Professional Development</Text>
-          <GlassCard
-            padding={16}
-            style={styles.spacedCard}
-            onPress={() => navigation.navigate('TeacherDevelopment')}
-          >
-            <View style={styles.row}>
-              <LinearGradient colors={['#10B981', '#059669']} style={styles.iconWrap} start={{x:0,y:0}} end={{x:1,y:1}}>
-                <AppIcon name="🌟" size={22} color="#FFFFFF" />
-              </LinearGradient>
-              <View style={{ flex: 1, marginLeft: spacing.md }}>
-                <Text style={styles.cardTitle}>Growth & Development</Text>
-                <Text style={styles.cardSubtle}>Explore professional development modules</Text>
-              </View>
-              <Text style={styles.arrow}>→</Text>
-            </View>
-          </GlassCard>
-
-          <GlassCard
-            padding={16}
-            style={styles.spacedCard}
-            onPress={() => navigation.navigate('JTIAAssessment')}
-          >
-            <View style={styles.row}>
-              <LinearGradient colors={['#EC4899', '#DB2777']} style={styles.iconWrap} start={{x:0,y:0}} end={{x:1,y:1}}>
-                <AppIcon name="🎯" size={22} color="#FFFFFF" />
-              </LinearGradient>
-              <View style={{ flex: 1, marginLeft: spacing.md }}>
-                <Text style={styles.cardTitle}>Teacher Intelligence Assessment</Text>
-                <Text style={styles.cardSubtle}>Map your strengths across 5 domains (JTIA)</Text>
-              </View>
-              <Text style={styles.arrow}>→</Text>
-            </View>
-          </GlassCard>
-        </View>
       </ScrollView>
     </ScreenBackground>
   );
@@ -238,7 +212,8 @@ export default function TeacherDashboard({ navigation }: any) {
 const makeStyles = (colors: Palette) => StyleSheet.create({
   scroll: { paddingTop: 8, paddingHorizontal: spacing.xl, paddingBottom: 120 },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  header: { marginBottom: spacing.xxl },
+  header: { marginBottom: spacing.xxl, paddingRight: 56 },
+  bell: { position: 'absolute', top: 0, right: 0 },
   greeting: { fontSize: 12, color: colors.textSubtle, letterSpacing: 1.4, fontWeight: '700' },
   name: { fontSize: 30, fontWeight: '700', color: colors.textPrimary, marginTop: 4, letterSpacing: -0.6 },
   tagline: { fontSize: 15, color: colors.textMuted, marginTop: 6 },
@@ -253,6 +228,10 @@ const makeStyles = (colors: Palette) => StyleSheet.create({
   sectionTitle: { fontSize: 20, fontWeight: '700', color: colors.textPrimary, marginBottom: 4, letterSpacing: -0.4 },
   sectionSubtitle: { fontSize: 14, color: colors.textMuted, marginBottom: spacing.lg },
   spacedCard: { marginBottom: spacing.md },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md },
+  tile: { flexBasis: '47%', flexGrow: 1 },
+  tileWide: { flexBasis: '100%' },
+  tileTitle: { fontSize: 15, fontWeight: '700', color: colors.text, marginTop: spacing.md },
   row: { flexDirection: 'row', alignItems: 'center' },
   cardTitle: { fontSize: 16, fontWeight: '600', color: colors.text },
   cardSubtle: { fontSize: 13, color: colors.textMuted, marginTop: 2 },

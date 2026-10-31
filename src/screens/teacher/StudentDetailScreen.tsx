@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 import ScreenBackground from '../../components/ScreenBackground';
 import GlassCard from '../../components/GlassCard';
 import { TeachingStrategiesCard, EducationalResourcesCard } from '../../components/ai/InsightCards';
 import { studentStyles, studentScores, scoreShares, DOMAINS, Domain } from '../../utils/classInsights';
+import { getTeacherObservations, TeacherObservation } from '../../utils/observationApi';
+import { useAuth } from '../../context/AuthContext';
 import { rs } from '../../utils/responsive';
 import { radii, spacing, Palette } from '../../theme';
 import { useThemedStyles } from '../../context/ThemeContext';
@@ -18,6 +20,24 @@ export default function StudentDetailScreen({ route, navigation }: ScreenProps<'
   const st = studentStyles(student);
   const scores = studentScores(student);
   const has = DOMAINS.some((d) => st[d]);
+
+  // This student's observation notes live on their profile (as in the webapp).
+  const { user } = useAuth();
+  const [obs, setObs] = useState<TeacherObservation[] | null>(null);
+  const [obsError, setObsError] = useState(false);
+  const loadObs = useCallback(() => {
+    if (!user?.id) return;
+    getTeacherObservations(user.id)
+      .then((all) => { setObs(all.filter((o) => o.studentId === student.id)); setObsError(false); })
+      .catch(() => setObsError(true));
+  }, [user?.id, student.id]);
+  useEffect(() => {
+    loadObs();
+    // Reload on return so a note just added appears.
+    return navigation.addListener('focus', loadObs);
+  }, [loadObs, navigation]);
+  const openObservations = (startNew: boolean) =>
+    navigation.navigate('ObservationLog', { studentId: student.id, studentName: student.name, startNew });
 
   return (
     <ScreenBackground>
@@ -61,12 +81,37 @@ export default function StudentDetailScreen({ route, navigation }: ScreenProps<'
 
         {has && <EducationalResourcesCard userType="teacher" styles={st} />}
 
-        <TouchableOpacity
-          style={styles.btn}
-          onPress={() => navigation.navigate('ObservationLog')}
-          accessibilityRole="button"
-        >
-          <Text style={styles.btnText}>📋 Record an observation</Text>
+        <GlassCard variant="dark" padding={16} style={styles.card}>
+          <View style={styles.obsHead}>
+            <Text style={styles.cardTitle}>Observations{obs && obs.length > 0 ? ` (${obs.length})` : ''}</Text>
+            {obs !== null && obs.length > 3 && (
+              <TouchableOpacity onPress={() => openObservations(false)} hitSlop={8} accessibilityRole="button">
+                <Text style={styles.link}>View all</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+          {obsError && obs === null ? (
+            <TouchableOpacity onPress={loadObs} accessibilityRole="button">
+              <Text style={styles.text}>Couldn't load observations. Tap to retry.</Text>
+            </TouchableOpacity>
+          ) : obs === null ? (
+            <Text style={styles.text}>Loading…</Text>
+          ) : obs.length === 0 ? (
+            <Text style={styles.text}>No observations yet.</Text>
+          ) : (
+            obs.slice(0, 3).map((o) => (
+              <View key={o.id} style={styles.obsRow}>
+                <Text style={styles.obsMeta}>
+                  {o.concernType} · {o.sharedWithParent ? 'shared' : 'private'} · {new Date(o.createdAt).toLocaleDateString()}
+                </Text>
+                <Text style={styles.text} numberOfLines={2}>{o.observationText}</Text>
+              </View>
+            ))
+          )}
+        </GlassCard>
+
+        <TouchableOpacity style={styles.btn} onPress={() => openObservations(true)} accessibilityRole="button">
+          <Text style={styles.btnText}>+ Add observation</Text>
         </TouchableOpacity>
       </ScrollView>
     </ScreenBackground>
@@ -91,6 +136,10 @@ const makeStyles = (colors: Palette) => StyleSheet.create({
   dimVal: { width: 30, textAlign: 'right', fontSize: rs(11), fontWeight: '700', color: colors.text },
   track: { flex: 1, height: 8, borderRadius: 4, backgroundColor: colors.bgTertiary, overflow: 'hidden' },
   fill: { height: 8, borderRadius: 4, backgroundColor: colors.cyan },
+  obsHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 },
+  obsRow: { paddingTop: 10, marginTop: 6, borderTopWidth: 1, borderTopColor: colors.borderLight },
+  obsMeta: { fontSize: rs(11), fontWeight: '700', color: colors.textMuted, marginBottom: 3 },
+  link: { fontSize: rs(12), fontWeight: '800', color: colors.cyan },
   btn: { backgroundColor: colors.success, borderRadius: radii.xl, paddingVertical: 15, alignItems: 'center', marginTop: spacing.sm },
   btnText: { color: '#FFFFFF', fontSize: rs(14), fontWeight: '800' },
 });
