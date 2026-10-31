@@ -14,6 +14,7 @@ import { FeatureVisible } from '../../components/FeatureGate';
 import { useAuth } from '../../context/AuthContext';
 import { getResets, resetStreak, didResetToday } from '../../utils/teacherReset';
 import { getLastJTIAReport } from '../../utils/jtiaStatus';
+import { assessmentBand } from '../../utils/assessmentBand';
 import { teachingFocus, TeachingFocus } from '../../utils/teachingFocus';
 
 export default function MindHomeScreen({ navigation }: any) {
@@ -25,6 +26,8 @@ export default function MindHomeScreen({ navigation }: any) {
   const [lastCheckin, setLastCheckin] = useState<any>(null);
   const { user } = useAuth();
   const isTeacher = user?.role === 'teacher';
+  // Weekly and 7-day dashboards are for older users; elementary learners get the check-in and games.
+  const isKid = user?.role === 'student' && assessmentBand(user) === 'kids';
   const [resets, setResets] = useState<string[]>([]);
   const [focus, setFocus] = useState<TeachingFocus | null>(null);
 
@@ -69,7 +72,7 @@ export default function MindHomeScreen({ navigation }: any) {
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <Text style={styles.title}>Mind</Text>
-          <Text style={styles.subtitle}>{isTeacher ? 'Look after your energy and focus' : 'Track your daily cognitive state'}</Text>
+          <Text style={styles.subtitle}>{isTeacher ? 'Look after your energy and focus' : isKid ? 'How are you feeling today?' : 'Track your daily cognitive state'}</Text>
         </View>
 
         {/* Teacher Reset: a two-minute activity made for the school day */}
@@ -191,6 +194,8 @@ export default function MindHomeScreen({ navigation }: any) {
           </TouchableOpacity>
         </GlassCard>
 
+        {!isKid && (
+          <>
         {/* Weekly Snapshot */}
         <GlassCard
           style={styles.snapshotCard}
@@ -238,6 +243,8 @@ export default function MindHomeScreen({ navigation }: any) {
             <Text style={styles.snapshotArrow}>→</Text>
           </View>
         </GlassCard>
+          </>
+        )}
 
         {/* Brain Gym */}
         <FeatureVisible flag="brain-gym">

@@ -113,7 +113,6 @@ export default function ParentDashboard({ navigation }: any) {
           <NotificationBell style={styles.bell} />
           <Text style={styles.greeting}>WELCOME</Text>
           <Text style={styles.name}>{user?.name || 'Parent'}</Text>
-          <Text style={styles.tagline}>Support your child's cognitive growth</Text>
         </View>
 
         <LinearGradient

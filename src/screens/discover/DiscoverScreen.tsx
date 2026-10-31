@@ -8,7 +8,11 @@ import { getAllAssessmentResults } from '../../utils/api';
 import { completedDomains, CognitiveDomain } from '../../utils/profileCompleteness';
 import { insightsFor, discoverAudience } from '../../data/discoverContent';
 import { assessmentBand } from '../../utils/assessmentBand';
-import { isJTIADone } from '../../utils/jtiaStatus';
+import { isJTIADone, getLastJTIAReport } from '../../utils/jtiaStatus';
+import { loadTeacherStudents } from '../../utils/teacherStudents';
+import { styleDistribution } from '../../utils/classInsights';
+import { teachingFocus } from '../../utils/teachingFocus';
+import { recommendTeacherArticles, orderByRecommendation, Recommendation } from '../../utils/teacherRecommendations';
 import JotRobot from '../../components/kids/JotRobot';
 import { DailyDiscoveryCard, StudyStrategyCard } from '../../components/ai/InsightCards';
 import { stylesFromResults } from '../../utils/profileStyles';
@@ -28,6 +32,7 @@ export default function DiscoverScreen({ navigation }: any) {
   const [myDomains, setMyDomains] = useState<Set<CognitiveDomain>>(new Set());
   const [learningStyle, setLearningStyle] = useState<string | undefined>();
   const [jtiaDone, setJtiaDone] = useState(false);
+  const [recs, setRecs] = useState<Recommendation[]>([]);
 
   // Teachers and elementary learners get content written for them; everyone else the general set.
   const audience = discoverAudience(user?.role, assessmentBand(user));
@@ -47,14 +52,21 @@ export default function DiscoverScreen({ navigation }: any) {
 
   useEffect(() => {
     if (!isTeacher) return;
-    const refresh = () => { isJTIADone().then(setJtiaDone).catch(() => {}); };
+    const refresh = () => {
+      isJTIADone().then(setJtiaDone).catch(() => {});
+      // Suggest articles from this class's styles and the teacher's own Teaching Insights.
+      Promise.all([
+        loadTeacherStudents().then((r) => styleDistribution(r.students)).catch(() => null),
+        getLastJTIAReport().then(teachingFocus).catch(() => null),
+      ]).then(([dist, focus]) => setRecs(recommendTeacherArticles(dist, focus)));
+    };
     refresh();
     return navigation?.addListener?.('focus', refresh);
   }, [isTeacher, navigation]);
 
   // Real personalization: insights matching a domain the user has actually
   // completed surface first, rather than a fixed order for every user.
-  const sorted = [...INSIGHTS].sort((a, b) => {
+  const sorted = orderByRecommendation([...INSIGHTS], isTeacher ? recs : []).sort((a, b) => {
     const aMatch = myDomains.has(a.domain) ? 0 : 1;
     const bMatch = myDomains.has(b.domain) ? 0 : 1;
     return aMatch - bMatch;
@@ -183,6 +195,9 @@ export default function DiscoverScreen({ navigation }: any) {
                   <Text style={[styles.insightTitle, isKids && styles.insightTitleKids]}>{insight.title}</Text>
                   {isKids && <Text style={styles.insightPreviewKids}>{insight.preview}</Text>}
                   {!isKids && <Text style={styles.insightReadTime}>{insight.readTime} read</Text>}
+                  {isTeacher && !!recs.find((r) => r.id === insight.id) && (
+                    <Text style={styles.reason}>★ {recs.find((r) => r.id === insight.id)!.reason}</Text>
+                  )}
                 </View>
               </View>
             </GlassCard>
@@ -211,6 +226,7 @@ const makeStyles = (colors: Palette) => StyleSheet.create({
   growthTitle: { fontSize: 15, fontWeight: '700', color: colors.text },
   growthSub: { fontSize: 12, color: colors.textMuted, marginTop: 2 },
   growthArrow: { fontSize: 18, color: colors.textMuted, fontWeight: '700' },
+  reason: { fontSize: 12, fontWeight: '700', color: colors.cyan, marginTop: 6 },
   insightIconWrapKids: { width: 64, height: 64, borderRadius: 20 },
   insightTitleKids: { fontSize: 19, lineHeight: 25 },
   insightPreviewKids: { fontSize: 15, color: colors.textMuted, lineHeight: 21 },

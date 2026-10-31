@@ -218,6 +218,10 @@ export default function LessonPlannerScreen({ navigation }: any) {
             })}
           />
 
+          <TouchableOpacity onPress={() => navigation.navigate('ObservationLog')} accessibilityRole="button" style={styles.linkRow}>
+            <Text style={styles.linkText}>Student observations →</Text>
+          </TouchableOpacity>
+
           <TouchableOpacity style={[styles.primaryBtn, active.delivered && styles.deliveredBtn]} onPress={toggleDelivered}>
             <Text style={styles.primaryBtnText}>{active.delivered ? '✓ Delivered' : 'Mark as delivered'}</Text>
           </TouchableOpacity>
@@ -341,6 +345,8 @@ const makeStyles = (colors: Palette) => StyleSheet.create({
   deliveredPill: { paddingVertical: 4, paddingHorizontal: 8, borderRadius: radii.pill, backgroundColor: `${colors.success}22` },
   deliveredPillText: { fontSize: rs(10), fontWeight: '800', color: colors.success },
 
+  linkRow: { alignItems: 'center', paddingVertical: 14 },
+  linkText: { fontSize: rs(13), fontWeight: '800', color: colors.cyan },
   deleteRow: { alignItems: 'center', marginTop: 14 },
   deleteText: { fontSize: rs(13), color: colors.error, fontWeight: '600' },
 });

@@ -161,7 +161,6 @@ export default function StudentDashboard({ navigation }: any) {
           <NotificationBell style={styles.bell} />
           <Text style={styles.greeting}>Welcome back,</Text>
           <Text style={styles.name}>{user?.name || 'Student'}</Text>
-          <Text style={styles.tagline}>Your weekly cognitive snapshot</Text>
         </View>
 
         <LinearGradient
@@ -278,7 +277,6 @@ export default function StudentDashboard({ navigation }: any) {
 
         {!isPreschool && <View style={styles.section}>
           <Text style={styles.sectionTitle}>{kidsBand ? 'Fun Quizzes' : 'Your Assessments'}</Text>
-          {!kidsBand && <Text style={styles.sectionSubtitle}>Complete these to build your profile</Text>}
 
           {cards.map((card) => {
             const isCompleted = completedTypes.includes(card.type);

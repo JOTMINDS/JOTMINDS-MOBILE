@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import * as Speech from 'expo-speech';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import ScreenBackground from '../../components/ScreenBackground';
 import GlassCard from '../../components/GlassCard';
 import AppIcon from '../../components/AppIcon';
 import ReadingQuiz from '../../components/ReadingQuiz';
+import { articleSpeech } from '../../utils/articleSpeech';
 import { colors, radii, spacing, Palette } from '../../theme';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 
@@ -29,6 +31,20 @@ export default function InsightDetailScreen({ route, navigation }: any) {
     },
   ];
 
+  // Audio version: the article read aloud, a little slower for younger readers.
+  const [speaking, setSpeaking] = useState(false);
+  useEffect(() => () => { Speech.stop(); }, []);
+  const toggleListen = () => {
+    if (speaking) { Speech.stop(); setSpeaking(false); return; }
+    setSpeaking(true);
+    Speech.speak(articleSpeech(insight.title, sections), {
+      rate: isKids ? 0.85 : 1,
+      onDone: () => setSpeaking(false),
+      onStopped: () => setSpeaking(false),
+      onError: () => setSpeaking(false),
+    });
+  };
+
   return (
     <ScreenBackground>
       <ScrollView
@@ -52,6 +68,11 @@ export default function InsightDetailScreen({ route, navigation }: any) {
           <Text style={styles.heroTitle}>{insight.title}</Text>
           <Text style={styles.heroMeta}>{insight.readTime} read</Text>
         </LinearGradient>
+
+        <TouchableOpacity style={styles.listenBtn} onPress={toggleListen} accessibilityRole="button" accessibilityLabel={speaking ? 'Stop listening' : 'Listen to this article'}>
+          <AppIcon name={speaking ? 'stop-circle' : 'volume-high'} size={20} color={colors.cyan} />
+          <Text style={styles.listenText}>{speaking ? 'Stop' : 'Listen'}</Text>
+        </TouchableOpacity>
 
         {/* Content sections */}
         <View style={styles.content}>
@@ -78,6 +99,12 @@ export default function InsightDetailScreen({ route, navigation }: any) {
 }
 
 const makeStyles = (colors: Palette) => StyleSheet.create({
+  listenBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, alignSelf: 'flex-start',
+    marginTop: 16, paddingVertical: 10, paddingHorizontal: 18, borderRadius: 999,
+    borderWidth: 1.5, borderColor: colors.cyan,
+  },
+  listenText: { fontSize: 14, fontWeight: '800', color: colors.cyan },
   scroll: {
     paddingTop: 8,
     paddingHorizontal: spacing.xl,
