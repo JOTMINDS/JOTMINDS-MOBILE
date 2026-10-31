@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, Animated, ActivityIndicator,
 } from 'react-native';
@@ -16,6 +16,7 @@ import {
 import { QUESTION_BANK, AssessmentType } from '../../data/questionBank';
 import { bankForBand } from '../../data/questionBankByAge';
 import { assessmentBand } from '../../utils/assessmentBand';
+import { buildSessionBank } from '../../utils/questionSelection';
 import ScreenBackground from '../../components/ScreenBackground';
 import AppIcon from '../../components/AppIcon';
 import { colors, radii, spacing, Palette } from '../../theme';
@@ -43,8 +44,14 @@ export default function AssessmentTakingScreen({ navigation, route }: any) {
   // JHS and everyone else → the default bank; Elementary goes to the kids quiz.
   // Scoring is unchanged — same dimensions and per-dimension counts.
   const band = assessmentBand(user);
-  const levelBank = bankForBand(band);
-  const bank = (levelBank ?? QUESTION_BANK)[assessmentType] ?? QUESTION_BANK.learning;
+  // A fresh random draw from the level's pool for each sitting (stable while the screen is open);
+  // levels without a pool use the fixed bank.
+  const bank = useMemo(
+    () => buildSessionBank(band, assessmentType)
+      ?? (bankForBand(band) ?? QUESTION_BANK)[assessmentType]
+      ?? QUESTION_BANK.learning,
+    [band, assessmentType],
+  );
   // Elementary learners take the picture-friendly kids quiz, not the 5-point scale.
   useEffect(() => {
     if (band === 'kids') navigation.replace('KidsAssessment');
