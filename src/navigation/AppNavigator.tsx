@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, useNavigationContainerRef } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { ActivityIndicator, View, StyleSheet } from 'react-native';
@@ -8,6 +8,10 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import AppIcon from '../components/AppIcon';
 import { tabsForUser, hiddenTabsForUser, TabKey } from './tabsForUser';
+import { shouldShowJottiFab, TAB_ROUTES } from './jottiFab';
+import type { RootStackParamList } from './types';
+import JottiFab from '../components/JottiFab';
+import { useFeatureFlag } from '../utils/featureFlags';
 import TeacherStudentsScreen from '../screens/teacher/TeacherStudentsScreen';
 import { colors } from '../theme';
 
@@ -212,6 +216,10 @@ export default function AppNavigator() {
   const t = useTheme();
   // First-Win onboarding gate: shown once per user before the main app.
   const [firstWinDone, setFirstWinDone] = useState<boolean | null>(null);
+  // Tracks the focused screen so the floating Jotti button knows where it is.
+  const navRef = useNavigationContainerRef<RootStackParamList>();
+  const [routeName, setRouteName] = useState<string | undefined>();
+  const jottiEnabled = useFeatureFlag('ai-coach', user?.id);
 
   useEffect(() => {
     if (!user) { setFirstWinDone(null); return; }
@@ -236,7 +244,11 @@ export default function AppNavigator() {
   }
 
   return (
-    <NavigationContainer>
+    <NavigationContainer
+      ref={navRef}
+      onReady={() => setRouteName(navRef.getCurrentRoute()?.name)}
+      onStateChange={() => setRouteName(navRef.getCurrentRoute()?.name)}
+    >
       <DeepLinkHandler />
       <Stack.Navigator
         screenOptions={{
@@ -390,6 +402,9 @@ export default function AppNavigator() {
           </>
         )}
       </Stack.Navigator>
+      {jottiEnabled && !passwordRecovery && shouldShowJottiFab(routeName, user) && (
+        <JottiFab aboveTabBar={TAB_ROUTES.has(routeName ?? '')} onPress={() => navRef.navigate('AskJotti')} />
+      )}
     </NavigationContainer>
   );
 }
